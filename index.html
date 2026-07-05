@@ -512,9 +512,12 @@ const $=s=>document.querySelector(s);
 
 window.__achievementShowcaseHold=true;
 document.body.classList.add('achievement-showcase-loading');
+// KIRI v17: на старте прячем готовую панель до первой проверки облака, чтобы не мигала старая локальная версия.
+document.body.classList.add('initial-sync-loading');
 function releaseAchievementShowcase(){
   window.__achievementShowcaseHold=false;
   document.body.classList.remove('achievement-showcase-loading');
+  document.body.classList.remove('initial-sync-loading');
 }
 setTimeout(()=>{
   if(window.__achievementShowcaseHold) releaseAchievementShowcase();
@@ -2511,13 +2514,11 @@ document.addEventListener('click',e=>{
 load();
 render();
 applyDashTab();
-// KIRI v098: локальная витрина достижений уже восстановлена и отрисована.
-// Показываем профиль сразу, не ждём медленную инициализацию Firebase/Auth.
-// Если облако позже пришлёт другое состояние, оно спокойно перерисует витрину поверх.
-releaseAchievementShowcase();
+// KIRI v17: не показываем панель мгновенно после localStorage.
+// Сначала даём Cloud Sync проверить Google-профиль, чтобы не мигала старая локальная версия.
 CloudSync.init();
 </script> 
-<!-- TEST v14: rating fully removed, cloud sync only -->
+<!-- TEST v17: no old local flash on refresh, rating removed -->
 
 <style>
 .kiri-test-version-badge{
@@ -2548,5 +2549,5 @@ CloudSync.init();
   .kiri-test-version-badge{bottom:10px!important;font-size:10px!important;padding:4px 10px!important;}
 }
 </style>
-<div class="kiri-test-version-badge">TEST v16 · bottom version restore</div>
+<div class="kiri-test-version-badge">TEST v17 · no old flash on refresh</div>
 </body></html>
