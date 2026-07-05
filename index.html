@@ -355,6 +355,7 @@
 
 
 /* KIRI v18: не показываем старую локальную карточку достижения, пока облако не проверилось */
+body.initial-sync-loading .app{visibility:hidden!important;}
 body.initial-sync-loading #lastAchCard,
 body.initial-sync-loading #lastAchInline,
 body.initial-sync-loading #achievementPreviewGrid,
@@ -534,8 +535,10 @@ function releaseAchievementShowcase(){
   }
 }
 setTimeout(()=>{
-  if(window.__achievementShowcaseHold) releaseAchievementShowcase();
-},2200);
+  // KIRI v19: не отпускаем старый локальный профиль раньше проверки Auth/Cloud.
+  // Если Firebase совсем не ответил, запасной выход сработает позже, чтобы панель не зависла навсегда.
+  if(window.__achievementShowcaseHold && (!window.CloudSync || !window.CloudSync.ready || window.CloudSync.authChecked)) releaseAchievementShowcase();
+},6500);
 
 function save(){
   // KIRI v039: обновляем updatedAt только при реальном действии пользователя.
@@ -2535,9 +2538,7 @@ applyDashTab();
 // Сначала даём Cloud Sync проверить Google-профиль, чтобы не мигала старая локальная версия.
 CloudSync.init();
 </script> 
-<!-- TEST v17: no old local flash on refresh, rating removed -->
-
-<style>
+<!-- TEST v19 · hide full profile until sync<style>
 .kiri-test-version-badge{
   position:fixed!important;
   left:50%!important;
@@ -2566,5 +2567,5 @@ CloudSync.init();
   .kiri-test-version-badge{bottom:10px!important;font-size:10px!important;padding:4px 10px!important;}
 }
 </style>
-<div class="kiri-test-version-badge">TEST v18 · no old achievement flash</div>
+<div class="kiri-test-version-badge">TEST v19 · hide full profile until sync</div>
 </body></html>
