@@ -3982,4 +3982,153 @@ CloudSync.init();
   },1200);
 })();
 </script>
+
+
+<style id="kiri-v08-achievement-modal-sort-visible-css">
+/* KIRI v08: видимая сортировка в окне всех достижений */
+.achievement-sort-row.kiri-v08-sort{
+  display:grid!important;
+  grid-template-columns:1fr minmax(220px,320px)!important;
+  align-items:center!important;
+  gap:10px!important;
+  margin:12px 0 14px!important;
+  padding:10px 12px!important;
+  border:1px solid color-mix(in srgb,var(--accent) 26%, rgba(255,255,255,.12))!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 7%, rgba(255,255,255,.035)),rgba(255,255,255,.024))!important;
+}
+.achievement-sort-row.kiri-v08-sort label{
+  color:var(--muted)!important;
+  font-size:12px!important;
+  font-weight:950!important;
+  text-transform:uppercase!important;
+  letter-spacing:.035em!important;
+}
+.achievement-sort-row.kiri-v08-sort select{
+  width:100%!important;
+  min-height:38px!important;
+  border-radius:13px!important;
+  border:1px solid color-mix(in srgb,var(--accent) 32%, rgba(255,255,255,.12))!important;
+  background:rgba(5,8,16,.92)!important;
+  color:var(--text)!important;
+  padding:0 12px!important;
+  font-size:12px!important;
+  font-weight:900!important;
+}
+@media(max-width:620px){
+  .achievement-sort-row.kiri-v08-sort{grid-template-columns:1fr!important;}
+}
+</style>
+<script id="kiri-v08-achievement-modal-sort-visible-js">
+(function(){
+  'use strict';
+  window.__KIRI_TEST_VERSION='v08_achievement_modal_sort_visible';
+
+  function getGot(){ try{return (typeof achievements==='function'?achievements():(S.account&&S.account.achievements)||{});}catch(e){return {}} }
+  function getPicked(){ try{return typeof ensureShowcase==='function'?ensureShowcase():(S.showcaseAchievements||[]);}catch(e){return []} }
+  function statPercentValueSafe(id){
+    try{
+      const st=window.__achievementStats;
+      if(!st||!st.total) return null;
+      return (Number(st.counts&&st.counts[id]||0)/Number(st.total))*100;
+    }catch(e){return null}
+  }
+  function compareByKiriSort(a,b,got,picked){
+    const mode=window.__achievementSortMode||'percent_asc';
+    if(mode==='percent_asc'){
+      const av=statPercentValueSafe(a.id), bv=statPercentValueSafe(b.id);
+      const ak=av===null?999999:av, bk=bv===null?999999:bv;
+      if(ak!==bk) return ak-bk;
+      return String(a.title||'').localeCompare(String(b.title||''),'ru');
+    }
+    if(mode==='opened_first'){
+      const ao=got[a.id]?1:0, bo=got[b.id]?1:0;
+      if(ao!==bo) return bo-ao;
+      return String(a.title||'').localeCompare(String(b.title||''),'ru');
+    }
+    if(mode==='locked_first'){
+      const ao=got[a.id]?1:0, bo=got[b.id]?1:0;
+      if(ao!==bo) return ao-bo;
+      return String(a.title||'').localeCompare(String(b.title||''),'ru');
+    }
+    if(mode==='showcase_first'){
+      const ap=picked.includes(a.id)?1:0, bp=picked.includes(b.id)?1:0;
+      if(ap!==bp) return bp-ap;
+    }
+    return String(a.title||'').localeCompare(String(b.title||''),'ru');
+  }
+  function addSortRow(){
+    const tabs=document.getElementById('achievementTabs');
+    if(!tabs) return;
+    let row=document.getElementById('kiriAchievementSortRow');
+    if(!row){
+      row=document.createElement('div');
+      row.id='kiriAchievementSortRow';
+      row.className='achievement-sort-row kiri-v08-sort';
+      row.innerHTML='<label for="achievementSortSelect">Отбор достижений</label><select id="achievementSortSelect"><option value="percent_asc">Самые редкие по процентам</option><option value="opened_first">Сначала полученные</option><option value="locked_first">Сначала закрытые</option><option value="showcase_first">Сначала витрина</option></select>';
+      tabs.insertAdjacentElement('afterend',row);
+    }
+    const sel=document.getElementById('achievementSortSelect');
+    if(sel){
+      sel.value=window.__achievementSortMode||'percent_asc';
+      sel.onchange=function(){ window.__achievementSortMode=this.value; try{renderAchievementModal();}catch(e){} setTimeout(sortGridOnly,0); };
+    }
+  }
+  function sortGridOnly(){
+    try{
+      if(!Array.isArray(window.ACHIEVEMENT_DEFS)) return;
+      const grid=document.getElementById('achievementGrid');
+      if(!grid) return;
+      const got=getGot(); const picked=getPicked();
+      const cards=[...grid.children];
+      const idByTitle={};
+      ACHIEVEMENT_DEFS.forEach(a=>{idByTitle[String(a.title||'')]=a;});
+      cards.sort((ca,cb)=>{
+        const ta=ca.querySelector('strong')?.textContent||'';
+        const tb=cb.querySelector('strong')?.textContent||'';
+        const a=idByTitle[ta] || ACHIEVEMENT_DEFS.find(x=>ca.innerHTML.includes(x.id)) || {id:'',title:ta};
+        const b=idByTitle[tb] || ACHIEVEMENT_DEFS.find(x=>cb.innerHTML.includes(x.id)) || {id:'',title:tb};
+        return compareByKiriSort(a,b,got,picked);
+      });
+      cards.forEach(c=>grid.appendChild(c));
+    }catch(e){}
+  }
+  if(typeof renderAchievementModal==='function' && !renderAchievementModal.__kiriV08SortVisible){
+    const oldRender=renderAchievementModal;
+    renderAchievementModal=function(){
+      const r=oldRender.apply(this,arguments);
+      addSortRow();
+      setTimeout(()=>{addSortRow();sortGridOnly();},0);
+      return r;
+    };
+    renderAchievementModal.__kiriV08SortVisible=true;
+  }
+  function openAllAchievements(){
+    try{renderAchievementModal();}catch(e){}
+    addSortRow();
+    document.getElementById('achievementsModal')?.classList.add('open');
+    setTimeout(()=>{addSortRow();sortGridOnly();},50);
+    try{window.RPCabinetAchievementStats&&window.RPCabinetAchievementStats.load&&window.RPCabinetAchievementStats.load(false);}catch(e){}
+  }
+  window.openAchievementsModal=openAllAchievements;
+  function bindOpenButtons(){
+    ['openAchievements','openAchievementsHero','openShowcaseSettings','openAchievementsHeroMini'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.onclick=openAllAchievements;
+    });
+    document.querySelectorAll('[data-open-achievements-modal]').forEach(el=>el.onclick=openAllAchievements);
+    const badge=document.querySelector('.kiri-test-version-badge');
+    if(badge) badge.textContent='TEST v08 · achievement modal sort visible';
+  }
+  document.addEventListener('click',function(e){
+    if(e.target && e.target.closest && e.target.closest('#openAchievements,#openAchievementsHero,#openShowcaseSettings,#openAchievementsHeroMini,[data-open-achievements-modal]')){
+      e.preventDefault(); e.stopPropagation(); openAllAchievements();
+    }
+  },true);
+  document.addEventListener('DOMContentLoaded',bindOpenButtons);
+  setInterval(()=>{ if(document.getElementById('achievementsModal')?.classList.contains('open')) addSortRow(); },700);
+  setTimeout(bindOpenButtons,300);
+  setTimeout(bindOpenButtons,1200);
+})();
+</script>
+
 </body></html>
