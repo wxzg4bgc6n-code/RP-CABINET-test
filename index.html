@@ -7756,3 +7756,97 @@ body.academy-info-clean #profileRankMaterials .profile-materials-source-root .ph
 }
 
 </style>
+
+
+<style id="kiri-v05-academy-kpp-theme-final">
+/* v05: добиваем красную линию в КПП именно в Академии и в Материалах. */
+body.academy-info-clean #departmentInfoContent #academy-kpp .phrase.redline,
+body.academy-info-clean #departmentInfoContent #academy-kpp .phrase.redline.redline,
+body.academy-info-clean #departmentInfoContent #academy-pass .phrase.redline,
+body.academy-info-clean #departmentInfoContent #academy-access .phrase.redline,
+body.academy-info-clean #departmentInfoContent :is(#academy-kpp,#academy-pass,#academy-access) :is(.phrase.redline,.answer-line.redline),
+body.academy-info-clean #profileRankMaterials .profile-materials-source-root :is(#academy-kpp,#academy-pass,#academy-access) :is(.phrase.redline,.answer-line.redline){
+  border-left-color:var(--accent)!important;
+}
+body.academy-info-clean #departmentInfoContent #academy-kpp .phrase.redline::before,
+body.academy-info-clean #departmentInfoContent #academy-pass .phrase.redline::before,
+body.academy-info-clean #departmentInfoContent #academy-access .phrase.redline::before,
+body.academy-info-clean #profileRankMaterials .profile-materials-source-root :is(#academy-kpp,#academy-pass,#academy-access) .phrase.redline::before{
+  background:var(--accent)!important;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 12%, transparent),0 0 18px color-mix(in srgb,var(--accent) 28%, transparent)!important;
+}
+/* Если красный приходит от danger-карточки или старого border-color — тоже переводим в тему. */
+body.academy-info-clean #departmentInfoContent :is(#academy-kpp,#academy-pass,#academy-access) .card.danger,
+body.academy-info-clean #departmentInfoContent :is(#academy-kpp,#academy-pass,#academy-access) .qa.danger,
+body.academy-info-clean #profileRankMaterials .profile-materials-source-root :is(#academy-kpp,#academy-pass,#academy-access) .card.danger,
+body.academy-info-clean #profileRankMaterials .profile-materials-source-root :is(#academy-kpp,#academy-pass,#academy-access) .qa.danger{
+  border-left-color:var(--accent)!important;
+  border-color:color-mix(in srgb,var(--accent) 32%, rgba(255,255,255,.12))!important;
+}
+</style>
+
+<script id="kiri-v05-tab-and-scroll-restore">
+(function(){
+  var label='TEST v05 · academy kpp theme + restore place';
+  var validTabs={profile:1,progress:1,department:1,tests:1,reports:1};
+  var tabKey='kiri:rp-cabinet:active-tab:'+location.pathname;
+  var scrollKey='kiri:rp-cabinet:last-scroll:'+location.pathname;
+
+  function setBadge(){
+    document.querySelectorAll('[data-test-version-badge],.kiri-test-version-badge').forEach(function(el){el.textContent=label;});
+  }
+  function getCurrentTab(){
+    var t=(document.body && document.body.dataset && document.body.dataset.activeDashTab) || '';
+    if(!validTabs[t]){
+      var active=document.querySelector('.dash-tab.active');
+      t=active && active.dataset ? active.dataset.dashTab : '';
+    }
+    return validTabs[t] ? t : 'profile';
+  }
+  function savePlace(){
+    try{ localStorage.setItem(tabKey, getCurrentTab()); }catch(e){}
+    try{ localStorage.setItem(scrollKey, String(Math.max(0, window.scrollY || document.documentElement.scrollTop || 0))); }catch(e){}
+  }
+  function applyTab(tab){
+    if(!validTabs[tab]) return;
+    try{ activeDashTab=tab; }catch(e){}
+    try{ window.activeDashTab=tab; }catch(e){}
+    try{ if(typeof renderDynamicDepartmentDashboard==='function') renderDynamicDepartmentDashboard(); }catch(e){}
+    document.body.dataset.activeDashTab=tab;
+    document.querySelectorAll('.dash-tab').forEach(function(b){
+      b.classList.toggle('active', (b.dataset && b.dataset.dashTab)===tab);
+    });
+    try{ document.dispatchEvent(new CustomEvent('kiri:profile-pins-changed')); }catch(e){}
+    try{ if(typeof window.KiriProfileMaterialsRefresh==='function') window.KiriProfileMaterialsRefresh(); }catch(e){}
+  }
+  function restorePlace(){
+    setBadge();
+    var tab='';
+    try{ tab=localStorage.getItem(tabKey)||''; }catch(e){}
+    if(validTabs[tab]) applyTab(tab);
+    var raw='';
+    try{ raw=localStorage.getItem(scrollKey)||''; }catch(e){}
+    var y=parseInt(raw,10);
+    if(isFinite(y) && y>0){
+      window.scrollTo(0,y);
+      setTimeout(function(){window.scrollTo(0,y);},80);
+      setTimeout(function(){window.scrollTo(0,y);},250);
+      setTimeout(function(){window.scrollTo(0,y);},650);
+    }
+  }
+  document.addEventListener('click',function(e){
+    var btn=e.target && e.target.closest ? e.target.closest('.dash-tab') : null;
+    if(btn && btn.dataset && validTabs[btn.dataset.dashTab]){
+      try{ localStorage.setItem(tabKey, btn.dataset.dashTab); }catch(err){}
+      setTimeout(savePlace,80);
+    }
+  },true);
+  window.addEventListener('scroll',function(){ clearTimeout(window.__kiriV05ScrollTimer); window.__kiriV05ScrollTimer=setTimeout(savePlace,120); },{passive:true});
+  window.addEventListener('pagehide',savePlace);
+  window.addEventListener('beforeunload',savePlace);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',restorePlace); else restorePlace();
+  window.addEventListener('load',restorePlace);
+  setTimeout(restorePlace,200);
+  setTimeout(restorePlace,800);
+})();
+</script>
