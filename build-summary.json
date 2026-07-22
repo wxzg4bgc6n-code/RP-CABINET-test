@@ -1,0 +1,17 @@
+{
+  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v67_MODULAR",
+  "sourceBytes": 6490540,
+  "indexBytes": 21037,
+  "cssFiles": 8,
+  "scriptFiles": 21,
+  "templates": [
+    "academyInfoTemplate",
+    "genericDepartmentInfoTemplate",
+    "academyTestsTemplate",
+    "usafTestsTemplate",
+    "usafInfoTemplateV20",
+    "usafTestsTemplateV20"
+  ],
+  "images": 23,
+  "imageBytes": 4250049
+}

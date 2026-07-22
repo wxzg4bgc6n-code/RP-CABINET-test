@@ -1,0 +1,1 @@
+const TEST_VERSION="67";const TEST_VERSION_LABEL="Modular architecture";document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{el.textContent=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;});});

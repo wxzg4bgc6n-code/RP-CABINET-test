@@ -1,0 +1,254 @@
+/* Извлечено из v66. Порядок подключения сохранять. */
+/* v55: pinned USAF tests use the same geometry as the live Tests tab. */
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"]{
+  min-width:0!important;
+  margin:0 0 14px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid color-mix(in srgb,var(--accent) 25%,rgba(255,255,255,.10))!important;
+  border-radius:18px!important;
+  background:rgba(255,255,255,.015)!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle[open]{
+  border-color:color-mix(in srgb,var(--accent) 48%,rgba(255,255,255,.18))!important;
+  background:rgba(255,255,255,.015)!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle > summary{
+  position:relative!important;
+  display:block!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:14px 58px 14px 15px!important;
+  border:0!important;
+  border-bottom:1px solid rgba(255,255,255,.075)!important;
+  border-radius:0!important;
+  background:color-mix(in srgb,var(--accent) 8%,rgba(0,0,0,.10))!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  color:var(--text)!important;
+  font-size:15px!important;
+  font-weight:950!important;
+  line-height:1.35!important;
+  list-style:none!important;
+  white-space:normal!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle > summary::-webkit-details-marker{
+  display:none!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle > summary::before{
+  content:"▸"!important;
+  position:static!important;
+  display:inline-block!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0 8px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--accent)!important;
+  font-size:15px!important;
+  line-height:1!important;
+  transform:none!important;
+  transition:transform .18s ease!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle[open] > summary::before{
+  transform:rotate(90deg)!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle > summary::after{
+  content:none!important;
+  display:none!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle > summary >
+.kiri-pin-profile-btn.profile-unpin-inline{
+  position:absolute!important;
+  right:14px!important;
+  top:50%!important;
+  display:grid!important;
+  place-items:center!important;
+  width:32px!important;
+  min-width:32px!important;
+  height:32px!important;
+  min-height:32px!important;
+  margin:0!important;
+  padding:0!important;
+  border-radius:12px!important;
+  transform:translateY(-50%)!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .qa-list{
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:10px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:12px!important;
+  border:0!important;
+  background:transparent!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .qa-card{
+  box-sizing:border-box!important;
+  position:relative!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:15px!important;
+  border:1px solid color-mix(in srgb,var(--accent) 23%,rgba(255,255,255,.10))!important;
+  border-radius:17px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.021))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important;
+  overflow:hidden!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .question-text{
+  margin:0 0 11px!important;
+  padding:0 0 11px!important;
+  border:0!important;
+  border-bottom:1px solid color-mix(in srgb,var(--accent) 18%,rgba(255,255,255,.08))!important;
+  background:transparent!important;
+  color:var(--text)!important;
+  font-size:15.5px!important;
+  font-weight:950!important;
+  line-height:1.38!important;
+  white-space:pre-line!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .vt-photo{
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  height:auto!important;
+  margin:0 0 12px!important;
+  object-fit:contain!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .answer-options{
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:7px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  list-style:none!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .answer-options > li{
+  box-sizing:border-box!important;
+  position:relative!important;
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:9px 11px 9px 36px!important;
+  border:1px solid rgba(255,255,255,.075)!important;
+  border-left:3px solid color-mix(in srgb,var(--accent) 72%,white 6%)!important;
+  border-radius:12px!important;
+  background:rgba(0,0,0,.15)!important;
+  background-image:none!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+  color:var(--text)!important;
+  font-size:13px!important;
+  font-weight:820!important;
+  line-height:1.32!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .answer-options > li::before{
+  content:""!important;
+  position:absolute!important;
+  display:block!important;
+  left:13px!important;
+  top:50%!important;
+  width:10px!important;
+  height:10px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  transform:translateY(-50%)!important;
+  background:color-mix(in srgb,var(--accent) 24%,rgba(255,255,255,.18))!important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 20%,rgba(255,255,255,.08))!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .answer-options > li.correct{
+  border-color:color-mix(in srgb,var(--accent) 46%,rgba(255,255,255,.10))!important;
+  border-left-color:color-mix(in srgb,var(--accent) 86%,rgba(255,255,255,.10))!important;
+  background:color-mix(in srgb,var(--accent) 10%,rgba(0,0,0,.15))!important;
+}
+html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+.profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .answer-options > li.correct::before{
+  content:"✓"!important;
+  display:grid!important;
+  place-items:center!important;
+  left:10px!important;
+  top:50%!important;
+  width:18px!important;
+  height:18px!important;
+  border-radius:50%!important;
+  transform:translateY(-50%)!important;
+  color:#07101f!important;
+  background:var(--accent)!important;
+  font-size:12px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  box-shadow:none!important;
+}
+@media(max-width:620px){
+  html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot >
+  .profile-material-test-section[data-profile-academy-ref^="usaf-test-"] > details.section-toggle > summary{
+    padding:12px 52px 12px 13px!important;
+    font-size:14px!important;
+  }
+  html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+  .profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .qa-list{
+    padding:10px!important;
+  }
+  html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+  .profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .qa-card{
+    padding:12px!important;
+  }
+  html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+  .profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .question-text{
+    font-size:14px!important;
+  }
+  html body.usaf-info-clean #profileRankMaterials #profileMaterialsSourceRoot
+  .profile-material-test-section[data-profile-academy-ref^="usaf-test-"] .answer-options > li{
+    min-height:38px!important;
+    padding:8px 10px 8px 36px!important;
+    font-size:13px!important;
+  }
+}
+/* end v55 pinned USAF tests sync */

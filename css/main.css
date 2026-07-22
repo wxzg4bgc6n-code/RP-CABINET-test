@@ -1,0 +1,8 @@
+/* Единая точка подключения оформления RP Cabinet. */
+@import url("./core.css");
+@import url("./animations.css");
+@import url("./features/tests.css");
+@import url("./features/surfaces.css");
+@import url("./features/usaf-speech.css");
+@import url("./features/pinned-materials.css");
+@import url("./features/sidebar-promo.css");

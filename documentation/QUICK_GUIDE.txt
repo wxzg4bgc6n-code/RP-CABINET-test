@@ -1,0 +1,20 @@
+RP CABINET v67 — БЫСТРАЯ ПАМЯТКА
+
+ТЕКСТЫ ACADEMY: data/academy/content.js
+ТЕСТЫ ACADEMY: data/academy/tests.js
+ТЕКСТЫ USAF: data/usaf/content.js
+ТЕСТЫ USAF: data/usaf/tests.js
+РАНГИ: data/levels.js
+ПОВЫШЕНИЯ: data/progress/
+СПИСОК ОТДЕЛОВ: data/sections.js
+СТИЛИ ФУНКЦИЙ: css/features/
+АНИМАЦИИ: css/animations.css
+ЛОГИКА ФУНКЦИЙ: js/features/
+НОМЕР ВЕРСИИ: js/core/version.js
+КЛЮЧИ ПРОФИЛЯ: js/core/storage-config.js — БЕЗ ПРИЧИНЫ НЕ МЕНЯТЬ
+
+index.html не использовать как склад текстов, стилей, тестов или изображений.
+Новый data-файл подключать до js/app.js.
+Новый js/features-файл подключать после js/app.js.
+Изображения хранить файлами в assets/images, не base64.
+После изменения обязательно проверять обычную вкладку и закреплённую копию.
