@@ -1,5 +1,5 @@
-/* Основное приложение v67. Данные и функции расширений подключаются до этого файла. */
-let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},account:{createdAt:Date.now(),initialName:''}};
+/* Основное приложение v68. Данные и функции расширений подключаются до этого файла. */
+let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},syncFieldUpdatedAt:{},account:{createdAt:Date.now(),initialName:''}};
 let displayedProgress=0;
 let progressAnimationFrame=null;
 const $=s=>document.querySelector(s);
@@ -119,11 +119,12 @@ function save(){
   if(normalized && normalized.ready) S=normalized;
   const passiveLoad = !!(window.__cloudApplyingRemote || window.__profileHydrating || window.__cloudAttaching || window.__cloudInternalWrite);
   if(!passiveLoad){
-    S.updatedAt=Date.now();
-
-
+    const now=Date.now();
+    touchChangedProfileSyncGroups(S,now);
+    S.updatedAt=Math.max(now,...Object.values(S.syncFieldUpdatedAt||{}).map(value=>Number(value||0)).filter(Number.isFinite));
     window.__cloudLocalDirtyAt=S.updatedAt;
   }
+  rememberProfileSyncBaseline(S);
   const data=JSON.stringify(S);
   try{
     if(S.ready){
@@ -205,6 +206,7 @@ function normalizeProfileData(d){
   if(!merged.account.createdAt || !Number.isFinite(Number(merged.account.createdAt))) merged.account.createdAt=mergedCreatedAt || Date.now();
   if(!merged.account.initialName) merged.account.initialName=merged.name||'';
   if(!merged.updatedAt) merged.updatedAt=Date.now();
+  normalizeProfileSyncTimes(merged,d);
   if(!merged.cloud || typeof merged.cloud!=='object') merged.cloud={enabled:false,provider:'local',uid:'',lastSync:0};
   return merged;
 }
@@ -902,6 +904,7 @@ window.CloudSync={
   async attachProfile(){
     if(!this.user || !this.db) return;
     window.__cloudAttaching=true;
+    let needsCloudWrite=false;
     const ref=this.profileRef();
     setCloudStatus('wait','Подключаю профиль','Сначала читаю облачный профиль.','UID: '+this.user.uid.slice(0,8)+'…');
     try{
@@ -911,7 +914,7 @@ window.CloudSync={
       const cloud=cloudDoc ? normalizeProfileData(cloudDoc.state) : null;
       if(cloud && cloud.ready){
         const cloudUpdated=cloud.updatedAt || cloudDoc.state?.updatedAt || 0;
-        this.applyRemoteState(cloud, cloudUpdated, true);
+        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true);
       }else if(local && local.ready){
         rememberGoogleProfileInfo(this.user);
         S.cloud=Object.assign({},S.cloud||{}, {
@@ -929,6 +932,7 @@ window.CloudSync={
       setCloudStatus('error','Ошибка облака','Не удалось прочитать профиль из Firebase.',String(e.message||e).slice(0,120));
     }
     window.__cloudAttaching=false;
+    if(needsCloudWrite) this.scheduleSave();
     if(this.unsub) this.unsub();
     this.unsub=ref.onSnapshot(doc=>{
       if(!doc.exists || window.__cloudSaving || window.__cloudAttaching) return;
@@ -947,14 +951,9 @@ window.CloudSync={
       const remote=normalizeProfileData(data.state);
       if(!remote || !remote.ready) return;
       const lastSeen=Number(S.cloud?.lastCloudUpdatedAt || 0);
-      const localDirty=Number(window.__cloudLocalDirtyAt || 0);
-
-
-      if(localDirty){
-        return;
-      }
       if(remoteUpdated && remoteUpdated>lastSeen+50){
-        this.applyRemoteState(remote, remoteUpdated, true);
+        const keptLocal=this.applyRemoteState(remote, remoteUpdated, true);
+        if(keptLocal) this.scheduleSave();
       }
     }, err=>{
       console.warn('Cloud snapshot failed',err);
@@ -969,16 +968,13 @@ window.CloudSync={
     this.saveTimer=setTimeout(()=>this.saveNow(false),220);
   },
   applyRemoteState(remote, remoteUpdated, silent){
-    if(!remote || !remote.ready || !this.user) return;
-
-
-
-    const localDirty=Number(window.__cloudLocalDirtyAt || 0);
-    if(!window.__cloudAttaching && localDirty){
-      return;
-    }
+    if(!remote || !remote.ready || !this.user) return false;
+    const local=normalizeProfileData(S);
+    const incoming=normalizeProfileData(remote);
+    const resolution=mergeSyncedProfileStates(local,incoming);
+    const resolved=normalizeProfileData(resolution.state);
     window.__cloudApplyingRemote=true;
-    S=remote;
+    S=resolved;
     rememberGoogleProfileInfo(this.user);
     S.cloud=Object.assign({},S.cloud||{}, {
       enabled:true,
@@ -990,12 +986,13 @@ window.CloudSync={
       googleEmail:this.user.email || S.cloud?.googleEmail || ''
     });
     save();
-    window.__cloudLocalDirtyAt=0;
+    window.__cloudLocalDirtyAt=resolution.keptLocal ? Math.max(Date.now(),Number(S.updatedAt||0)) : 0;
     window.__cloudApplyingRemote=false;
     render();
     applyDashTab();
     renderCloudSyncStatus();
     if(!silent) showToast('Профиль обновлён','Данные подтянуты из облака');
+    return resolution.keptLocal;
   },
   async saveNow(force){
     if(!this.ready || !this.user || !S.ready || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
@@ -1021,10 +1018,13 @@ window.CloudSync={
           const remote=normalizeProfileData(serverData.state);
           if(remote && remote.ready){
             window.__cloudSaving=false;
-            window.__cloudLocalDirtyAt=0;
-            this.applyRemoteState(remote, serverUpdated, true);
-            showToast('Профиль обновлён','Старые данные с этой вкладки не перезаписали облако');
-            return;
+            const keptLocal=this.applyRemoteState(remote, serverUpdated, true);
+            if(!keptLocal){
+              window.__cloudLocalDirtyAt=0;
+              showToast('Профиль обновлён','Старые данные с этой вкладки не перезаписали облако');
+              return;
+            }
+            window.__cloudSaving=true;
           }
         }
       }catch(conflictCheckError){
@@ -1032,7 +1032,8 @@ window.CloudSync={
       }
 
       const now=Date.now();
-      S.updatedAt=now;
+      touchChangedProfileSyncGroups(S,now);
+      S.updatedAt=Math.max(now,...Object.values(S.syncFieldUpdatedAt||{}).map(value=>Number(value||0)).filter(Number.isFinite));
       rememberGoogleProfileInfo(this.user);
       S.cloud=Object.assign({},S.cloud||{}, {
         enabled:true,
@@ -1087,7 +1088,7 @@ $('#createProfile').onclick=()=>{
   const name=$('#firstName').value.trim();
   if(!name){$('#firstError').classList.add('show');return}
   $('#firstError').classList.remove('show');
-  S={ready:true,name,project:$('#firstProject').value,path:document.querySelector('[name="path"]:checked').value,style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},account:{createdAt:Date.now(),initialName:name}};
+  S={ready:true,name,project:$('#firstProject').value,path:document.querySelector('[name="path"]:checked').value,style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},syncFieldUpdatedAt:{},account:{createdAt:Date.now(),initialName:name}};
   save();
   render();
 };

@@ -1,9 +1,9 @@
 {
-  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v67_MODULAR",
+  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v68_MOBILE_SYNC",
   "sourceBytes": 6490540,
-  "indexBytes": 21037,
-  "cssFiles": 8,
-  "scriptFiles": 21,
+  "indexBytes": 21150,
+  "cssFiles": 9,
+  "scriptFiles": 23,
   "templates": [
     "academyInfoTemplate",
     "genericDepartmentInfoTemplate",
@@ -13,5 +13,8 @@
     "usafTestsTemplateV20"
   ],
   "images": 23,
-  "imageBytes": 4250049
+  "imageBytes": 4250049,
+  "mobileLayout": "css/responsive/mobile.css",
+  "mobileBehavior": "js/features/mobile-navigation.js",
+  "syncConflictResolver": "js/core/sync-merge.js"
 }
