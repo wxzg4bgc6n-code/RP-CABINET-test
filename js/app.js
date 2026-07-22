@@ -1,4 +1,4 @@
-/* Основное приложение v68. Данные и функции расширений подключаются до этого файла. */
+/* Основное приложение v69. Данные и функции расширений подключаются до этого файла. */
 let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},syncFieldUpdatedAt:{},account:{createdAt:Date.now(),initialName:''}};
 let displayedProgress=0;
 let progressAnimationFrame=null;
@@ -119,6 +119,7 @@ function save(){
   if(normalized && normalized.ready) S=normalized;
   const passiveLoad = !!(window.__cloudApplyingRemote || window.__profileHydrating || window.__cloudAttaching || window.__cloudInternalWrite);
   if(!passiveLoad){
+    queuePendingProfileSyncDelta(window.__profileSyncBaselineState,S,false);
     const now=Date.now();
     touchChangedProfileSyncGroups(S,now);
     S.updatedAt=Math.max(now,...Object.values(S.syncFieldUpdatedAt||{}).map(value=>Number(value||0)).filter(Number.isFinite));
@@ -817,8 +818,8 @@ function renderCloudSyncStatus(){
     setCloudStatus('wait','Подготовка Firebase','Проверяю подключение к облачной синхронизации.','Если статус не меняется, проверь интернет или настройки Firebase.');
   }
 }
-function cloudSafeState(){
-  const copy=JSON.parse(JSON.stringify(S));
+function cloudSafeState(sourceState){
+  const copy=JSON.parse(JSON.stringify(sourceState||S));
   copy.ready=!!copy.ready;
   copy.cloud=Object.assign({},copy.cloud||{}, {enabled:true, provider:'google', uid:window.CloudSync?.user?.uid||copy.cloud?.uid||'', lastSync:Date.now()});
   return copy;
@@ -838,6 +839,7 @@ window.CloudSync={
   user:null,
   unsub:null,
   saveTimer:null,
+  lastCloudRevision:0,
   async init(){
     try{
       if(!window.firebase) throw new Error('Firebase SDK не загрузился');
@@ -912,9 +914,10 @@ window.CloudSync={
       const local=normalizeProfileData(S);
       const cloudDoc=snap.exists ? (snap.data()||{}) : null;
       const cloud=cloudDoc ? normalizeProfileData(cloudDoc.state) : null;
+      this.lastCloudRevision=Number(cloudDoc?.syncRevision||0);
       if(cloud && cloud.ready){
         const cloudUpdated=cloud.updatedAt || cloudDoc.state?.updatedAt || 0;
-        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true);
+        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision);
       }else if(local && local.ready){
         rememberGoogleProfileInfo(this.user);
         S.cloud=Object.assign({},S.cloud||{}, {
@@ -924,6 +927,7 @@ window.CloudSync={
           googlePhotoURL:this.user.photoURL||S.cloud?.googlePhotoURL||'',
           googleEmail:this.user.email||S.cloud?.googleEmail||''
         });
+        queuePendingProfileSyncDelta({},S,true);
         await this.saveNow(true);
         showToast('Облако подключено','Локальный профиль перенесён в Firebase');
       }
@@ -938,8 +942,10 @@ window.CloudSync={
       if(!doc.exists || window.__cloudSaving || window.__cloudAttaching) return;
       const data=doc.data()||{};
       const remoteUpdated=data.state?.updatedAt || 0;
+      const remoteRevision=Number(data.syncRevision||0);
       if(!remoteUpdated) return;
       if(data.sourceDevice===getCloudDeviceId()){
+        this.lastCloudRevision=Math.max(this.lastCloudRevision,remoteRevision);
         if(remoteUpdated){
           if(!S.cloud || typeof S.cloud!=='object') S.cloud={};
           S.cloud.lastCloudUpdatedAt=remoteUpdated;
@@ -950,11 +956,8 @@ window.CloudSync={
       }
       const remote=normalizeProfileData(data.state);
       if(!remote || !remote.ready) return;
-      const lastSeen=Number(S.cloud?.lastCloudUpdatedAt || 0);
-      if(remoteUpdated && remoteUpdated>lastSeen+50){
-        const keptLocal=this.applyRemoteState(remote, remoteUpdated, true);
-        if(keptLocal) this.scheduleSave();
-      }
+      const keptLocal=this.applyRemoteState(remote, remoteUpdated, true, remoteRevision);
+      if(keptLocal) this.scheduleSave();
     }, err=>{
       console.warn('Cloud snapshot failed',err);
       setCloudStatus('error','Ошибка синхронизации','Не удалось слушать изменения Firebase.',String(err.message||err).slice(0,120));
@@ -967,12 +970,11 @@ window.CloudSync={
     clearTimeout(this.saveTimer);
     this.saveTimer=setTimeout(()=>this.saveNow(false),220);
   },
-  applyRemoteState(remote, remoteUpdated, silent){
+  applyRemoteState(remote, remoteUpdated, silent, remoteRevision=0){
     if(!remote || !remote.ready || !this.user) return false;
-    const local=normalizeProfileData(S);
     const incoming=normalizeProfileData(remote);
-    const resolution=mergeSyncedProfileStates(local,incoming);
-    const resolved=normalizeProfileData(resolution.state);
+    const pending=readPendingProfileSyncPatch();
+    const resolved=normalizeProfileData(applyProfileSyncPatch(incoming,pending));
     window.__cloudApplyingRemote=true;
     S=resolved;
     rememberGoogleProfileInfo(this.user);
@@ -985,77 +987,78 @@ window.CloudSync={
       googlePhotoURL:S.cloud?.googlePhotoURL || this.user.photoURL || '',
       googleEmail:this.user.email || S.cloud?.googleEmail || ''
     });
+    this.lastCloudRevision=Math.max(this.lastCloudRevision,Number(remoteRevision||0));
     save();
-    window.__cloudLocalDirtyAt=resolution.keptLocal ? Math.max(Date.now(),Number(S.updatedAt||0)) : 0;
+    const keptLocal=profileSyncPatchHasChanges(pending);
+    window.__cloudLocalDirtyAt=keptLocal ? Math.max(Date.now(),Number(S.updatedAt||0)) : 0;
     window.__cloudApplyingRemote=false;
     render();
     applyDashTab();
     renderCloudSyncStatus();
     if(!silent) showToast('Профиль обновлён','Данные подтянуты из облака');
-    return resolution.keptLocal;
+    return keptLocal;
   },
   async saveNow(force){
     if(!this.ready || !this.user || !S.ready || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
-    if(!force && !window.__cloudLocalDirtyAt) return;
+    let pending=readPendingProfileSyncPatch();
+    if(force && !profileSyncPatchHasChanges(pending)) pending=queuePendingProfileSyncDelta({},S,true);
+    if(!profileSyncPatchHasChanges(pending)){
+      window.__cloudLocalDirtyAt=0;
+      return;
+    }
     try{
       window.__cloudSaving=true;
       const ref=this.profileRef();
-
-
-
-
-      try{
-        const serverSnap=await ref.get();
-        const serverData=serverSnap.exists ? (serverSnap.data()||{}) : null;
-        const serverUpdated=serverData ? Number(serverData.state?.updatedAt || 0) : 0;
-        const knownCloudUpdated=Number(S.cloud?.lastCloudUpdatedAt || 0);
-        const localDirty=Number(window.__cloudLocalDirtyAt || 0);
-        const serverDevice=serverData?.sourceDevice || '';
-        const currentDevice=getCloudDeviceId();
-        const serverIsNewerThanThisTab=serverUpdated && serverUpdated>knownCloudUpdated+50 && serverDevice!==currentDevice;
-        const localChangeIsOlder=!localDirty || (localDirty + 250 < serverUpdated);
-        if(serverIsNewerThanThisTab && localChangeIsOlder){
-          const remote=normalizeProfileData(serverData.state);
-          if(remote && remote.ready){
-            window.__cloudSaving=false;
-            const keptLocal=this.applyRemoteState(remote, serverUpdated, true);
-            if(!keptLocal){
-              window.__cloudLocalDirtyAt=0;
-              showToast('Профиль обновлён','Старые данные с этой вкладки не перезаписали облако');
-              return;
-            }
-            window.__cloudSaving=true;
-          }
-        }
-      }catch(conflictCheckError){
-        console.warn('Cloud conflict check skipped', conflictCheckError);
-      }
-
       const now=Date.now();
-      touchChangedProfileSyncGroups(S,now);
-      S.updatedAt=Math.max(now,...Object.values(S.syncFieldUpdatedAt||{}).map(value=>Number(value||0)).filter(Number.isFinite));
       rememberGoogleProfileInfo(this.user);
-      S.cloud=Object.assign({},S.cloud||{}, {
-        enabled:true,
-        provider:'google',
-        uid:this.user.uid,
-        lastSync:now,
-        lastCloudUpdatedAt:now,
-        googlePhotoURL:S.cloud?.googlePhotoURL||this.user.photoURL||'',
-        googleEmail:this.user.email||S.cloud?.googleEmail||''
+      const currentDevice=getCloudDeviceId();
+      const writeId=currentDevice+':'+now+':'+Math.random().toString(36).slice(2,9);
+      let committedState=null;
+      let committedRevision=0;
+      await this.db.runTransaction(async transaction=>{
+        const serverSnap=await transaction.get(ref);
+        const serverData=serverSnap.exists ? (serverSnap.data()||{}) : {};
+        const serverState=serverData.state&&typeof serverData.state==='object' ? serverData.state : {};
+        const mergedRaw=applyProfileSyncPatch(serverState,pending);
+        const normalized=normalizeProfileData(mergedRaw)||mergedRaw;
+        normalized.cloud=Object.assign({},normalized.cloud||{}, {
+          enabled:true,
+          provider:'google',
+          uid:this.user.uid,
+          lastSync:now,
+          lastCloudUpdatedAt:now,
+          googlePhotoURL:S.cloud?.googlePhotoURL||this.user.photoURL||'',
+          googleEmail:this.user.email||S.cloud?.googleEmail||''
+        });
+        normalized.updatedAt=now;
+        committedState=cloudSafeState(normalized);
+        committedRevision=Number(serverData.syncRevision||0)+1;
+        transaction.set(ref,{
+          profileId:CLOUD_PROFILE_ID,
+          ownerUid:this.user.uid,
+          updatedAt:now,
+          syncRevision:committedRevision,
+          writeId,
+          sourceDevice:currentDevice,
+          state:committedState,
+          devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
+        },{merge:true});
       });
-      const state=cloudSafeState();
-      await ref.set({
-        profileId:CLOUD_PROFILE_ID,
-        ownerUid:this.user.uid,
-        updatedAt:now,
-        sourceDevice:getCloudDeviceId(),
-        state,
-          devices:{[getCloudDeviceId()]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
-      },{merge:true});
-      window.__cloudLocalDirtyAt=0;
+      acknowledgePendingProfileSyncPatch(pending);
+      const remaining=readPendingProfileSyncPatch();
+      window.__cloudApplyingRemote=true;
+      S=normalizeProfileData(applyProfileSyncPatch(committedState,remaining));
+      rememberGoogleProfileInfo(this.user);
+      S.cloud=Object.assign({},S.cloud||{}, {lastSync:now,lastCloudUpdatedAt:now});
+      save();
+      window.__cloudApplyingRemote=false;
+      this.lastCloudRevision=Math.max(this.lastCloudRevision,committedRevision);
+      window.__cloudLocalDirtyAt=profileSyncPatchHasChanges(remaining)?Date.now():0;
       window.__cloudSaving=false;
+      render();
+      applyDashTab();
       renderCloudSyncStatus();
+      if(profileSyncPatchHasChanges(remaining)) this.scheduleSave();
       if(force) showToast('Синхронизировано','Профиль сохранён в облаке');
     }catch(e){
       window.__cloudSaving=false;
@@ -1539,3 +1542,7 @@ render();
 applyDashTab();
 renderCloudSyncStatus();
 CloudSync.init();
+window.addEventListener('online',()=>CloudSync.scheduleSave());
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible') CloudSync.scheduleSave();
+});

@@ -53,6 +53,7 @@ function rememberProfileSyncBaseline(state){
     baseline[group]=profileSyncGroupSnapshot(state,fields);
   });
   window.__profileSyncBaseline=baseline;
+  window.__profileSyncBaselineState=cloneProfileSyncValue(state)||{};
 }
 
 function touchChangedProfileSyncGroups(state,requestedTime){
@@ -109,4 +110,182 @@ function mergeSyncedProfileStates(localState,remoteState){
     keptLocalGroups,
     keptRemoteGroups
   };
+}
+
+/*
+ * v69: синхронизация действий вместо сравнения часов устройств.
+ *
+ * Телефон и ПК могут иметь разное системное время. Поэтому локальная правка
+ * сначала превращается в маленькую накопительную операцию: изменённый ник,
+ * конкретная галочка конкретной ступени и т.п. В облачной транзакции эта
+ * операция накладывается на самую свежую серверную версию профиля. Старый
+ * снимок телефона больше не заменяет весь прогресс целиком.
+ */
+const PROFILE_PENDING_PATCH_KEY='kiri:rp-cabinet:v69:pending-sync-patch';
+
+function emptyProfileSyncPatch(){
+  return {version:2,sequence:0,groups:{},progress:{contexts:{},levels:{}}};
+}
+
+function readPendingProfileSyncPatch(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(PROFILE_PENDING_PATCH_KEY)||'null');
+    if(!parsed || parsed.version!==2) return null;
+    parsed.groups=parsed.groups&&typeof parsed.groups==='object'?parsed.groups:{};
+    parsed.progress=parsed.progress&&typeof parsed.progress==='object'?parsed.progress:{};
+    parsed.progress.contexts=parsed.progress.contexts&&typeof parsed.progress.contexts==='object'?parsed.progress.contexts:{};
+    parsed.progress.levels=parsed.progress.levels&&typeof parsed.progress.levels==='object'?parsed.progress.levels:{};
+    return parsed;
+  }catch(e){return null;}
+}
+
+function writePendingProfileSyncPatch(patch){
+  try{
+    if(!patch){
+      localStorage.removeItem(PROFILE_PENDING_PATCH_KEY);
+      return;
+    }
+    localStorage.setItem(PROFILE_PENDING_PATCH_KEY,JSON.stringify(patch));
+  }catch(e){console.warn('Pending sync patch save failed',e);}
+}
+
+function profileSyncPatchHasChanges(patch){
+  if(!patch) return false;
+  if(Object.keys(patch.groups||{}).length) return true;
+  if(Object.keys(patch.progress?.levels||{}).length) return true;
+  return Object.values(patch.progress?.contexts||{}).some(tasks=>tasks&&Object.keys(tasks).length);
+}
+
+function normalizedProgressContexts(state){
+  const source=state?.progressByContext;
+  return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
+}
+
+function normalizedSelectedLevels(state){
+  const source=state?.selectedLevelBySection;
+  return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
+}
+
+function buildProfileSyncDelta(baselineState,currentState,forceFull=false){
+  const before=baselineState&&typeof baselineState==='object'?baselineState:{};
+  const after=currentState&&typeof currentState==='object'?currentState:{};
+  const patch=emptyProfileSyncPatch();
+  const scalarGroups={
+    name:['name'],
+    style:['style'],
+    context:['project','path','org','section','level','configured'],
+    pins:['pinnedDepartmentBlocks','pinnedAcademyBlocks'],
+    account:['account']
+  };
+
+  Object.entries(scalarGroups).forEach(([group,fields])=>{
+    if(forceFull || profileSyncGroupSnapshot(before,fields)!==profileSyncGroupSnapshot(after,fields)){
+      patch.groups[group]={};
+      fields.forEach(field=>{
+        patch.groups[group][field]=Object.prototype.hasOwnProperty.call(after,field)
+          ? cloneProfileSyncValue(after[field])
+          : null;
+      });
+    }
+  });
+
+  const beforeContexts=normalizedProgressContexts(before);
+  const afterContexts=normalizedProgressContexts(after);
+  const contextKeys=new Set([...Object.keys(beforeContexts),...Object.keys(afterContexts)]);
+  contextKeys.forEach(contextKey=>{
+    const oldTasks=beforeContexts[contextKey]&&typeof beforeContexts[contextKey]==='object'?beforeContexts[contextKey]:{};
+    const newTasks=afterContexts[contextKey]&&typeof afterContexts[contextKey]==='object'?afterContexts[contextKey]:{};
+    const taskKeys=new Set([...Object.keys(oldTasks),...Object.keys(newTasks)]);
+    taskKeys.forEach(task=>{
+      const oldValue=oldTasks[task]===true;
+      const newValue=newTasks[task]===true;
+      if(forceFull ? newValue : oldValue!==newValue){
+        if(!patch.progress.contexts[contextKey]) patch.progress.contexts[contextKey]={};
+        patch.progress.contexts[contextKey][task]=newValue;
+      }
+    });
+  });
+
+  const beforeLevels=normalizedSelectedLevels(before);
+  const afterLevels=normalizedSelectedLevels(after);
+  new Set([...Object.keys(beforeLevels),...Object.keys(afterLevels)]).forEach(key=>{
+    const oldValue=typeof beforeLevels[key]==='string'?beforeLevels[key]:'';
+    const newValue=typeof afterLevels[key]==='string'?afterLevels[key]:'';
+    if(forceFull ? !!newValue : oldValue!==newValue) patch.progress.levels[key]=newValue||null;
+  });
+  return patch;
+}
+
+function mergePendingProfileSyncPatches(previous,next){
+  const merged=previous?cloneProfileSyncValue(previous):emptyProfileSyncPatch();
+  const incoming=next||emptyProfileSyncPatch();
+  merged.version=2;
+  merged.sequence=Math.max(Number(merged.sequence||0),Number(incoming.sequence||0))+1;
+  merged.groups=Object.assign({},merged.groups||{},cloneProfileSyncValue(incoming.groups)||{});
+  merged.progress=merged.progress||{contexts:{},levels:{}};
+  merged.progress.contexts=merged.progress.contexts||{};
+  Object.entries(incoming.progress?.contexts||{}).forEach(([contextKey,tasks])=>{
+    merged.progress.contexts[contextKey]=Object.assign({},merged.progress.contexts[contextKey]||{},cloneProfileSyncValue(tasks)||{});
+  });
+  merged.progress.levels=Object.assign({},merged.progress.levels||{},cloneProfileSyncValue(incoming.progress?.levels)||{});
+  merged.changedAt=Date.now();
+  return merged;
+}
+
+function queuePendingProfileSyncDelta(baselineState,currentState,forceFull=false){
+  const delta=buildProfileSyncDelta(baselineState,currentState,forceFull);
+  if(!profileSyncPatchHasChanges(delta)) return readPendingProfileSyncPatch();
+  const merged=mergePendingProfileSyncPatches(readPendingProfileSyncPatch(),delta);
+  writePendingProfileSyncPatch(merged);
+  return merged;
+}
+
+function applyProfileSyncPatch(baseState,patch){
+  const result=cloneProfileSyncValue(baseState)||{};
+  if(!patch) return result;
+  Object.values(patch.groups||{}).forEach(values=>{
+    Object.entries(values||{}).forEach(([field,value])=>{
+      if(value===null || value===undefined) delete result[field];
+      else result[field]=cloneProfileSyncValue(value);
+    });
+  });
+
+  if(!result.progressByContext || typeof result.progressByContext!=='object' || Array.isArray(result.progressByContext)) result.progressByContext={};
+  Object.entries(patch.progress?.contexts||{}).forEach(([contextKey,tasks])=>{
+    const target=result.progressByContext[contextKey]&&typeof result.progressByContext[contextKey]==='object'
+      ? Object.assign({},result.progressByContext[contextKey])
+      : {};
+    Object.entries(tasks||{}).forEach(([task,value])=>{
+      if(value===true) target[task]=true;
+      else delete target[task];
+    });
+    result.progressByContext[contextKey]=target;
+  });
+
+  if(!result.selectedLevelBySection || typeof result.selectedLevelBySection!=='object' || Array.isArray(result.selectedLevelBySection)) result.selectedLevelBySection={};
+  Object.entries(patch.progress?.levels||{}).forEach(([key,value])=>{
+    if(typeof value==='string'&&value) result.selectedLevelBySection[key]=value;
+    else delete result.selectedLevelBySection[key];
+  });
+
+  const currentKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(result):'';
+  if(currentKey&&Object.prototype.hasOwnProperty.call(result.progressByContext,currentKey)){
+    result.tasks=cloneProfileSyncValue(result.progressByContext[currentKey])||{};
+  }
+  const now=Date.now();
+  if(!result.syncFieldUpdatedAt || typeof result.syncFieldUpdatedAt!=='object') result.syncFieldUpdatedAt={};
+  Object.keys(patch.groups||{}).forEach(group=>{result.syncFieldUpdatedAt[group]=now;});
+  if(Object.keys(patch.progress?.contexts||{}).length||Object.keys(patch.progress?.levels||{}).length) result.syncFieldUpdatedAt.progress=now;
+  result.updatedAt=now;
+  return result;
+}
+
+function acknowledgePendingProfileSyncPatch(sentPatch){
+  const current=readPendingProfileSyncPatch();
+  if(!current) return true;
+  if(Number(current.sequence||0)===Number(sentPatch?.sequence||0)){
+    writePendingProfileSyncPatch(null);
+    return true;
+  }
+  return false;
 }

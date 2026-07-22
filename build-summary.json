@@ -1,5 +1,5 @@
 {
-  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v68_MOBILE_SYNC",
+  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v69_MOBILE_SYNC_FIX",
   "sourceBytes": 6490540,
   "indexBytes": 21150,
   "cssFiles": 9,
@@ -16,5 +16,7 @@
   "imageBytes": 4250049,
   "mobileLayout": "css/responsive/mobile.css",
   "mobileBehavior": "js/features/mobile-navigation.js",
-  "syncConflictResolver": "js/core/sync-merge.js"
+  "syncConflictResolver": "js/core/sync-merge.js",
+  "syncStrategy": "transactional cloud revision with per-field and per-task pending patches",
+  "version": "69"
 }
