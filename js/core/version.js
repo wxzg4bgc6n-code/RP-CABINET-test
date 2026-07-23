@@ -1,5 +1,5 @@
-const TEST_VERSION="75";
-const TEST_VERSION_LABEL="Queued sync + stable checks";
+const TEST_VERSION="76";
+const TEST_VERSION_LABEL="Isolated state sync";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

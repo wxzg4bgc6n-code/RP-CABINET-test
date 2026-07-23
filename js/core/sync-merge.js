@@ -7,7 +7,7 @@ const PROFILE_SYNC_GROUPS=Object.freeze({
   name:['name'],
   style:['style'],
   context:['project','path','org','section','level','configured'],
-  progress:['tasks','progressByContext','selectedLevelBySection','proofsByContext'],
+  progress:['progressByContext','selectedLevelBySection','proofsByContext'],
   pins:['pinnedDepartmentBlocks','pinnedAcademyBlocks'],
   account:['account'],
   reports:['reportsByContext']
@@ -122,7 +122,7 @@ function mergeSyncedProfileStates(localState,remoteState){
  * операция накладывается на самую свежую серверную версию профиля. Старый
  * снимок телефона больше не заменяет весь прогресс целиком.
  */
-const PROFILE_PENDING_PATCH_KEY='kiri:rp-cabinet:v69:pending-sync-patch';
+const PROFILE_PENDING_PATCH_KEY='kiri:rp-cabinet:v76:pending-sync-patch';
 const PROFILE_TASK_UI_LOCK_TTL=30000;
 
 function emptyProfileSyncPatch(){

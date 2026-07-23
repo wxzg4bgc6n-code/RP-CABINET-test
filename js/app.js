@@ -1,4 +1,4 @@
-/* Основное приложение v75. Данные и функции расширений подключаются до этого файла. */
+/* Основное приложение v76. Прогресс хранится только по контексту; облако изолировано от старых сборок. */
 window.__profileBootComplete=false;
 document.body.classList.add('profile-booting');
 let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:0,initialName:''}};
@@ -6,7 +6,7 @@ let displayedProgress=0;
 let progressAnimationFrame=null;
 let progressAnimationTarget=null;
 const $=s=>document.querySelector(s);
-const PROFILE_CONTEXT_CHECKPOINT_KEY='kiri:rp-cabinet:v73:context-checkpoint';
+const PROFILE_CONTEXT_CHECKPOINT_KEY='kiri:rp-cabinet:v76:context-checkpoint';
 
 function profileContextValues(state){
   return {
@@ -372,6 +372,9 @@ function profileStorageScore(data,key){
 function load(){
   const primaryKeys=[KEY, VERSION_KEY, PROFILE_BACKUP_KEY];
   const legacyKeys=[
+    'rp_panel_account_profile_STABLE',
+    'rp_panel_account_profile_BACKUP_STABLE',
+    'rp_panel_v156_fast_boot_safe_cache',
     'rp_panel_v154_cleanup_stage7_final_check',
     'rp_panel_v153_cleanup_stage6_optimize',
     'rp_panel_v152_cleanup_stage5_dead_code',
@@ -649,10 +652,16 @@ function renderProgress(){
        * только текущего input иногда возвращало предыдущий пункт к старому
        * состоянию.
        */
+      const contextKey=progressContextKeyFor(S);
+      const contextTasks=contextKey
+        ? Object.assign({},ensureProgressStore(S)[contextKey]||{})
+        : {};
       document.querySelectorAll('#tasks input[data-task]').forEach(visibleInput=>{
-        if(visibleInput.checked) S.tasks[visibleInput.dataset.task]=true;
-        else delete S.tasks[visibleInput.dataset.task];
+        if(visibleInput.checked) contextTasks[visibleInput.dataset.task]=true;
+        else delete contextTasks[visibleInput.dataset.task];
       });
+      if(contextKey) ensureProgressStore(S)[contextKey]=cleanTaskState(contextTasks);
+      S.tasks=cleanTaskState(contextTasks); // только зеркало текущего контекста для рендера
       queueProfileTaskSyncMutation(S,input.dataset.task,input.checked);
       save();
       showToast('Прогресс обновлён',input.checked?'Задача засчитана':'Отметка снята');
@@ -966,7 +975,8 @@ const FIREBASE_CONFIG={
   appId:"1:686693815982:web:94fd42fdab2ddab6c53f3f",
   measurementId:"G-250D37LHFT"
 };
-const CLOUD_PROFILE_ID='default';
+const CLOUD_PROFILE_ID='default_v76';
+const LEGACY_CLOUD_PROFILE_ID='default';
 const CLOUD_DEVICE_KEY='rp_cabinet_cloud_device_id';
 function getCloudDeviceId(){
   try{
@@ -985,6 +995,7 @@ function deviceLabel(){
   return 'Браузер';
 }
 function cloudPath(uid){return `users/${uid}/profiles/${CLOUD_PROFILE_ID}`;}
+function legacyCloudPath(uid){return `users/${uid}/profiles/${LEGACY_CLOUD_PROFILE_ID}`;}
 function setCloudStatus(mode,title,desc,meta){
   const el=$('#cloudSyncStatus');
   if(el){
@@ -1138,10 +1149,19 @@ window.CloudSync={
     try{
       const snap=await ref.get();
       const local=normalizeProfileData(S);
-      const cloudDoc=snap.exists ? (snap.data()||{}) : null;
+      let cloudDoc=snap.exists ? (snap.data()||{}) : null;
+      let migratedFromLegacyCloud=false;
+      if(!cloudDoc){
+        const legacySnap=await this.db.doc(legacyCloudPath(this.user.uid)).get();
+        if(legacySnap.exists){
+          cloudDoc=legacySnap.data()||{};
+          migratedFromLegacyCloud=true;
+        }
+      }
       const rawCloudState=selectCloudProfileState(cloudDoc);
       const cloud=isRecoverableProfileState(rawCloudState) ? normalizeProfileData(rawCloudState) : null;
-      this.lastCloudRevision=Number(cloudDoc?.syncRevision||0);
+      this.lastCloudRevision=snap.exists ? Number(cloudDoc?.syncRevision||0) : 0;
+      if(migratedFromLegacyCloud) needsCloudWrite=true;
       if(cloud && cloud.ready && local && local.ready && cloudProfileCompleteness(local)>cloudProfileCompleteness(cloud)){
         S=local;
         rememberGoogleProfileInfo(this.user);
@@ -1149,7 +1169,7 @@ window.CloudSync={
         needsCloudWrite=true;
       }else if(cloud && cloud.ready){
         const cloudUpdated=cloud.updatedAt || cloudDoc.state?.updatedAt || 0;
-        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision);
+        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision) || migratedFromLegacyCloud;
       }else if(local && local.ready){
         rememberGoogleProfileInfo(this.user);
         S.cloud=Object.assign({},S.cloud||{}, {
@@ -1308,7 +1328,7 @@ window.CloudSync={
           sourceDevice:currentDevice,
           state:committedState,
           recoveryState:committedState,
-          clientVersion:75,
+          clientVersion:76,
           devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
         },{merge:true});
       });
