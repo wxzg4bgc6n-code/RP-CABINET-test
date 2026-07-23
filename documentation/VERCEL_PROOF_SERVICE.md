@@ -9,7 +9,7 @@
 
 Cloudflare не используется.
 
-## Рабочее подключение v73
+## Рабочее подключение v75
 
 - проект Vercel: `rp-cabinet-proof-service`;
 - API: `https://rp-cabinet-proof-service.vercel.app`;
@@ -19,7 +19,7 @@ Cloudflare не используется.
 
 ## Первый запуск
 
-1. Загрузить содержимое папки v73 в GitHub.
+1. Загрузить содержимое папки v75 в GitHub.
 2. Серверную папку `proof-service` загрузить в отдельный проект Vercel через Drop либо подключить Git.
 3. При подключении всего репозитория в Root Directory выбрать `proof-service`.
 4. Создать Public Blob Store и подключить к проекту.

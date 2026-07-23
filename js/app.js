@@ -1,9 +1,10 @@
-/* Основное приложение v73. Данные и функции расширений подключаются до этого файла. */
+/* Основное приложение v75. Данные и функции расширений подключаются до этого файла. */
 window.__profileBootComplete=false;
 document.body.classList.add('profile-booting');
 let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:0,initialName:''}};
 let displayedProgress=0;
 let progressAnimationFrame=null;
+let progressAnimationTarget=null;
 const $=s=>document.querySelector(s);
 const PROFILE_CONTEXT_CHECKPOINT_KEY='kiri:rp-cabinet:v73:context-checkpoint';
 
@@ -28,6 +29,7 @@ function readProfileContextCheckpoint(){
   }catch(e){return null;}
 }
 function rememberProfileContextCheckpoint(state){
+  if(!hasCompleteProfileContext(state)) return false;
   try{
     localStorage.setItem(PROFILE_CONTEXT_CHECKPOINT_KEY,JSON.stringify({
       version:1,
@@ -35,13 +37,15 @@ function rememberProfileContextCheckpoint(state){
       updatedAt:Date.now(),
       context:profileContextValues(state)
     }));
-  }catch(e){console.warn('Profile context checkpoint failed',e);}
+    return true;
+  }catch(e){
+    console.warn('Profile context checkpoint failed',e);
+    return false;
+  }
 }
 function recoverProfileContextState(state,fallbackState){
   const result=Object.assign({},state||{});
   if(hasCompleteProfileContext(result)) return {state:result,recovered:false};
-  const isBlank=!result.org && !result.section && !result.level && result.configured!==true;
-  if(!isBlank) return {state:result,recovered:false};
   const checkpoint=readProfileContextCheckpoint();
   const candidates=[
     fallbackState,
@@ -131,6 +135,9 @@ function changeProgressContext(mutator,restoreSavedLevel=false){
   if(restoreSavedLevel) restoreSelectedLevelForState(S);
   else persistSelectedLevelForState(S);
   restoreProgressForState(S);
+  if(progressAnimationFrame) cancelAnimationFrame(progressAnimationFrame);
+  progressAnimationFrame=null;
+  progressAnimationTarget=null;
   displayedProgress=0;
 }
 
@@ -388,16 +395,25 @@ function load(){
   function bestFrom(keys){
     let best=null;
     let bestKey='';
+    let bestContextRank=-1;
     let bestUpdated=-1;
     let bestScore=-1;
     for(const key of keys){
       const data=safeReadProfileKey(key);
       if(!data || !data.ready) continue;
+      const contextRank=hasCompleteProfileContext(data)
+        ? 2
+        : (data.org || data.section || data.level ? 1 : 0);
       const updated=profileTimestampMs(data.updatedAt)||0;
       const score=profileStorageScore(data,key);
-      if(updated>bestUpdated || (updated===bestUpdated && score>bestScore)){
+      if(
+        contextRank>bestContextRank
+        || (contextRank===bestContextRank && updated>bestUpdated)
+        || (contextRank===bestContextRank && updated===bestUpdated && score>bestScore)
+      ){
         best=data;
         bestKey=key;
+        bestContextRank=contextRank;
         bestUpdated=updated;
         bestScore=score;
       }
@@ -546,27 +562,43 @@ function renderSetup(){
 function animateProgressTo(target){
   const ring=$('#ring'), percentEl=$('#percent');
   if(!ring || !percentEl) return;
-  const from=Number(displayedProgress)||0;
-  const to=Number(target)||0;
-  if(progressAnimationFrame) cancelAnimationFrame(progressAnimationFrame);
+  const to=Math.max(0,Math.min(100,Number(target)||0));
+  if(progressAnimationFrame && progressAnimationTarget===to) return;
+  const from=Math.max(0,Math.min(100,Number(displayedProgress)||0));
+  if(progressAnimationFrame){
+    cancelAnimationFrame(progressAnimationFrame);
+    progressAnimationFrame=null;
+  }
+  if(Math.abs(to-from)<0.01){
+    displayedProgress=to;
+    progressAnimationTarget=null;
+    ring.style.setProperty('--p',to);
+    percentEl.textContent=Math.round(to)+'%';
+    return;
+  }
+  progressAnimationTarget=to;
   const start=performance.now();
   const duration=700;
   ring.classList.add('progress-pulse');
   function frame(now){
     const t=Math.min(1,(now-start)/duration);
     const eased=1-Math.pow(1-t,3);
-    const val=Math.round(from+(to-from)*eased);
+    const current=from+(to-from)*eased;
+    const val=Math.round(current);
+    displayedProgress=current;
     ring.style.setProperty('--p',val);
     percentEl.textContent=val+'%';
     if(t<1) progressAnimationFrame=requestAnimationFrame(frame);
     else{
       displayedProgress=to;
+      progressAnimationFrame=null;
+      progressAnimationTarget=null;
       ring.style.setProperty('--p',to);
       percentEl.textContent=to+'%';
       setTimeout(()=>ring.classList.remove('progress-pulse'),220);
     }
   }
-  requestAnimationFrame(frame);
+  progressAnimationFrame=requestAnimationFrame(frame);
 }
 
 function isAcademyFinalCompleted(){
@@ -611,8 +643,16 @@ function renderProgress(){
   </label>`).join('');
   document.querySelectorAll('[data-task]').forEach(input=>{
     input.onchange=()=>{
-      if(input.checked) S.tasks[input.dataset.task]=true;
-      else delete S.tasks[input.dataset.task];
+      /*
+       * Сначала снимаем единый снимок всех видимых галок. Firebase может
+       * закончить предыдущую запись между двумя кликами, поэтому сохранение
+       * только текущего input иногда возвращало предыдущий пункт к старому
+       * состоянию.
+       */
+      document.querySelectorAll('#tasks input[data-task]').forEach(visibleInput=>{
+        if(visibleInput.checked) S.tasks[visibleInput.dataset.task]=true;
+        else delete S.tasks[visibleInput.dataset.task];
+      });
       queueProfileTaskSyncMutation(S,input.dataset.task,input.checked);
       save();
       showToast('Прогресс обновлён',input.checked?'Задача засчитана':'Отметка снята');
@@ -1024,6 +1064,7 @@ window.CloudSync={
   user:null,
   unsub:null,
   saveTimer:null,
+  saveAgainRequested:false,
   lastCloudRevision:0,
   async init(){
     try{
@@ -1163,6 +1204,10 @@ window.CloudSync={
   },
   scheduleSave(){
     if(!this.ready || !this.user || !window.__profileBootComplete || !isUsableProfileState(S) || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
+    if(window.__cloudSaving){
+      this.saveAgainRequested=true;
+      return;
+    }
     clearTimeout(this.saveTimer);
     this.saveTimer=setTimeout(()=>this.saveNow(false),220);
   },
@@ -1211,6 +1256,10 @@ window.CloudSync={
   },
   async saveNow(force){
     if(!this.ready || !this.user || !window.__profileBootComplete || !isUsableProfileState(S) || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
+    if(window.__cloudSaving){
+      this.saveAgainRequested=true;
+      return;
+    }
     let pending=readPendingProfileSyncPatch();
     if(force && !profileSyncPatchHasChanges(pending)) pending=queuePendingProfileSyncDelta({},S,true);
     if(!profileSyncPatchHasChanges(pending)){
@@ -1218,6 +1267,7 @@ window.CloudSync={
       return;
     }
     try{
+      this.saveAgainRequested=false;
       window.__cloudSaving=true;
       const ref=this.profileRef();
       const now=Date.now();
@@ -1258,7 +1308,7 @@ window.CloudSync={
           sourceDevice:currentDevice,
           state:committedState,
           recoveryState:committedState,
-          clientVersion:73,
+          clientVersion:75,
           devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
         },{merge:true});
       });
@@ -1277,12 +1327,18 @@ window.CloudSync={
       render();
       applyDashTab();
       renderCloudSyncStatus();
-      if(profileSyncPatchHasChanges(remaining)) this.scheduleSave();
+      const needsAnotherSave=this.saveAgainRequested || profileSyncPatchHasChanges(remaining);
+      this.saveAgainRequested=false;
+      if(needsAnotherSave) this.scheduleSave();
       if(force) showToast('Синхронизировано','Профиль сохранён в облаке');
     }catch(e){
       window.__cloudSaving=false;
       console.warn('Cloud save failed',e);
       setCloudStatus('error','Ошибка синхронизации','Не удалось записать данные в Firestore. Проверь правила доступа.',String(e.message||e).slice(0,120));
+      if(this.saveAgainRequested || profileSyncPatchHasChanges(readPendingProfileSyncPatch())){
+        this.saveAgainRequested=false;
+        this.scheduleSave();
+      }
     }
   }
 };
@@ -1762,6 +1818,7 @@ load();
 render();
 applyDashTab();
 renderCloudSyncStatus();
+if(isUsableProfileState(S) && hasCompleteProfileContext(S)) finishProfileBoot();
 CloudSync.init();
 window.addEventListener('online',()=>CloudSync.scheduleSave());
 document.addEventListener('visibilitychange',()=>{

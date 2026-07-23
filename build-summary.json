@@ -1,3 +1,29 @@
-# Сервисы
-
-Сюда добавляются отдельные интеграции: Firebase, Cloudflare R2, публичные отчёты и API. Секретные ключи нельзя помещать в клиентский JavaScript. Текущая совместимая логика Firebase пока находится в `../app.js` и переносится сюда только вместе с отдельной проверкой миграции профилей.
+{
+  "output": "RP_CABINET_v75_QUEUED_SYNC_STABLE_CHECKS",
+  "sourceBytes": 5350982,
+  "indexBytes": 21676,
+  "cssFiles": 9,
+  "scriptFiles": 28,
+  "templates": [
+    "academyInfoTemplate",
+    "genericDepartmentInfoTemplate",
+    "academyTestsTemplate",
+    "usafTestsTemplate",
+    "usafInfoTemplateV20",
+    "usafTestsTemplateV20"
+  ],
+  "images": 23,
+  "imageBytes": 4250049,
+  "mobileLayout": "css/responsive/mobile.css",
+  "mobileBehavior": "js/features/mobile-navigation.js",
+  "syncConflictResolver": "js/core/sync-merge.js",
+  "syncStrategy": "strictly serialized transactional writes with per-field and per-task pending patches",
+  "version": "75",
+  "progressSources": ["Academy", "MA", "USAF", "MP", "DF", "SD", "ED"],
+  "proofRequiredOnlyFor": ["Участие в СО", "Участие в ГМП"],
+  "profileRecovery": "complete local profile wins over newer incomplete copies + protected context checkpoint + Firestore recoveryState + immediate complete-profile boot",
+  "progressAnimation": "same-target rerenders keep the active animation; changed targets continue from the visible value",
+  "progressChecks": "every click captures all visible checkboxes before enqueueing the changed task",
+  "maxFilesPerTask": 10,
+  "uploadAuth": "Firebase Identity Toolkit verification without Firebase Admin service credentials"
+}

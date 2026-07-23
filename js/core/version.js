@@ -1,5 +1,5 @@
-const TEST_VERSION="73";
-const TEST_VERSION_LABEL="Context recovery + 10 files";
+const TEST_VERSION="75";
+const TEST_VERSION_LABEL="Queued sync + stable checks";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
