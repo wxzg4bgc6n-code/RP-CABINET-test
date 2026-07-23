@@ -1,20 +1,25 @@
-RP CABINET v70 — КРАТКАЯ ПАМЯТКА
+RP CABINET v71 — КРАТКАЯ ПАМЯТКА
 
-1. На GitHub загружать всё содержимое папки v70, включая report.html, css, data, js, documentation и proof-service.
+1. На GitHub загружать всё содержимое папки v71, включая report.html, css, data, js, documentation и proof-service.
 2. Не загружать proof-service/node_modules и локальные .env/.env.local.
-3. В GitHub Pages остаются index.html и report.html. Папка proof-service разворачивается отдельным проектом Vercel.
-4. Рабочий API уже указан в js/config/proof-service.js: https://rp-cabinet-proof-service.vercel.app.
+3. В GitHub Pages остаются index.html и report.html. Папка proof-service развёрнута отдельным проектом Vercel.
+4. Рабочий API указан в js/config/proof-service.js: https://rp-cabinet-proof-service.vercel.app.
 5. Тексты и тесты менять только в data/academy и data/usaf.
-6. Ступени менять в data/levels.js, задания — в data/progress/.
-7. Нужен ли скриншот, менять только в data/progress/proof-rules.js.
-8. Общие стили менять в css/core.css или css/features/.
-9. Мобильные размеры и расположение менять только в css/responsive/mobile.css.
-10. Не создавать отдельный index для телефона и не дублировать тексты.
-11. Не менять постоянные ключи из js/core/storage-config.js.
-12. Не сохранять изображения в Firebase/localStorage и не превращать их в Base64.
-13. Не обрезать и не сжимать скриншоты: в отчёте используется оригинальный файл.
-14. Не разрешать облачную запись до окончания загрузки профиля.
-15. Дату регистрации брать только из account.createdAt; не использовать lastSync/updatedAt/дату Google.
-16. При новой версии менять номер сразу в js/core/version.js, css/core.css, meta index.html и памятке.
-17. После публикации полностью обновить страницу на ПК и телефоне.
-18. Перед включением пользователям проверить адрес Vercel без VPN с ПК и телефона.
+6. Ступени менять в data/levels.js, задания — в отдельных файлах data/progress/.
+7. Название ступени в data/levels.js и data/progress/<отдел>.js должно совпадать полностью.
+8. Не переименовывать опубликованное задание без необходимости: его текст является ключом сохранённой галочки.
+9. Скриншот требуется только для участия в СО/специальной операции и ГМП.
+10. Правила обязательных скриншотов менять только в data/progress/proof-rules.js.
+11. Общие стили менять в css/core.css или css/features/.
+12. Мобильные размеры и расположение менять только в css/responsive/mobile.css.
+13. Не создавать отдельный index для телефона и не дублировать тексты.
+14. Не менять KEY, VERSION_KEY и PROFILE_BACKUP_KEY из js/core/storage-config.js.
+15. Не сохранять изображения в Firebase/localStorage и не превращать их в Base64.
+16. Не обрезать и не сжимать скриншоты: в отчёте используется оригинальный файл.
+17. Не разрешать облачную запись до окончания загрузки профиля.
+18. Снятие галочки должно записываться отдельной операцией false через queueProfileTaskSyncMutation.
+19. Рабочий профиль сохраняется локально в основную и резервную копии, а в Firebase — в state и recoveryState.
+20. Дату регистрации брать как самую раннюю корректную из account.createdAt, старых локальных копий и первого входа Firebase; не использовать lastSync/updatedAt.
+21. При новой версии менять номер сразу в js/core/version.js, css/core.css, meta index.html, README, build-summary и памятке.
+22. После публикации полностью обновить страницу на ПК и телефоне.
+23. Перед включением пользователям проверить страницу GitHub Pages и Vercel без VPN с ПК и телефона.

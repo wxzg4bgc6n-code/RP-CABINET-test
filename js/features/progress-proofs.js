@@ -157,7 +157,6 @@
       <div>
         <span class="proof-eyebrow">Подтверждения прогресса</span>
         <h3>Скриншоты выполненных пунктов</h3>
-        <p>Отмеченные задачи появляются здесь отдельно. Скриншот не обрезается и открывается в исходном размере.</p>
       </div>
       <span class="proof-counter">${completed.length} из ${allTasks.length}</span>
     </div>

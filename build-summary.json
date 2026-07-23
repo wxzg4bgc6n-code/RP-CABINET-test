@@ -1,9 +1,9 @@
 {
-  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v69_MOBILE_SYNC_FIX",
+  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v71_PROGRESS_SYNC_FIX",
   "sourceBytes": 6490540,
   "indexBytes": 21150,
   "cssFiles": 9,
-  "scriptFiles": 23,
+  "scriptFiles": 28,
   "templates": [
     "academyInfoTemplate",
     "genericDepartmentInfoTemplate",
@@ -18,5 +18,8 @@
   "mobileBehavior": "js/features/mobile-navigation.js",
   "syncConflictResolver": "js/core/sync-merge.js",
   "syncStrategy": "transactional cloud revision with per-field and per-task pending patches",
-  "version": "69"
+  "version": "71",
+  "progressSources": ["Academy", "MA", "USAF", "MP", "DF", "SD", "ED"],
+  "proofRequiredOnlyFor": ["Участие в СО", "Участие в ГМП"],
+  "profileRecovery": "stable local backup + Firestore recoveryState + explicit uncheck operations"
 }

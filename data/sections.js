@@ -4,7 +4,7 @@ const ORGS={
   'Крайм':['Семья','Банда','Мафия','Картель','Нелегал']
 };
 const SECTIONS={
-  ARMY:['Academy','USAF','MP','DF','SD','RAP','SAS','ED'],
+  ARMY:['Academy','MA','USAF','MP','DF','SD','RAP','SAS','ED'],
   defaultGov:['Основной раздел'],
   defaultCrime:['Основной состав']
 };

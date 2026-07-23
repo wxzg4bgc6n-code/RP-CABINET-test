@@ -271,6 +271,30 @@ function queuePendingProfileSyncDelta(baselineState,currentState,forceFull=false
   return merged;
 }
 
+/*
+ * Явные пользовательские действия записываются в очередь напрямую.
+ * Это не зависит от снимка интерфейса: снятая галочка остаётся операцией
+ * со значением false и не может потеряться при одновременном ответе облака.
+ */
+function queueProfileTaskSyncMutation(state,task,completed){
+  const contextKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(state):'';
+  if(!contextKey || !task) return readPendingProfileSyncPatch();
+  const delta=emptyProfileSyncPatch();
+  delta.progress.contexts[contextKey]={[task]:completed===true};
+  const merged=mergePendingProfileSyncPatches(readPendingProfileSyncPatch(),delta);
+  writePendingProfileSyncPatch(merged);
+  return merged;
+}
+
+function queueProfileGroupSyncMutation(group,values){
+  if(!group || !PROFILE_SYNC_GROUPS[group] || !values || typeof values!=='object') return readPendingProfileSyncPatch();
+  const delta=emptyProfileSyncPatch();
+  delta.groups[group]=cloneProfileSyncValue(values)||{};
+  const merged=mergePendingProfileSyncPatches(readPendingProfileSyncPatch(),delta);
+  writePendingProfileSyncPatch(merged);
+  return merged;
+}
+
 function applyProfileSyncPatch(baseState,patch){
   const result=cloneProfileSyncValue(baseState)||{};
   if(!patch) return result;

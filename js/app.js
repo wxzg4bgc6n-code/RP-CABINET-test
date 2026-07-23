@@ -1,4 +1,4 @@
-/* Основное приложение v70. Данные и функции расширений подключаются до этого файла. */
+/* Основное приложение v71. Данные и функции расширений подключаются до этого файла. */
 window.__profileBootComplete=false;
 document.body.classList.add('profile-booting');
 let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:0,initialName:''}};
@@ -117,9 +117,7 @@ function ensureProfileCreatedAt(){
     S.account.createdAt=current;
     return current;
   }
-  if(!isUsableProfileState(S)) return 0;
-  S.account.createdAt=Date.now();
-  return S.account.createdAt;
+  return 0;
 }
 function save(){
 
@@ -142,6 +140,7 @@ function save(){
     if(S.ready){
       localStorage.setItem(KEY,data);
       localStorage.setItem(VERSION_KEY,data);
+      localStorage.setItem(PROFILE_BACKUP_KEY,data);
     }else{
       localStorage.setItem(VERSION_KEY,data);
     }
@@ -234,7 +233,7 @@ function normalizeProfileData(d){
     d?.registeredAt,
     S?.account?.createdAt
   );
-  merged.account.createdAt=mergedCreatedAt || (merged.ready ? Date.now() : 0);
+  merged.account.createdAt=mergedCreatedAt || 0;
   if(!merged.account.initialName) merged.account.initialName=merged.name||'';
   if(!merged.updatedAt) merged.updatedAt=Date.now();
   normalizeProfileSyncTimes(merged,d);
@@ -272,7 +271,7 @@ function profileStorageScore(data,key){
   return score;
 }
 function load(){
-  const primaryKeys=[KEY, VERSION_KEY];
+  const primaryKeys=[KEY, VERSION_KEY, PROFILE_BACKUP_KEY];
   const legacyKeys=[
     'rp_panel_v154_cleanup_stage7_final_check',
     'rp_panel_v153_cleanup_stage6_optimize',
@@ -297,18 +296,21 @@ function load(){
   function bestFrom(keys){
     let best=null;
     let bestKey='';
+    let bestUpdated=-1;
     let bestScore=-1;
     for(const key of keys){
       const data=safeReadProfileKey(key);
       if(!data || !data.ready) continue;
+      const updated=profileTimestampMs(data.updatedAt)||0;
       const score=profileStorageScore(data,key);
-      if(score>bestScore){
+      if(updated>bestUpdated || (updated===bestUpdated && score>bestScore)){
         best=data;
         bestKey=key;
+        bestUpdated=updated;
         bestScore=score;
       }
     }
-    return {best,bestKey,bestScore};
+    return {best,bestKey,bestScore,bestUpdated};
   }
 
 
@@ -319,6 +321,32 @@ function load(){
 
   if(result.best && result.best.ready){
     S=result.best;
+    const allRecoveryKeys=[...new Set([...primaryKeys,...legacyKeys])];
+    const activeName=String(S.name||'').trim().toLocaleLowerCase('ru-RU');
+    const storedDates=[];
+    allRecoveryKeys.forEach(key=>{
+      try{
+        const raw=JSON.parse(localStorage.getItem(key)||'null');
+        if(!raw || typeof raw!=='object') return;
+        const rawName=String(raw.name||'').trim().toLocaleLowerCase('ru-RU');
+        if(activeName && rawName && rawName!==activeName) return;
+        [
+          raw?.account?.createdAt,
+          raw?.createdAt,
+          raw?.profileCreatedAt,
+          raw?.registeredAt,
+          raw?.cloud?.googleCreatedAt
+        ].forEach(value=>{
+          const timestamp=profileTimestampMs(value);
+          if(timestamp) storedDates.push(timestamp);
+        });
+      }catch(e){}
+    });
+    const recoveredCreatedAt=earliestProfileTimestamp(S?.account?.createdAt,S?.cloud?.googleCreatedAt,...storedDates);
+    if(recoveredCreatedAt){
+      if(!S.account || typeof S.account!=='object') S.account={};
+      S.account.createdAt=recoveredCreatedAt;
+    }
     window.__profileHydrating=true;
     save();
     window.__profileHydrating=false;
@@ -469,7 +497,7 @@ function renderDepartmentUnlock(){
     grid.innerHTML='';
     return;
   }
-  const departments=['USAF','MP','DF','SD','RAP','SAS','ED'];
+  const departments=['MA','USAF','MP','DF','SD','RAP','SAS','ED'];
   grid.innerHTML=departments.map(dep=>`<button class="department-btn" data-dept="${dep}">${dep}</button>`).join('');
   document.querySelectorAll('[data-dept]').forEach(btn=>{
     btn.onclick=()=>chooseDepartmentAfterAcademy(btn.dataset.dept);
@@ -488,8 +516,9 @@ function renderProgress(){
     input.onchange=()=>{
       if(input.checked) S.tasks[input.dataset.task]=true;
       else delete S.tasks[input.dataset.task];
+      queueProfileTaskSyncMutation(S,input.dataset.task,input.checked);
       save();
-      showToast('Прогресс обновлён','Задача засчитана');
+      showToast('Прогресс обновлён',input.checked?'Задача засчитана':'Отметка снята');
       render();
     };
   });
@@ -606,9 +635,13 @@ function rememberGoogleProfileInfo(user){
   if(!user) return;
   if(!S.cloud || typeof S.cloud!=='object') S.cloud={enabled:false,provider:'local',uid:'',lastSync:0};
   if(!S.account || typeof S.account!=='object') S.account={};
+  const previousCreatedAt=profileTimestampMs(S.account.createdAt);
   if(user.metadata && user.metadata.creationTime){
     const googleCreated=Date.parse(user.metadata.creationTime);
-    if(Number.isFinite(googleCreated) && googleCreated>0) S.cloud.googleCreatedAt=googleCreated;
+    if(Number.isFinite(googleCreated) && googleCreated>0){
+      S.cloud.googleCreatedAt=googleCreated;
+      S.account.createdAt=earliestProfileTimestamp(S.account.createdAt,googleCreated)||googleCreated;
+    }
   }
   if(user.photoURL){
     S.cloud.googlePhotoURL=user.photoURL;
@@ -616,6 +649,10 @@ function rememberGoogleProfileInfo(user){
   }
   if(user.email) S.cloud.googleEmail=user.email;
   if(user.displayName) S.cloud.googleName=user.displayName;
+  const repairedCreatedAt=profileTimestampMs(S.account.createdAt);
+  if(isUsableProfileState(S) && repairedCreatedAt && repairedCreatedAt!==previousCreatedAt){
+    queueProfileGroupSyncMutation('account',{account:JSON.parse(JSON.stringify(S.account))});
+  }
 }
 
 
@@ -850,6 +887,27 @@ function cloudSafeState(sourceState){
   copy.cloud=Object.assign({},copy.cloud||{}, {enabled:true, provider:'google', uid:window.CloudSync?.user?.uid||copy.cloud?.uid||'', lastSync:Date.now()});
   return copy;
 }
+function cloudProfileCompleteness(state){
+  if(!isUsableProfileState(state)) return -1;
+  let score=100;
+  if(state.project) score+=5;
+  if(state.path) score+=5;
+  if(state.org) score+=20;
+  if(state.section) score+=20;
+  if(state.level) score+=20;
+  if(state.configured) score+=30;
+  if(profileTimestampMs(state?.account?.createdAt)) score+=10;
+  return score;
+}
+function selectCloudProfileState(cloudDoc){
+  const state=cloudDoc?.state;
+  const recovery=cloudDoc?.recoveryState;
+  const stateScore=cloudProfileCompleteness(state);
+  const recoveryScore=cloudProfileCompleteness(recovery);
+  if(recoveryScore>stateScore) return recovery;
+  if(stateScore>=0) return state;
+  return recoveryScore>=0?recovery:null;
+}
 
 function finishProfileBoot(){
   window.__profileBootComplete=true;
@@ -942,10 +1000,15 @@ window.CloudSync={
       const snap=await ref.get();
       const local=normalizeProfileData(S);
       const cloudDoc=snap.exists ? (snap.data()||{}) : null;
-      const rawCloudState=cloudDoc?.state;
+      const rawCloudState=selectCloudProfileState(cloudDoc);
       const cloud=isUsableProfileState(rawCloudState) ? normalizeProfileData(rawCloudState) : null;
       this.lastCloudRevision=Number(cloudDoc?.syncRevision||0);
-      if(cloud && cloud.ready){
+      if(cloud && cloud.ready && local && local.ready && cloudProfileCompleteness(local)>cloudProfileCompleteness(cloud)){
+        S=local;
+        rememberGoogleProfileInfo(this.user);
+        queuePendingProfileSyncDelta({},S,true);
+        needsCloudWrite=true;
+      }else if(cloud && cloud.ready){
         const cloudUpdated=cloud.updatedAt || cloudDoc.state?.updatedAt || 0;
         needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision);
       }else if(local && local.ready){
@@ -987,8 +1050,9 @@ window.CloudSync={
         renderCloudSyncStatus();
         return;
       }
-      if(!isUsableProfileState(data.state)) return;
-      const remote=normalizeProfileData(data.state);
+      const remoteSource=selectCloudProfileState(data);
+      if(!isUsableProfileState(remoteSource)) return;
+      const remote=normalizeProfileData(remoteSource);
       if(!remote || !remote.ready) return;
       const keptLocal=this.applyRemoteState(remote, remoteUpdated, true, remoteRevision);
       if(keptLocal) this.scheduleSave();
@@ -1063,7 +1127,7 @@ window.CloudSync={
       await this.db.runTransaction(async transaction=>{
         const serverSnap=await transaction.get(ref);
         const serverData=serverSnap.exists ? (serverSnap.data()||{}) : {};
-        const serverState=serverData.state&&typeof serverData.state==='object' ? serverData.state : {};
+        const serverState=selectCloudProfileState(serverData)||{};
         const mergedRaw=applyProfileSyncPatch(serverState,pending);
         const stableCreatedAt=earliestProfileTimestamp(serverState?.account?.createdAt,S?.account?.createdAt,mergedRaw?.account?.createdAt);
         if(stableCreatedAt){
@@ -1091,6 +1155,8 @@ window.CloudSync={
           writeId,
           sourceDevice:currentDevice,
           state:committedState,
+          recoveryState:committedState,
+          clientVersion:71,
           devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
         },{merge:true});
       });
@@ -1132,6 +1198,8 @@ function saveSettings(){
   const active=document.querySelector('.theme-card.active')?.dataset.style || S.style || 'style-arctic';
   S.name=newName;
   S.style=active;
+  queueProfileGroupSyncMutation('name',{name:newName});
+  queueProfileGroupSyncMutation('style',{style:active});
   save();
   closeSettings();
   render();

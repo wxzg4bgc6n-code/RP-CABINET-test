@@ -1,6 +1,7 @@
 /* Реестр контента. Новый отдел сначала регистрируется здесь. */
 window.RPCabinetSectionRegistry = Object.freeze({
   Academy:{infoTemplate:'academyInfoTemplate',tests:['academyTestsTemplate']},
+  MA:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
   USAF:{infoTemplate:'usafInfoTemplateV20',tests:['usafTestsTemplateV20','usafTestsTemplate']},
   MP:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
   DF:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
