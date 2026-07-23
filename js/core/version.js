@@ -1,5 +1,5 @@
-const TEST_VERSION="78";
-const TEST_VERSION_LABEL="Unlimited screenshots";
+const TEST_VERSION="79";
+const TEST_VERSION_LABEL="Realtime cloud sync";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

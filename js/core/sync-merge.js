@@ -1,219 +1,195 @@
 /*
- * Разрешение конфликтов между устройствами.
- * Профиль синхронизируется логическими группами, поэтому старое имя с телефона
- * больше не должно перезаписывать новый ник с ПК вместе с несвязанным прогрессом.
+ * RP CABINET v79 — очередь пользовательских операций.
+ *
+ * Firebase хранит каноническое состояние. localStorage хранит только:
+ * 1) кэш последнего показанного состояния;
+ * 2) операции, которые пользователь реально совершил и которые ещё не
+ *    подтверждены облачной транзакцией.
+ *
+ * Открытие или обновление страницы не создаёт операцию и поэтому никогда не
+ * может отправить устаревший локальный снимок поверх более нового облачного.
  */
-const PROFILE_SYNC_GROUPS=Object.freeze({
+
+const PROFILE_SYNC_GROUPS={
   name:['name'],
   style:['style'],
   context:['project','path','org','section','level','configured'],
-  progress:['progressByContext','selectedLevelBySection','proofsByContext'],
   pins:['pinnedDepartmentBlocks','pinnedAcademyBlocks'],
-  account:['account'],
-  reports:['reportsByContext']
-});
+  account:['account']
+};
+const PROFILE_MUTATION_QUEUE_KEY='kiri:rp-cabinet:v79:mutation-queue';
+const PROFILE_MUTATION_QUEUE_VERSION=1;
 
 function cloneProfileSyncValue(value){
   if(value===undefined) return undefined;
-  try{return JSON.parse(JSON.stringify(value));}
-  catch(e){return value;}
+  try{return JSON.parse(JSON.stringify(value));}catch(e){return value;}
 }
 
 function profileSyncGroupSnapshot(state,fields){
-  const source=state && typeof state==='object' ? state : {};
-  return JSON.stringify(fields.map(field=>[field,source[field]]));
-}
-
-function profileSyncGroupTime(state,group){
-  const own=Number(state?.syncFieldUpdatedAt?.[group]||0);
-  if(Number.isFinite(own) && own>0) return own;
-  const fallback=Number(state?.updatedAt||0);
-  return Number.isFinite(fallback) && fallback>0 ? fallback : 0;
-}
-
-function normalizeProfileSyncTimes(target,incoming){
-  const source=incoming && typeof incoming==='object' ? incoming : {};
-  const raw=source.syncFieldUpdatedAt && typeof source.syncFieldUpdatedAt==='object' && !Array.isArray(source.syncFieldUpdatedAt)
-    ? source.syncFieldUpdatedAt
-    : {};
-  const fallback=Number(source.updatedAt||0);
-  const normalized={};
-  Object.keys(PROFILE_SYNC_GROUPS).forEach(group=>{
-    const own=Number(raw[group]||0);
-    normalized[group]=Number.isFinite(own) && own>0
-      ? own
-      : (Number.isFinite(fallback) && fallback>0 ? fallback : 0);
+  const source=state&&typeof state==='object'?state:{};
+  const snapshot={};
+  fields.forEach(field=>{
+    snapshot[field]=Object.prototype.hasOwnProperty.call(source,field)
+      ? cloneProfileSyncValue(source[field])
+      : null;
   });
-  target.syncFieldUpdatedAt=normalized;
-  return target;
+  try{return JSON.stringify(snapshot);}catch(e){return '';}
 }
 
 function rememberProfileSyncBaseline(state){
-  const baseline={};
-  Object.entries(PROFILE_SYNC_GROUPS).forEach(([group,fields])=>{
-    baseline[group]=profileSyncGroupSnapshot(state,fields);
-  });
-  window.__profileSyncBaseline=baseline;
   window.__profileSyncBaselineState=cloneProfileSyncValue(state)||{};
 }
 
-function touchChangedProfileSyncGroups(state,requestedTime){
-  if(!state || typeof state!=='object') return [];
-  if(!state.syncFieldUpdatedAt || typeof state.syncFieldUpdatedAt!=='object') state.syncFieldUpdatedAt={};
-  const baseline=window.__profileSyncBaseline && typeof window.__profileSyncBaseline==='object'
-    ? window.__profileSyncBaseline
-    : null;
-  const highestKnown=Math.max(
-    Number(state.updatedAt||0),
-    ...Object.values(state.syncFieldUpdatedAt).map(value=>Number(value||0)).filter(Number.isFinite),
-    0
-  );
-  let stamp=Math.max(Number(requestedTime||0),highestKnown+1,Date.now());
-  const changed=[];
-  Object.entries(PROFILE_SYNC_GROUPS).forEach(([group,fields])=>{
-    const current=profileSyncGroupSnapshot(state,fields);
-    if(!baseline || baseline[group]!==current){
-      state.syncFieldUpdatedAt[group]=stamp++;
-      changed.push(group);
-    }
-  });
-  return changed;
+function profileMutationId(){
+  const device=typeof getCloudDeviceId==='function'?getCloudDeviceId():'device';
+  const session=window.__cloudSessionId||'session';
+  return `${device}:${session}:${Date.now()}:${Math.random().toString(36).slice(2,10)}`;
 }
-
-function mergeSyncedProfileStates(localState,remoteState){
-  const local=cloneProfileSyncValue(localState)||{};
-  const remote=cloneProfileSyncValue(remoteState)||{};
-  normalizeProfileSyncTimes(local,localState||{});
-  normalizeProfileSyncTimes(remote,remoteState||{});
-  const merged=cloneProfileSyncValue(remote)||{};
-  const mergedTimes={};
-  const keptLocalGroups=[];
-  const keptRemoteGroups=[];
-
-  Object.entries(PROFILE_SYNC_GROUPS).forEach(([group,fields])=>{
-    const localTime=profileSyncGroupTime(local,group);
-    const remoteTime=profileSyncGroupTime(remote,group);
-    const keepLocal=localTime>remoteTime;
-    const source=keepLocal ? local : remote;
-    fields.forEach(field=>{
-      if(Object.prototype.hasOwnProperty.call(source,field)) merged[field]=cloneProfileSyncValue(source[field]);
-      else delete merged[field];
-    });
-    mergedTimes[group]=keepLocal ? localTime : remoteTime;
-    (keepLocal ? keptLocalGroups : keptRemoteGroups).push(group);
-  });
-
-  merged.syncFieldUpdatedAt=mergedTimes;
-  merged.updatedAt=Math.max(Number(local.updatedAt||0),Number(remote.updatedAt||0),...Object.values(mergedTimes),0);
-  return {
-    state:merged,
-    keptLocal:keptLocalGroups.length>0,
-    keptLocalGroups,
-    keptRemoteGroups
-  };
+function emptyProfileMutationQueue(){
+  return {version:PROFILE_MUTATION_QUEUE_VERSION,operations:[]};
 }
-
-/*
- * v69: синхронизация действий вместо сравнения часов устройств.
- *
- * Телефон и ПК могут иметь разное системное время. Поэтому локальная правка
- * сначала превращается в маленькую накопительную операцию: изменённый ник,
- * конкретная галочка конкретной ступени и т.п. В облачной транзакции эта
- * операция накладывается на самую свежую серверную версию профиля. Старый
- * снимок телефона больше не заменяет весь прогресс целиком.
- */
-const PROFILE_PENDING_PATCH_KEY='kiri:rp-cabinet:v77:pending-sync-patch';
-const PROFILE_TASK_UI_LOCK_TTL=30000;
-
-function emptyProfileSyncPatch(){
-  return {version:3,sequence:0,groups:{},progress:{contexts:{},levels:{}},proofs:{contexts:{}}};
+function currentProfileSyncBaseRevision(){
+  const revision=Number(window.CloudSync?.lastAppliedRevision||0);
+  return Number.isFinite(revision)&&revision>=0?revision:0;
 }
-
+function sanitizeProfileMutation(operation){
+  if(!operation||typeof operation!=='object'||typeof operation.kind!=='string') return null;
+  const clean=cloneProfileSyncValue(operation)||{};
+  clean.id=typeof clean.id==='string'&&clean.id?clean.id:profileMutationId();
+  clean.createdAt=Number(clean.createdAt||Date.now());
+  const suppliedBase=Number(clean.baseRevision);
+  clean.baseRevision=Number.isFinite(suppliedBase)&&suppliedBase>=0
+    ? suppliedBase
+    : currentProfileSyncBaseRevision();
+  clean.supersedesIds=Array.isArray(clean.supersedesIds)
+    ? [...new Set(clean.supersedesIds.filter(id=>typeof id==='string'&&id&&id!==clean.id))].slice(-40)
+    : [];
+  return clean;
+}
 function readPendingProfileSyncPatch(){
   try{
-    const parsed=JSON.parse(localStorage.getItem(PROFILE_PENDING_PATCH_KEY)||'null');
-    if(!parsed || (parsed.version!==2 && parsed.version!==3)) return null;
-    parsed.version=3;
-    parsed.groups=parsed.groups&&typeof parsed.groups==='object'?parsed.groups:{};
-    parsed.progress=parsed.progress&&typeof parsed.progress==='object'?parsed.progress:{};
-    parsed.progress.contexts=parsed.progress.contexts&&typeof parsed.progress.contexts==='object'?parsed.progress.contexts:{};
-    parsed.progress.levels=parsed.progress.levels&&typeof parsed.progress.levels==='object'?parsed.progress.levels:{};
-    parsed.proofs=parsed.proofs&&typeof parsed.proofs==='object'?parsed.proofs:{};
-    parsed.proofs.contexts=parsed.proofs.contexts&&typeof parsed.proofs.contexts==='object'?parsed.proofs.contexts:{};
-    return parsed;
-  }catch(e){return null;}
+    const parsed=JSON.parse(localStorage.getItem(PROFILE_MUTATION_QUEUE_KEY)||'null');
+    if(!parsed||parsed.version!==PROFILE_MUTATION_QUEUE_VERSION||!Array.isArray(parsed.operations)) return emptyProfileMutationQueue();
+    return {
+      version:PROFILE_MUTATION_QUEUE_VERSION,
+      operations:parsed.operations.map(sanitizeProfileMutation).filter(Boolean)
+    };
+  }catch(e){return emptyProfileMutationQueue();}
 }
-
-function writePendingProfileSyncPatch(patch){
+function writePendingProfileSyncPatch(queue){
+  const normalized=queue&&Array.isArray(queue.operations)
+    ? {version:PROFILE_MUTATION_QUEUE_VERSION,operations:queue.operations.map(sanitizeProfileMutation).filter(Boolean)}
+    : emptyProfileMutationQueue();
   try{
-    if(!patch){
-      localStorage.removeItem(PROFILE_PENDING_PATCH_KEY);
+    if(!normalized.operations.length) localStorage.removeItem(PROFILE_MUTATION_QUEUE_KEY);
+    else localStorage.setItem(PROFILE_MUTATION_QUEUE_KEY,JSON.stringify(normalized));
+  }catch(e){console.warn('Mutation queue save failed',e);}
+  return normalized;
+}
+function profileSyncPatchHasChanges(queue){
+  return !!(queue&&Array.isArray(queue.operations)&&queue.operations.length);
+}
+function profileMutationTargetKey(operation){
+  if(!operation) return '';
+  if(operation.kind==='group') return `group:${operation.group}`;
+  if(operation.kind==='task') return `task:${operation.contextKey}:${operation.task}`;
+  if(operation.kind==='level') return `level:${operation.key}`;
+  if(operation.kind==='proof') return `proof:${operation.contextKey}:${operation.task}`;
+  if(operation.kind==='map') return `map:${operation.field}:${operation.key}`;
+  return `${operation.kind}:${operation.id}`;
+}
+function enqueueProfileMutation(operation){
+  const clean=sanitizeProfileMutation(operation);
+  if(!clean) return readPendingProfileSyncPatch();
+  const queue=readPendingProfileSyncPatch();
+  const target=profileMutationTargetKey(clean);
+  const next=[];
+  let merged=false;
+  queue.operations.forEach(existing=>{
+    if(profileMutationTargetKey(existing)!==target){
+      next.push(existing);
       return;
     }
-    localStorage.setItem(PROFILE_PENDING_PATCH_KEY,JSON.stringify(patch));
-  }catch(e){console.warn('Pending sync patch save failed',e);}
-}
-
-function profileSyncPatchHasChanges(patch){
-  if(!patch) return false;
-  if(Object.keys(patch.groups||{}).length) return true;
-  if(Object.keys(patch.progress?.levels||{}).length) return true;
-  if(Object.values(patch.progress?.contexts||{}).some(tasks=>tasks&&Object.keys(tasks).length)) return true;
-  return Object.values(patch.proofs?.contexts||{}).some(proofs=>proofs&&Object.keys(proofs).length);
+    if(clean.kind==='group'){
+      clean.values=Object.assign({},existing.values||{},clean.values||{});
+    }
+    clean.supersedesIds=[...new Set([
+      ...(clean.supersedesIds||[]),
+      existing.id,
+      ...(existing.supersedesIds||[])
+    ].filter(Boolean))].slice(-40);
+    merged=true;
+  });
+  next.push(clean);
+  /* Защита от бесконечного роста при очень долгом офлайне. Операции уже
+   * уплотнены по цели, поэтому хвост содержит самое актуальное значение. */
+  const compacted=next.length>2000?next.slice(-2000):next;
+  return writePendingProfileSyncPatch({version:PROFILE_MUTATION_QUEUE_VERSION,operations:compacted});
 }
 
 function normalizedProgressContexts(state){
   const source=state?.progressByContext;
   return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
 }
-
 function normalizedSelectedLevels(state){
   const source=state?.selectedLevelBySection;
   return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
 }
-
 function normalizedProofContexts(state){
   const source=state?.proofsByContext;
   return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
 }
+function normalizedReports(state){
+  const source=state?.reportsByContext;
+  return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
+}
 
-function buildProfileSyncDelta(baselineState,currentState,forceFull=false){
+function queueProfileGroupSyncMutation(group,values){
+  if(!group||!PROFILE_SYNC_GROUPS[group]||!values||typeof values!=='object') return readPendingProfileSyncPatch();
+  return enqueueProfileMutation({kind:'group',group,values:cloneProfileSyncValue(values)||{},id:profileMutationId(),createdAt:Date.now()});
+}
+function queueProfileTaskSyncMutation(state,task,completed){
+  const contextKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(state):'';
+  if(!contextKey||!task) return readPendingProfileSyncPatch();
+  return enqueueProfileMutation({kind:'task',contextKey,task:String(task),value:completed===true,id:profileMutationId(),createdAt:Date.now()});
+}
+function queueProfileLevelSyncMutation(key,value){
+  if(!key) return readPendingProfileSyncPatch();
+  return enqueueProfileMutation({kind:'level',key:String(key),value:typeof value==='string'?value:'',id:profileMutationId(),createdAt:Date.now()});
+}
+function queueProfileProofSyncMutation(contextKey,task,value){
+  if(!contextKey||!task) return readPendingProfileSyncPatch();
+  return enqueueProfileMutation({kind:'proof',contextKey:String(contextKey),task:String(task),value:value?cloneProfileSyncValue(value):null,id:profileMutationId(),createdAt:Date.now()});
+}
+function queueProfileMapSyncMutation(field,key,value){
+  if(!field||!key) return readPendingProfileSyncPatch();
+  return enqueueProfileMutation({kind:'map',field:String(field),key:String(key),value:value===undefined?null:cloneProfileSyncValue(value),id:profileMutationId(),createdAt:Date.now()});
+}
+
+function queuePendingProfileSyncDelta(baselineState,currentState,forceFull=false){
   const before=baselineState&&typeof baselineState==='object'?baselineState:{};
   const after=currentState&&typeof currentState==='object'?currentState:{};
-  const patch=emptyProfileSyncPatch();
-  const scalarGroups={
-    name:['name'],
-    style:['style'],
-    context:['project','path','org','section','level','configured'],
-    pins:['pinnedDepartmentBlocks','pinnedAcademyBlocks'],
-    account:['account'],
-    reports:['reportsByContext']
-  };
 
-  Object.entries(scalarGroups).forEach(([group,fields])=>{
-    if(forceFull || profileSyncGroupSnapshot(before,fields)!==profileSyncGroupSnapshot(after,fields)){
-      patch.groups[group]={};
+  Object.entries(PROFILE_SYNC_GROUPS).forEach(([group,fields])=>{
+    if(forceFull||profileSyncGroupSnapshot(before,fields)!==profileSyncGroupSnapshot(after,fields)){
+      const values={};
       fields.forEach(field=>{
-        patch.groups[group][field]=Object.prototype.hasOwnProperty.call(after,field)
-          ? cloneProfileSyncValue(after[field])
-          : null;
+        values[field]=Object.prototype.hasOwnProperty.call(after,field)?cloneProfileSyncValue(after[field]):null;
       });
+      queueProfileGroupSyncMutation(group,values);
     }
   });
 
   const beforeContexts=normalizedProgressContexts(before);
   const afterContexts=normalizedProgressContexts(after);
-  const contextKeys=new Set([...Object.keys(beforeContexts),...Object.keys(afterContexts)]);
-  contextKeys.forEach(contextKey=>{
+  new Set([...Object.keys(beforeContexts),...Object.keys(afterContexts)]).forEach(contextKey=>{
     const oldTasks=beforeContexts[contextKey]&&typeof beforeContexts[contextKey]==='object'?beforeContexts[contextKey]:{};
     const newTasks=afterContexts[contextKey]&&typeof afterContexts[contextKey]==='object'?afterContexts[contextKey]:{};
-    const taskKeys=new Set([...Object.keys(oldTasks),...Object.keys(newTasks)]);
-    taskKeys.forEach(task=>{
+    new Set([...Object.keys(oldTasks),...Object.keys(newTasks)]).forEach(task=>{
       const oldValue=oldTasks[task]===true;
       const newValue=newTasks[task]===true;
-      if(forceFull ? newValue : oldValue!==newValue){
-        if(!patch.progress.contexts[contextKey]) patch.progress.contexts[contextKey]={};
-        patch.progress.contexts[contextKey][task]=newValue;
+      if((forceFull&&newValue)||oldValue!==newValue){
+        enqueueProfileMutation({kind:'task',contextKey,task,value:newValue,id:profileMutationId(),createdAt:Date.now()});
       }
     });
   });
@@ -223,207 +199,150 @@ function buildProfileSyncDelta(baselineState,currentState,forceFull=false){
   new Set([...Object.keys(beforeLevels),...Object.keys(afterLevels)]).forEach(key=>{
     const oldValue=typeof beforeLevels[key]==='string'?beforeLevels[key]:'';
     const newValue=typeof afterLevels[key]==='string'?afterLevels[key]:'';
-    if(forceFull ? !!newValue : oldValue!==newValue) patch.progress.levels[key]=newValue||null;
+    if((forceFull&&newValue)||oldValue!==newValue) queueProfileLevelSyncMutation(key,newValue);
   });
 
   const beforeProofs=normalizedProofContexts(before);
   const afterProofs=normalizedProofContexts(after);
   new Set([...Object.keys(beforeProofs),...Object.keys(afterProofs)]).forEach(contextKey=>{
-    const oldTaskProofs=beforeProofs[contextKey]&&typeof beforeProofs[contextKey]==='object'?beforeProofs[contextKey]:{};
-    const newTaskProofs=afterProofs[contextKey]&&typeof afterProofs[contextKey]==='object'?afterProofs[contextKey]:{};
-    new Set([...Object.keys(oldTaskProofs),...Object.keys(newTaskProofs)]).forEach(task=>{
-      const oldValue=oldTaskProofs[task]||null;
-      const newValue=newTaskProofs[task]||null;
-      if((forceFull && newValue) || JSON.stringify(oldValue)!==JSON.stringify(newValue)){
-        if(!patch.proofs.contexts[contextKey]) patch.proofs.contexts[contextKey]={};
-        patch.proofs.contexts[contextKey][task]=newValue ? cloneProfileSyncValue(newValue) : null;
-      }
+    const oldProofs=beforeProofs[contextKey]&&typeof beforeProofs[contextKey]==='object'?beforeProofs[contextKey]:{};
+    const newProofs=afterProofs[contextKey]&&typeof afterProofs[contextKey]==='object'?afterProofs[contextKey]:{};
+    new Set([...Object.keys(oldProofs),...Object.keys(newProofs)]).forEach(task=>{
+      const oldValue=oldProofs[task]||null;
+      const newValue=newProofs[task]||null;
+      if((forceFull&&newValue)||JSON.stringify(oldValue)!==JSON.stringify(newValue)) queueProfileProofSyncMutation(contextKey,task,newValue);
     });
   });
-  return patch;
+
+  const beforeReports=normalizedReports(before);
+  const afterReports=normalizedReports(after);
+  new Set([...Object.keys(beforeReports),...Object.keys(afterReports)]).forEach(key=>{
+    const oldValue=beforeReports[key]||null;
+    const newValue=afterReports[key]||null;
+    if((forceFull&&newValue)||JSON.stringify(oldValue)!==JSON.stringify(newValue)) queueProfileMapSyncMutation('reportsByContext',key,newValue);
+  });
+
+  return readPendingProfileSyncPatch();
 }
 
-function mergePendingProfileSyncPatches(previous,next){
-  const merged=previous?cloneProfileSyncValue(previous):emptyProfileSyncPatch();
-  const incoming=next||emptyProfileSyncPatch();
-  merged.version=3;
-  merged.sequence=Math.max(Number(merged.sequence||0),Number(incoming.sequence||0))+1;
-  merged.groups=Object.assign({},merged.groups||{},cloneProfileSyncValue(incoming.groups)||{});
-  merged.progress=merged.progress||{contexts:{},levels:{}};
-  merged.progress.contexts=merged.progress.contexts||{};
-  Object.entries(incoming.progress?.contexts||{}).forEach(([contextKey,tasks])=>{
-    merged.progress.contexts[contextKey]=Object.assign({},merged.progress.contexts[contextKey]||{},cloneProfileSyncValue(tasks)||{});
+function applyProfileSyncPatch(baseState,queue){
+  const result=cloneProfileSyncValue(baseState)||{};
+  const operations=queue&&Array.isArray(queue.operations)?queue.operations:[];
+  operations.forEach(operation=>{
+    if(!operation||typeof operation!=='object') return;
+    if(operation.kind==='group'){
+      Object.entries(operation.values||{}).forEach(([field,value])=>{
+        if(value===null||value===undefined) delete result[field];
+        else result[field]=cloneProfileSyncValue(value);
+      });
+      return;
+    }
+    if(operation.kind==='task'){
+      if(!result.progressByContext||typeof result.progressByContext!=='object'||Array.isArray(result.progressByContext)) result.progressByContext={};
+      const tasks=result.progressByContext[operation.contextKey]&&typeof result.progressByContext[operation.contextKey]==='object'
+        ? Object.assign({},result.progressByContext[operation.contextKey])
+        : {};
+      if(operation.value===true) tasks[operation.task]=true;
+      else delete tasks[operation.task];
+      result.progressByContext[operation.contextKey]=tasks;
+      return;
+    }
+    if(operation.kind==='level'){
+      if(!result.selectedLevelBySection||typeof result.selectedLevelBySection!=='object'||Array.isArray(result.selectedLevelBySection)) result.selectedLevelBySection={};
+      if(operation.value) result.selectedLevelBySection[operation.key]=operation.value;
+      else delete result.selectedLevelBySection[operation.key];
+      return;
+    }
+    if(operation.kind==='proof'){
+      if(!result.proofsByContext||typeof result.proofsByContext!=='object'||Array.isArray(result.proofsByContext)) result.proofsByContext={};
+      const proofs=result.proofsByContext[operation.contextKey]&&typeof result.proofsByContext[operation.contextKey]==='object'
+        ? Object.assign({},result.proofsByContext[operation.contextKey])
+        : {};
+      if(operation.value) proofs[operation.task]=cloneProfileSyncValue(operation.value);
+      else delete proofs[operation.task];
+      result.proofsByContext[operation.contextKey]=proofs;
+      return;
+    }
+    if(operation.kind==='map'){
+      if(!result[operation.field]||typeof result[operation.field]!=='object'||Array.isArray(result[operation.field])) result[operation.field]={};
+      if(operation.value===null||operation.value===undefined) delete result[operation.field][operation.key];
+      else result[operation.field][operation.key]=cloneProfileSyncValue(operation.value);
+    }
   });
-  merged.progress.levels=Object.assign({},merged.progress.levels||{},cloneProfileSyncValue(incoming.progress?.levels)||{});
-  merged.proofs=merged.proofs||{contexts:{}};
-  merged.proofs.contexts=merged.proofs.contexts||{};
-  Object.entries(incoming.proofs?.contexts||{}).forEach(([contextKey,taskProofs])=>{
-    merged.proofs.contexts[contextKey]=Object.assign({},merged.proofs.contexts[contextKey]||{},cloneProfileSyncValue(taskProofs)||{});
-  });
-  merged.changedAt=Date.now();
-  return merged;
+
+  const currentKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(result):'';
+  if(currentKey&&result.progressByContext&&Object.prototype.hasOwnProperty.call(result.progressByContext,currentKey)){
+    result.tasks=cloneProfileSyncValue(result.progressByContext[currentKey])||{};
+  }
+  result.updatedAt=Date.now();
+  return result;
 }
 
-function queuePendingProfileSyncDelta(baselineState,currentState,forceFull=false){
-  const delta=buildProfileSyncDelta(baselineState,currentState,forceFull);
-  if(!profileSyncPatchHasChanges(delta)) return readPendingProfileSyncPatch();
-  const merged=mergePendingProfileSyncPatches(readPendingProfileSyncPatch(),delta);
-  writePendingProfileSyncPatch(merged);
-  return merged;
-}
 
 /*
- * Явные пользовательские действия записываются в очередь напрямую.
- * Это не зависит от снимка интерфейса: снятая галочка остаётся операцией
- * со значением false и не может потеряться при одновременном ответе облака.
+ * Применяет пакет внутри транзакции Firebase с защитой от двух видов отката:
+ * 1) повтор уже подтверждённой операции после закрытия вкладки до локального ACK;
+ * 2) старая офлайн-операция по той же цели, если эта цель уже менялась в более
+ *    новой облачной ревизии.
+ *
+ * Несвязанные цели не блокируют друг друга: старая операция по задаче A не
+ * мешает применить изменение задачи B.
  */
-function queueProfileTaskSyncMutation(state,task,completed){
-  const contextKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(state):'';
-  if(!contextKey || !task) return readPendingProfileSyncPatch();
-  rememberProfileTaskUiLock(contextKey,task,completed===true);
-  const delta=emptyProfileSyncPatch();
-  delta.progress.contexts[contextKey]={[task]:completed===true};
-  const merged=mergePendingProfileSyncPatches(readPendingProfileSyncPatch(),delta);
-  writePendingProfileSyncPatch(merged);
-  return merged;
-}
+function applyProfileSyncPatchWithGuards(baseState,queue,serverMeta,commitRevision){
+  let state=cloneProfileSyncValue(baseState)||{};
+  const operations=queue&&Array.isArray(queue.operations)?queue.operations.map(sanitizeProfileMutation).filter(Boolean):[];
+  const targetRevisions=Object.assign({},serverMeta?.targetRevisions||{});
+  const targetMutationIds=Object.assign({},serverMeta?.targetMutationIds||{});
+  const processedOrder=Array.isArray(serverMeta?.processedMutationIds)
+    ? serverMeta.processedMutationIds.filter(id=>typeof id==='string'&&id)
+    : [];
+  const processed=new Set(processedOrder);
+  const acceptedIds=[];
+  const skippedIds=[];
+  const revision=Math.max(1,Number(commitRevision||1));
 
-function profileTaskUiLockStore(){
-  if(!window.__profileTaskUiLocks || typeof window.__profileTaskUiLocks!=='object'){
-    window.__profileTaskUiLocks={};
+  operations.forEach(operation=>{
+    const target=profileMutationTargetKey(operation);
+    if(processed.has(operation.id)){
+      skippedIds.push(operation.id);
+      return;
+    }
+    const targetRevision=Math.max(0,Number(targetRevisions[target]||0));
+    const baseRevision=Math.max(0,Number(operation.baseRevision||0));
+    const lastTargetMutationId=typeof targetMutationIds[target]==='string'?targetMutationIds[target]:'';
+    const causallySupersedesLast=!!(lastTargetMutationId&&operation.supersedesIds.includes(lastTargetMutationId));
+    if(targetRevision>baseRevision&&!causallySupersedesLast){
+      processed.add(operation.id);
+      processedOrder.push(operation.id);
+      skippedIds.push(operation.id);
+      return;
+    }
+    state=applyProfileSyncPatch(state,{version:PROFILE_MUTATION_QUEUE_VERSION,operations:[operation]});
+    targetRevisions[target]=revision;
+    targetMutationIds[target]=operation.id;
+    processed.add(operation.id);
+    processedOrder.push(operation.id);
+    acceptedIds.push(operation.id);
+  });
+
+  const uniqueProcessed=[];
+  const seen=new Set();
+  for(let i=processedOrder.length-1;i>=0;i--){
+    const id=processedOrder[i];
+    if(seen.has(id)) continue;
+    seen.add(id);
+    uniqueProcessed.push(id);
+    if(uniqueProcessed.length>=600) break;
   }
-  return window.__profileTaskUiLocks;
+  uniqueProcessed.reverse();
+  return {state,targetRevisions,targetMutationIds,processedMutationIds:uniqueProcessed,acceptedIds,skippedIds};
 }
 
-function rememberProfileTaskUiLock(contextKey,task,completed){
-  if(!contextKey || !task) return;
-  const store=profileTaskUiLockStore();
-  if(!store[contextKey] || typeof store[contextKey]!=='object') store[contextKey]={};
-  store[contextKey][task]={
-    value:completed===true,
-    expiresAt:Date.now()+PROFILE_TASK_UI_LOCK_TTL
-  };
-}
-
-function applyProfileTaskUiLocks(state){
-  const result=cloneProfileSyncValue(state)||{};
-  const store=profileTaskUiLockStore();
-  const now=Date.now();
-  if(!result.progressByContext || typeof result.progressByContext!=='object' || Array.isArray(result.progressByContext)){
-    result.progressByContext={};
-  }
-  Object.entries(store).forEach(([contextKey,tasks])=>{
-    const target=result.progressByContext[contextKey]&&typeof result.progressByContext[contextKey]==='object'
-      ? Object.assign({},result.progressByContext[contextKey])
-      : {};
-    Object.entries(tasks||{}).forEach(([task,lock])=>{
-      if(!lock || Number(lock.expiresAt||0)<=now){
-        delete tasks[task];
-        return;
-      }
-      if(lock.value===true) target[task]=true;
-      else delete target[task];
-    });
-    if(!Object.keys(tasks||{}).length) delete store[contextKey];
-    result.progressByContext[contextKey]=target;
-  });
-  const currentKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(result):'';
-  if(currentKey&&Object.prototype.hasOwnProperty.call(result.progressByContext,currentKey)){
-    result.tasks=cloneProfileSyncValue(result.progressByContext[currentKey])||{};
-  }
-  return result;
-}
-
-function acknowledgeProfileTaskUiLocks(committedState){
-  const store=profileTaskUiLockStore();
-  Object.entries(store).forEach(([contextKey,tasks])=>{
-    const committedTasks=committedState?.progressByContext?.[contextKey]||{};
-    Object.entries(tasks||{}).forEach(([task,lock])=>{
-      const committedValue=committedTasks?.[task]===true;
-      if(lock && committedValue===(lock.value===true)) delete tasks[task];
-    });
-    if(!Object.keys(tasks||{}).length) delete store[contextKey];
-  });
-}
-
-function queueProfileGroupSyncMutation(group,values){
-  if(!group || !PROFILE_SYNC_GROUPS[group] || !values || typeof values!=='object') return readPendingProfileSyncPatch();
-  const delta=emptyProfileSyncPatch();
-  delta.groups[group]=cloneProfileSyncValue(values)||{};
-  const merged=mergePendingProfileSyncPatches(readPendingProfileSyncPatch(),delta);
-  writePendingProfileSyncPatch(merged);
-  return merged;
-}
-
-function applyProfileSyncPatch(baseState,patch){
-  const result=cloneProfileSyncValue(baseState)||{};
-  if(!patch) return result;
-  const originalCreatedAt=result?.account?.createdAt;
-  Object.values(patch.groups||{}).forEach(values=>{
-    Object.entries(values||{}).forEach(([field,value])=>{
-      if(value===null || value===undefined) delete result[field];
-      else result[field]=cloneProfileSyncValue(value);
-    });
-  });
-
-  if(!result.progressByContext || typeof result.progressByContext!=='object' || Array.isArray(result.progressByContext)) result.progressByContext={};
-  Object.entries(patch.progress?.contexts||{}).forEach(([contextKey,tasks])=>{
-    const target=result.progressByContext[contextKey]&&typeof result.progressByContext[contextKey]==='object'
-      ? Object.assign({},result.progressByContext[contextKey])
-      : {};
-    Object.entries(tasks||{}).forEach(([task,value])=>{
-      if(value===true) target[task]=true;
-      else delete target[task];
-    });
-    result.progressByContext[contextKey]=target;
-  });
-
-  if(!result.selectedLevelBySection || typeof result.selectedLevelBySection!=='object' || Array.isArray(result.selectedLevelBySection)) result.selectedLevelBySection={};
-  Object.entries(patch.progress?.levels||{}).forEach(([key,value])=>{
-    if(typeof value==='string'&&value) result.selectedLevelBySection[key]=value;
-    else delete result.selectedLevelBySection[key];
-  });
-
-  if(!result.proofsByContext || typeof result.proofsByContext!=='object' || Array.isArray(result.proofsByContext)) result.proofsByContext={};
-  Object.entries(patch.proofs?.contexts||{}).forEach(([contextKey,taskProofs])=>{
-    const target=result.proofsByContext[contextKey]&&typeof result.proofsByContext[contextKey]==='object'
-      ? Object.assign({},result.proofsByContext[contextKey])
-      : {};
-    Object.entries(taskProofs||{}).forEach(([task,value])=>{
-      if(value&&typeof value==='object') target[task]=cloneProfileSyncValue(value);
-      else delete target[task];
-    });
-    result.proofsByContext[contextKey]=target;
-  });
-
-  const patchedCreatedAt=result?.account?.createdAt;
-  const createdCandidates=[originalCreatedAt,patchedCreatedAt].map(value=>{
-    const parsed=typeof value==='number'?value:Date.parse(value||'');
-    return Number.isFinite(parsed)&&parsed>=Date.UTC(2020,0,1)&&parsed<=Date.now()+86400000?parsed:0;
-  }).filter(Boolean);
-  if(createdCandidates.length){
-    if(!result.account || typeof result.account!=='object') result.account={};
-    result.account.createdAt=Math.min(...createdCandidates);
-  }
-
-  const currentKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(result):'';
-  if(currentKey&&Object.prototype.hasOwnProperty.call(result.progressByContext,currentKey)){
-    result.tasks=cloneProfileSyncValue(result.progressByContext[currentKey])||{};
-  }
-  const now=Date.now();
-  if(!result.syncFieldUpdatedAt || typeof result.syncFieldUpdatedAt!=='object') result.syncFieldUpdatedAt={};
-  Object.keys(patch.groups||{}).forEach(group=>{result.syncFieldUpdatedAt[group]=now;});
-  if(Object.keys(patch.progress?.contexts||{}).length||Object.keys(patch.progress?.levels||{}).length||Object.keys(patch.proofs?.contexts||{}).length) result.syncFieldUpdatedAt.progress=now;
-  result.updatedAt=now;
-  return result;
-}
-
-function acknowledgePendingProfileSyncPatch(sentPatch){
+function acknowledgePendingProfileSyncPatch(sentQueue){
+  const sentIds=new Set((sentQueue?.operations||[]).map(operation=>operation?.id).filter(Boolean));
+  if(!sentIds.size) return false;
   const current=readPendingProfileSyncPatch();
-  if(!current) return true;
-  if(Number(current.sequence||0)===Number(sentPatch?.sequence||0)){
-    writePendingProfileSyncPatch(null);
-    return true;
-  }
-  return false;
+  current.operations=current.operations.filter(operation=>!sentIds.has(operation.id));
+  writePendingProfileSyncPatch(current);
+  return true;
 }

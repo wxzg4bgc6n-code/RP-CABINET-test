@@ -1,12 +1,12 @@
-/* Основное приложение v76. Прогресс хранится только по контексту; облако изолировано от старых сборок. */
+/* Основное приложение v79. Firebase — единственный источник истины; локально хранится кэш и очередь реальных действий. */
 window.__profileBootComplete=false;
 document.body.classList.add('profile-booting');
-let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:0,initialName:''}};
+let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},account:{createdAt:0,initialName:''}};
 let displayedProgress=0;
 let progressAnimationFrame=null;
 let progressAnimationTarget=null;
 const $=s=>document.querySelector(s);
-const PROFILE_CONTEXT_CHECKPOINT_KEY='kiri:rp-cabinet:v76:context-checkpoint';
+const PROFILE_CONTEXT_CHECKPOINT_KEY='kiri:rp-cabinet:v79:context-checkpoint';
 
 function profileContextValues(state){
   return {
@@ -199,21 +199,22 @@ function ensureProfileCreatedAt(){
   return 0;
 }
 function save(){
-
-
   persistProgressForState(S);
   persistSelectedLevelForState(S);
-  const passiveLoad = !!(window.__cloudApplyingRemote || window.__profileHydrating || window.__cloudAttaching || window.__cloudInternalWrite);
+  const passiveLoad=!!(window.__cloudApplyingRemote||window.__profileHydrating||window.__cloudAttaching||window.__cloudInternalWrite);
   if(!passiveLoad) rememberProfileContextCheckpoint(S);
   const normalized=normalizeProfileData(S);
-  if(normalized && normalized.ready) S=normalized;
-  if(!passiveLoad){
+  if(normalized&&normalized.ready) S=normalized;
+
+  /* Только действие, совершённое после завершения загрузки, становится
+   * облачной операцией. Само открытие страницы, чтение кэша и входящий
+   * snapshot никогда не формируют запись в Firebase. */
+  if(!passiveLoad&&window.__profileBootComplete){
     queuePendingProfileSyncDelta(window.__profileSyncBaselineState,S,false);
-    const now=Date.now();
-    touchChangedProfileSyncGroups(S,now);
-    S.updatedAt=Math.max(now,...Object.values(S.syncFieldUpdatedAt||{}).map(value=>Number(value||0)).filter(Number.isFinite));
+    S.updatedAt=Date.now();
     window.__cloudLocalDirtyAt=S.updatedAt;
   }
+
   rememberProfileSyncBaseline(S);
   const data=JSON.stringify(S);
   try{
@@ -224,10 +225,11 @@ function save(){
     }else{
       localStorage.setItem(VERSION_KEY,data);
     }
-  }catch(e){
-    console.warn('Profile save failed',e);
+  }catch(e){console.warn('Profile save failed',e);}
+
+  if(window.CloudSync&&window.__profileBootComplete&&!passiveLoad&&!window.__cloudSigningOut){
+    window.CloudSync.requestFlush();
   }
-  if(window.CloudSync && window.__profileBootComplete && !passiveLoad && !window.__cloudSigningOut) window.CloudSync.scheduleSave();
 }
 function normalizeProfileData(d){
   if(!d || typeof d!=='object') return null;
@@ -335,7 +337,7 @@ function normalizeProfileData(d){
   merged.account.createdAt=mergedCreatedAt || 0;
   if(!merged.account.initialName) merged.account.initialName=merged.name||'';
   if(!merged.updatedAt) merged.updatedAt=Date.now();
-  normalizeProfileSyncTimes(merged,d);
+  delete merged.syncFieldUpdatedAt;
   if(!merged.cloud || typeof merged.cloud!=='object') merged.cloud={enabled:false,provider:'local',uid:'',lastSync:0};
   return merged;
 }
@@ -372,6 +374,9 @@ function profileStorageScore(data,key){
 function load(){
   const primaryKeys=[KEY, VERSION_KEY, PROFILE_BACKUP_KEY];
   const legacyKeys=[
+    'rp_panel_account_profile_V77_STABLE',
+    'rp_panel_v77_isolated_state_cache',
+    'rp_panel_account_profile_V77_BACKUP',
     'rp_panel_account_profile_STABLE',
     'rp_panel_account_profile_BACKUP_STABLE',
     'rp_panel_v156_fast_boot_safe_cache',
@@ -435,7 +440,6 @@ function load(){
     const recoveredContext=recoverProfileContextState(S,null);
     if(recoveredContext.recovered){
       S=recoveredContext.state;
-      queueProfileGroupSyncMutation('context',profileContextValues(S));
     }
     const allRecoveryKeys=[...new Set([...primaryKeys,...legacyKeys])];
     const activeName=String(S.name||'').trim().toLocaleLowerCase('ru-RU');
@@ -796,7 +800,7 @@ function rememberGoogleProfileInfo(user){
   if(user.email) S.cloud.googleEmail=user.email;
   if(user.displayName) S.cloud.googleName=user.displayName;
   const repairedCreatedAt=profileTimestampMs(S.account.createdAt);
-  if(isUsableProfileState(S) && repairedCreatedAt && repairedCreatedAt!==previousCreatedAt){
+  if(isUsableProfileState(S) && window.__profileBootComplete && !window.__profileHydrating && repairedCreatedAt && repairedCreatedAt!==previousCreatedAt){
     queueProfileGroupSyncMutation('account',{account:JSON.parse(JSON.stringify(S.account))});
   }
 }
@@ -975,8 +979,8 @@ const FIREBASE_CONFIG={
   appId:"1:686693815982:web:94fd42fdab2ddab6c53f3f",
   measurementId:"G-250D37LHFT"
 };
-const CLOUD_PROFILE_ID='default_v77';
-const LEGACY_CLOUD_PROFILE_ID='default';
+const CLOUD_PROFILE_ID='default_v79_realtime';
+const LEGACY_CLOUD_PROFILE_IDS=['default_v77','default'];
 const CLOUD_DEVICE_KEY='rp_cabinet_cloud_device_id';
 function getCloudDeviceId(){
   try{
@@ -994,8 +998,8 @@ function deviceLabel(){
   if(/Linux/i.test(ua)) return 'Linux';
   return 'Браузер';
 }
+window.__cloudSessionId='session_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);
 function cloudPath(uid){return `users/${uid}/profiles/${CLOUD_PROFILE_ID}`;}
-function legacyCloudPath(uid){return `users/${uid}/profiles/${LEGACY_CLOUD_PROFILE_ID}`;}
 function setCloudStatus(mode,title,desc,meta){
   const el=$('#cloudSyncStatus');
   if(el){
@@ -1008,9 +1012,10 @@ function setCloudStatus(mode,title,desc,meta){
   const googleBtn=$('#cloudGoogleLogin');
   const logoutBtn=$('#cloudLogout');
   const actions=$('#cloudSyncActions');
-  if(googleBtn) googleBtn.classList.toggle('is-hidden', mode==='on');
-  if(logoutBtn) logoutBtn.classList.toggle('is-hidden', mode!=='on');
-  if(actions) actions.classList.toggle('cloud-connected', mode==='on');
+  const authenticated=!!(window.CloudSync&&window.CloudSync.user);
+  if(googleBtn) googleBtn.classList.toggle('is-hidden',authenticated);
+  if(logoutBtn) logoutBtn.classList.toggle('is-hidden',!authenticated);
+  if(actions) actions.classList.toggle('cloud-connected',authenticated);
 }
 function formatSyncTime(ts){
   if(!ts) return 'ещё не было';
@@ -1020,9 +1025,12 @@ function renderCloudSyncStatus(){
   const cloud=S.cloud||{};
   document.body.classList.toggle('cloud-auth-ready',!!(window.CloudSync && (window.CloudSync.authChecked || !window.CloudSync.ready)));
   document.body.classList.toggle('cloud-authenticated',!!(window.CloudSync && window.CloudSync.user));
-  if(window.CloudSync && window.CloudSync.user){
+  if(window.CloudSync && window.CloudSync.user && window.CloudSync.lastError){
+    const error=window.CloudSync.lastError;
+    setCloudStatus('error',error.title||'Ошибка синхронизации',error.desc||'Локальные действия сохранены и будут отправлены повторно.',error.meta||'');
+  }else if(window.CloudSync && window.CloudSync.user){
     const email=window.CloudSync.user.email||'Google аккаунт';
-    setCloudStatus('on','Синхронизировано',`Google: ${email}. Профиль автоматически обновляется между устройствами.`,`Последняя синхронизация: ${formatSyncTime(cloud.lastSync)} · Устройство: ${deviceLabel()}`);
+    setCloudStatus('on','Синхронизация в реальном времени',`Google: ${email}. Изменения Firebase сразу приходят на все открытые устройства.`,`Последняя полученная версия: ${formatSyncTime(cloud.lastSync)} · Устройство: ${deviceLabel()}`);
   }else if(window.CloudSync && window.CloudSync.ready){
     setCloudStatus('off','Не подключена','Профиль хранится только на этом устройстве. Войди через Google, чтобы включить автоматическую синхронизацию.','Локальный режим: между ПК и телефоном данные не обновляются.');
   }else{
@@ -1059,6 +1067,7 @@ function selectCloudProfileState(cloudDoc){
 }
 
 function finishProfileBoot(){
+  if(window.__profileBootComplete && !document.documentElement.classList.contains('profile-booting') && !document.body.classList.contains('profile-booting')) return;
   window.__profileBootComplete=true;
   document.body.classList.remove('profile-booting');
   document.documentElement.classList.remove('profile-booting');
@@ -1074,14 +1083,18 @@ window.CloudSync={
   db:null,
   user:null,
   unsub:null,
-  saveTimer:null,
-  saveAgainRequested:false,
-  showConnectedAfterSave:false,
-  lastCloudRevision:0,
+  flushTimer:null,
+  flushing:false,
+  flushAgain:false,
+  attaching:false,
+  cloudDocumentReady:false,
+  lastAppliedRevision:0,
+  canonicalState:null,
+  lastError:null,
   async init(){
     try{
       if(!window.firebase) throw new Error('Firebase SDK не загрузился');
-      this.app=firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+      this.app=firebase.apps&&firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);
       this.auth=firebase.auth();
       this.db=firebase.firestore();
       this.ready=true;
@@ -1113,8 +1126,11 @@ window.CloudSync={
     try{
       window.__cloudSigningOut=true;
       if(this.unsub){this.unsub();this.unsub=null;}
+      clearTimeout(this.flushTimer);
+      this.cloudDocumentReady=false;
+      this.canonicalState=null;
+      this.lastAppliedRevision=0;
       this.user=null;
-      clearTimeout(this.saveTimer);
       await this.auth?.signOut();
       S.cloud={enabled:false,provider:'local',uid:'',lastSync:S.cloud?.lastSync||0};
       window.__profileHydrating=true;
@@ -1130,255 +1146,265 @@ window.CloudSync={
   },
   async onAuth(user){
     this.authChecked=true;
+    document.body.classList.add('cloud-auth-ready');
     this.user=user||null;
     if(!user){
+      if(this.unsub){this.unsub();this.unsub=null;}
+      this.cloudDocumentReady=false;
       renderCloudSyncStatus();
       finishProfileBoot();
       return;
     }
+    window.__profileHydrating=true;
     rememberGoogleProfileInfo(user);
+    window.__profileHydrating=false;
     await this.attachProfile();
     finishProfileBoot();
   },
   profileRef(){return this.db.doc(cloudPath(this.user.uid));},
-  async attachProfile(){
-    if(!this.user || !this.db) return;
-    window.__cloudAttaching=true;
-    let needsCloudWrite=false;
+  legacyProfileRefs(){return LEGACY_CLOUD_PROFILE_IDS.map(id=>this.db.doc(`users/${this.user.uid}/profiles/${id}`));},
+  async readLegacyCloudSeed(){
+    for(const ref of this.legacyProfileRefs()){
+      try{
+        const snap=await ref.get();
+        if(!snap.exists) continue;
+        const source=selectCloudProfileState(snap.data()||{});
+        if(isRecoverableProfileState(source)) return normalizeProfileData(source);
+      }catch(e){console.warn('Legacy cloud read failed',e);}
+    }
+    return null;
+  },
+  cloudEnvelope(state,revision,sourceAction,syncMeta={}){
+    const now=Date.now();
+    const device=getCloudDeviceId();
+    const session=window.__cloudSessionId;
+    const safe=cloudSafeState(state);
+    safe.updatedAt=now;
+    safe.cloud=Object.assign({},safe.cloud||{}, {
+      enabled:true,
+      provider:'google',
+      uid:this.user.uid,
+      lastSync:now,
+      lastCloudUpdatedAt:now,
+      googlePhotoURL:this.user.photoURL||safe.cloud?.googlePhotoURL||'',
+      googleEmail:this.user.email||safe.cloud?.googleEmail||''
+    });
+    return {
+      profileId:CLOUD_PROFILE_ID,
+      ownerUid:this.user.uid,
+      schemaVersion:79,
+      syncRevision:revision,
+      targetRevisions:Object.assign({},syncMeta.targetRevisions||{}),
+      targetMutationIds:Object.assign({},syncMeta.targetMutationIds||{}),
+      processedMutationIds:Array.isArray(syncMeta.processedMutationIds)?syncMeta.processedMutationIds.slice(-600):[],
+      updatedAt:now,
+      sourceDevice:device,
+      sourceSession:session,
+      sourceAction:sourceAction||'mutation',
+      state:safe,
+      recoveryState:safe,
+      clientVersion:79,
+      devices:{[device]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
+    };
+  },
+  async bootstrapDocument(seedState){
+    if(!this.user||!this.db||!isUsableProfileState(seedState)) return null;
     const ref=this.profileRef();
-    setCloudStatus('wait','Подключаю профиль','Сначала читаю облачный профиль.','UID: '+this.user.uid.slice(0,8)+'…');
-    try{
-      const snap=await ref.get();
-      const local=normalizeProfileData(S);
-      let cloudDoc=snap.exists ? (snap.data()||{}) : null;
-      let migratedFromLegacyCloud=false;
-      /*
-       * Критическое правило v77: старый облачный документ никогда не имеет
-       * права перезаписывать уже настроенный локальный профиль. Legacy читаем
-       * только когда на устройстве вообще нет восстановимого профиля.
-       */
-      if(!cloudDoc && !(local && local.ready)){
-        const legacySnap=await this.db.doc(legacyCloudPath(this.user.uid)).get();
-        if(legacySnap.exists){
-          cloudDoc=legacySnap.data()||{};
-          migratedFromLegacyCloud=true;
-        }
-      }
-      const rawCloudState=selectCloudProfileState(cloudDoc);
-      const cloud=isRecoverableProfileState(rawCloudState) ? normalizeProfileData(rawCloudState) : null;
-      this.lastCloudRevision=snap.exists ? Number(cloudDoc?.syncRevision||0) : 0;
-      const localComplete=!!(local && local.ready && local.org && local.section && local.level && local.configured);
-      const cloudComplete=!!(cloud && cloud.ready && cloud.org && cloud.section && cloud.level && cloud.configured);
-      const localUpdated=Number(local?.updatedAt||0);
-      const cloudUpdated=Number(cloud?.updatedAt||cloudDoc?.state?.updatedAt||0);
-      const hasPendingLocal=profileSyncPatchHasChanges(readPendingProfileSyncPatch());
-
-      if(localComplete && (!cloudComplete || hasPendingLocal || localUpdated>=cloudUpdated)){
-        S=local;
-        rememberGoogleProfileInfo(this.user);
-        queuePendingProfileSyncDelta({},S,true);
-        needsCloudWrite=true;
-      }else if(cloudComplete){
-        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision) || migratedFromLegacyCloud;
-      }else if(local && local.ready){
-        S=local;
-        rememberGoogleProfileInfo(this.user);
-        S.cloud=Object.assign({},S.cloud||{}, {
-          enabled:true,
-          provider:'google',
-          uid:this.user.uid,
-          googlePhotoURL:this.user.photoURL||S.cloud?.googlePhotoURL||'',
-          googleEmail:this.user.email||S.cloud?.googleEmail||''
-        });
-        queuePendingProfileSyncDelta({},S,true);
-        needsCloudWrite=true;
-      }else if(cloud && cloud.ready){
-        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision) || migratedFromLegacyCloud;
-      }
-    }catch(e){
-      console.warn('Cloud attach failed', e);
-      setCloudStatus('error','Ошибка облака','Не удалось прочитать профиль из Firebase.',String(e.message||e).slice(0,120));
-    }
-    window.__cloudAttaching=false;
-    if(needsCloudWrite){
-      window.__profileBootComplete=true;
-      this.showConnectedAfterSave=true;
-      this.scheduleSave();
-    }
-    if(this.unsub) this.unsub();
-    this.unsub=ref.onSnapshot(doc=>{
-      if(!doc.exists || window.__cloudSaving || window.__cloudAttaching) return;
-      const data=doc.data()||{};
-      const remoteUpdated=data.state?.updatedAt || 0;
-      const remoteRevision=Number(data.syncRevision||0);
-      if(!remoteUpdated) return;
-      if(data.sourceDevice===getCloudDeviceId()){
-        this.lastCloudRevision=Math.max(this.lastCloudRevision,remoteRevision);
-        if(remoteUpdated){
-          if(!S.cloud || typeof S.cloud!=='object') S.cloud={};
-          S.cloud.lastCloudUpdatedAt=remoteUpdated;
-          S.cloud.lastSync=Date.now();
-        }
-        renderCloudSyncStatus();
+    let result=null;
+    await this.db.runTransaction(async transaction=>{
+      const current=await transaction.get(ref);
+      if(current.exists){
+        result=current.data()||{};
         return;
       }
-      const remoteSource=selectCloudProfileState(data);
-      if(!isRecoverableProfileState(remoteSource)) return;
-      const remote=normalizeProfileData(remoteSource);
-      if(!remote || !remote.ready) return;
-      const keptLocal=this.applyRemoteState(remote, remoteUpdated, true, remoteRevision);
-      if(keptLocal) this.scheduleSave();
-    }, err=>{
-      console.warn('Cloud snapshot failed',err);
-      this.showConnectedAfterSave=false;
-      setCloudStatus('error','Ошибка синхронизации','Не удалось слушать изменения Firebase.',String(err.message||err).slice(0,120));
+      const normalized=normalizeProfileData(seedState)||seedState;
+      const envelope=this.cloudEnvelope(normalized,1,'bootstrap');
+      transaction.set(ref,envelope,{merge:false});
+      result=envelope;
     });
+    return result;
+  },
+  async attachProfile(){
+    if(!this.user||!this.db||this.attaching) return;
+    this.attaching=true;
+    this.lastError=null;
+    window.__cloudAttaching=true;
+    setCloudStatus('wait','Подключаю профиль','Получаю последнюю версию из Firebase.','Локальный кэш не отправляется в облако при открытии страницы.');
+    let initialData=null;
+    try{
+      const ref=this.profileRef();
+      const snap=await ref.get();
+      if(snap.exists) initialData=snap.data()||{};
+      if(!initialData){
+        const legacySeed=await this.readLegacyCloudSeed();
+        const localSeed=normalizeProfileData(S);
+        const seed=isUsableProfileState(legacySeed)?legacySeed:(isUsableProfileState(localSeed)?localSeed:null);
+        if(seed) initialData=await this.bootstrapDocument(seed);
+      }
+      const initialSource=selectCloudProfileState(initialData);
+      if(isRecoverableProfileState(initialSource)){
+        const revision=Number(initialData?.syncRevision||0);
+        this.cloudDocumentReady=true;
+        this.applyCanonicalState(initialSource,revision,true);
+      }else{
+        this.cloudDocumentReady=false;
+      }
+      this.subscribeRealtime();
+    }catch(e){
+      console.warn('Cloud attach failed',e);
+      this.cloudDocumentReady=false;
+      this.lastError={title:'Облако временно недоступно',desc:'Показываю локальный кэш. После восстановления сети сначала будет загружена последняя версия Firebase.',meta:String(e.message||e).slice(0,120)};
+    }
+    this.attaching=false;
+    window.__cloudAttaching=false;
     renderCloudSyncStatus();
-    
+    if(this.cloudDocumentReady&&profileSyncPatchHasChanges(readPendingProfileSyncPatch())) this.requestFlush();
   },
-  scheduleSave(){
-    if(!this.ready || !this.user || !window.__profileBootComplete || !isUsableProfileState(S) || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
-    if(window.__cloudSaving){
-      this.saveAgainRequested=true;
-      return;
-    }
-    clearTimeout(this.saveTimer);
-    this.saveTimer=setTimeout(()=>this.saveNow(false),220);
+  subscribeRealtime(){
+    if(!this.user||!this.db) return;
+    if(this.unsub){this.unsub();this.unsub=null;}
+    const ref=this.profileRef();
+    this.unsub=ref.onSnapshot({includeMetadataChanges:true},doc=>{
+      if(!doc.exists){
+        this.cloudDocumentReady=false;
+        const canBootstrap=isUsableProfileState(S)||profileSyncPatchHasChanges(readPendingProfileSyncPatch());
+        if(canBootstrap&&!this.attaching&&navigator.onLine!==false) this.resume();
+        return;
+      }
+      const data=doc.data()||{};
+      const revision=Number(data.syncRevision||0);
+      const source=selectCloudProfileState(data);
+      if(!isRecoverableProfileState(source)) return;
+      this.cloudDocumentReady=true;
+      this.lastError=null;
+      if(revision<this.lastAppliedRevision) return;
+      if(revision===this.lastAppliedRevision&&this.canonicalState) return;
+      this.applyCanonicalState(source,revision,true);
+    },err=>{
+      console.warn('Cloud snapshot failed',err);
+      this.lastError={title:'Ошибка синхронизации',desc:'Не удалось слушать изменения Firebase. Локальные действия останутся в очереди.',meta:String(err.message||err).slice(0,120)};
+      renderCloudSyncStatus();
+    });
   },
-  applyRemoteState(remote, remoteUpdated, silent, remoteRevision=0){
-    if(!isUsableProfileState(remote) || !this.user) return false;
-    const recoveredContext=recoverProfileContextState(remote,S);
-    if(recoveredContext.recovered){
-      queueProfileGroupSyncMutation('context',profileContextValues(recoveredContext.state));
-    }
-    const incoming=normalizeProfileData(recoveredContext.state);
-    const remoteCreatedAt=profileTimestampMs(incoming?.account?.createdAt);
-    const stableCreatedAt=earliestProfileTimestamp(S?.account?.createdAt,incoming?.account?.createdAt);
+  applyCanonicalState(remote,revision,silent){
+    if(!isRecoverableProfileState(remote)||!this.user) return;
+    const canonical=normalizeProfileData(remote);
+    if(!canonical) return;
+    const stableCreatedAt=earliestProfileTimestamp(canonical?.account?.createdAt,S?.account?.createdAt);
     if(stableCreatedAt){
-      if(!incoming.account || typeof incoming.account!=='object') incoming.account={};
-      incoming.account.createdAt=stableCreatedAt;
+      if(!canonical.account||typeof canonical.account!=='object') canonical.account={};
+      canonical.account.createdAt=stableCreatedAt;
     }
-    if(stableCreatedAt && remoteCreatedAt!==stableCreatedAt){
-      const beforeDateRepair=JSON.parse(JSON.stringify(incoming));
-      beforeDateRepair.account.createdAt=remoteCreatedAt||0;
-      queuePendingProfileSyncDelta(beforeDateRepair,incoming,false);
-    }
+    this.lastError=null;
+    this.canonicalState=cloneProfileSyncValue(canonical)||canonical;
+    this.lastAppliedRevision=Math.max(this.lastAppliedRevision,Number(revision||0));
     const pending=readPendingProfileSyncPatch();
-    const resolved=normalizeProfileData(applyProfileTaskUiLocks(applyProfileSyncPatch(incoming,pending)));
-    window.__cloudApplyingRemote=true;
-    S=resolved;
-    rememberGoogleProfileInfo(this.user);
-    S.cloud=Object.assign({},S.cloud||{}, {
+    const resolved=normalizeProfileData(applyProfileSyncPatch(canonical,pending))||canonical;
+    resolved.cloud=Object.assign({},resolved.cloud||{}, {
       enabled:true,
       provider:'google',
       uid:this.user.uid,
       lastSync:Date.now(),
-      lastCloudUpdatedAt:remoteUpdated || Date.now(),
-      googlePhotoURL:S.cloud?.googlePhotoURL || this.user.photoURL || '',
-      googleEmail:this.user.email || S.cloud?.googleEmail || ''
+      lastCloudUpdatedAt:Number(canonical.updatedAt||Date.now()),
+      googlePhotoURL:this.user.photoURL||resolved.cloud?.googlePhotoURL||'',
+      googleEmail:this.user.email||resolved.cloud?.googleEmail||''
     });
-    this.lastCloudRevision=Math.max(this.lastCloudRevision,Number(remoteRevision||0));
+    window.__cloudApplyingRemote=true;
+    S=resolved;
+    rememberGoogleProfileInfo(this.user);
     save();
-    const keptLocal=profileSyncPatchHasChanges(pending);
-    window.__cloudLocalDirtyAt=keptLocal ? Math.max(Date.now(),Number(S.updatedAt||0)) : 0;
     window.__cloudApplyingRemote=false;
-    render();
-    applyDashTab();
-    renderCloudSyncStatus();
-    if(!silent) showToast('Профиль обновлён','Данные подтянуты из облака');
-    return keptLocal;
-  },
-  async saveNow(force){
-    if(!this.ready || !this.user || !window.__profileBootComplete || !isUsableProfileState(S) || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
-    if(window.__cloudSaving){
-      this.saveAgainRequested=true;
-      return;
-    }
-    let pending=readPendingProfileSyncPatch();
-    if(force && !profileSyncPatchHasChanges(pending)) pending=queuePendingProfileSyncDelta({},S,true);
-    if(!profileSyncPatchHasChanges(pending)){
-      window.__cloudLocalDirtyAt=0;
-      return;
-    }
-    try{
-      this.saveAgainRequested=false;
-      window.__cloudSaving=true;
-      const ref=this.profileRef();
-      const now=Date.now();
-      rememberGoogleProfileInfo(this.user);
-      const currentDevice=getCloudDeviceId();
-      const writeId=currentDevice+':'+now+':'+Math.random().toString(36).slice(2,9);
-      let committedState=null;
-      let committedRevision=0;
-      await this.db.runTransaction(async transaction=>{
-        const serverSnap=await transaction.get(ref);
-        const serverData=serverSnap.exists ? (serverSnap.data()||{}) : {};
-        const serverState=selectCloudProfileState(serverData)||{};
-        const mergedRaw=applyProfileSyncPatch(serverState,pending);
-        const stableCreatedAt=earliestProfileTimestamp(serverState?.account?.createdAt,S?.account?.createdAt,mergedRaw?.account?.createdAt);
-        if(stableCreatedAt){
-          if(!mergedRaw.account || typeof mergedRaw.account!=='object') mergedRaw.account={};
-          mergedRaw.account.createdAt=stableCreatedAt;
-        }
-        const normalized=normalizeProfileData(mergedRaw)||mergedRaw;
-        normalized.cloud=Object.assign({},normalized.cloud||{}, {
-          enabled:true,
-          provider:'google',
-          uid:this.user.uid,
-          lastSync:now,
-          lastCloudUpdatedAt:now,
-          googlePhotoURL:S.cloud?.googlePhotoURL||this.user.photoURL||'',
-          googleEmail:this.user.email||S.cloud?.googleEmail||''
-        });
-        normalized.updatedAt=now;
-        committedState=cloudSafeState(normalized);
-        committedRevision=Number(serverData.syncRevision||0)+1;
-        transaction.set(ref,{
-          profileId:CLOUD_PROFILE_ID,
-          ownerUid:this.user.uid,
-          updatedAt:now,
-          syncRevision:committedRevision,
-          writeId,
-          sourceDevice:currentDevice,
-          state:committedState,
-          recoveryState:committedState,
-          clientVersion:77,
-          devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
-        },{merge:true});
-      });
-      acknowledgePendingProfileSyncPatch(pending);
-      acknowledgeProfileTaskUiLocks(committedState);
-      const remaining=readPendingProfileSyncPatch();
-      window.__cloudApplyingRemote=true;
-      S=normalizeProfileData(applyProfileTaskUiLocks(applyProfileSyncPatch(committedState,remaining)));
-      rememberGoogleProfileInfo(this.user);
-      S.cloud=Object.assign({},S.cloud||{}, {lastSync:now,lastCloudUpdatedAt:now});
-      save();
-      window.__cloudApplyingRemote=false;
-      this.lastCloudRevision=Math.max(this.lastCloudRevision,committedRevision);
-      window.__cloudLocalDirtyAt=profileSyncPatchHasChanges(remaining)?Date.now():0;
-      window.__cloudSaving=false;
+    if(window.__profileBootComplete){
       render();
       applyDashTab();
-      renderCloudSyncStatus();
-      if(this.showConnectedAfterSave){
-        this.showConnectedAfterSave=false;
-        showToast('Облако подключено','Профиль подтверждённо сохранён в Firebase');
-      }
-      const needsAnotherSave=this.saveAgainRequested || profileSyncPatchHasChanges(remaining);
-      this.saveAgainRequested=false;
-      if(needsAnotherSave) this.scheduleSave();
-      if(force) showToast('Синхронизировано','Профиль сохранён в облаке');
-    }catch(e){
-      window.__cloudSaving=false;
-      console.warn('Cloud save failed',e);
-      this.showConnectedAfterSave=false;
-      setCloudStatus('error','Ошибка синхронизации','Не удалось записать данные в Firestore. Проверь правила доступа.',String(e.message||e).slice(0,120));
-      if(this.saveAgainRequested || profileSyncPatchHasChanges(readPendingProfileSyncPatch())){
-        this.saveAgainRequested=false;
-        this.scheduleSave();
-      }
     }
+    renderCloudSyncStatus();
+    if(!silent) showToast('Профиль обновлён','Изменения получены с другого устройства');
+  },
+  requestFlush(){
+    if(!this.ready||!this.user||!window.__profileBootComplete||window.__cloudApplyingRemote||window.__cloudAttaching||window.__cloudSigningOut) return;
+    if(!profileSyncPatchHasChanges(readPendingProfileSyncPatch())) return;
+    if(!this.cloudDocumentReady){
+      this.resume();
+      return;
+    }
+    if(this.flushing){this.flushAgain=true;return;}
+    clearTimeout(this.flushTimer);
+    this.flushTimer=setTimeout(()=>this.flushNow(),70);
+  },
+  scheduleSave(){this.requestFlush();},
+  async flushNow(){
+    if(this.flushing){this.flushAgain=true;return;}
+    if(!this.ready||!this.user||!this.cloudDocumentReady||!window.__profileBootComplete) return;
+    const batch=readPendingProfileSyncPatch();
+    if(!profileSyncPatchHasChanges(batch)) return;
+    this.flushing=true;
+    window.__cloudSaving=true;
+    this.flushAgain=false;
+    let committedState=null;
+    let committedRevision=0;
+    try{
+      const ref=this.profileRef();
+      await this.db.runTransaction(async transaction=>{
+        const snap=await transaction.get(ref);
+        const data=snap.exists?(snap.data()||{}):{};
+        const serverSource=selectCloudProfileState(data);
+        const serverState=isRecoverableProfileState(serverSource)
+          ? serverSource
+          : (this.canonicalState||S||{});
+        committedRevision=Number(data.syncRevision||0)+1;
+        const guarded=applyProfileSyncPatchWithGuards(
+          serverState,
+          batch,
+          {
+            targetRevisions:data.targetRevisions||{},
+            targetMutationIds:data.targetMutationIds||{},
+            processedMutationIds:data.processedMutationIds||[]
+          },
+          committedRevision
+        );
+        const normalized=normalizeProfileData(guarded.state)||guarded.state;
+        const stableCreatedAt=earliestProfileTimestamp(serverState?.account?.createdAt,S?.account?.createdAt,normalized?.account?.createdAt);
+        if(stableCreatedAt){
+          if(!normalized.account||typeof normalized.account!=='object') normalized.account={};
+          normalized.account.createdAt=stableCreatedAt;
+        }
+        const envelope=this.cloudEnvelope(normalized,committedRevision,'user-mutation',{
+          targetRevisions:guarded.targetRevisions,
+          targetMutationIds:guarded.targetMutationIds,
+          processedMutationIds:guarded.processedMutationIds
+        });
+        committedState=envelope.state;
+        transaction.set(ref,envelope,{merge:true});
+      });
+      acknowledgePendingProfileSyncPatch(batch);
+      this.cloudDocumentReady=true;
+      this.applyCanonicalState(committedState,committedRevision,true);
+      const remaining=readPendingProfileSyncPatch();
+      this.flushing=false;
+      window.__cloudSaving=false;
+      renderCloudSyncStatus();
+      if(this.flushAgain||profileSyncPatchHasChanges(remaining)){
+        this.flushAgain=false;
+        this.requestFlush();
+      }
+    }catch(e){
+      this.flushing=false;
+      window.__cloudSaving=false;
+      console.warn('Realtime cloud mutation failed',e);
+      this.lastError={title:'Изменения ждут отправки',desc:'Firebase временно не принял операцию. Она сохранена и будет повторена без отката интерфейса.',meta:String(e.message||e).slice(0,120)};
+      renderCloudSyncStatus();
+      clearTimeout(this.flushTimer);
+      this.flushTimer=setTimeout(()=>this.requestFlush(),2500);
+    }
+  },
+  async resume(){
+    if(!this.user||!this.db||this.attaching) return;
+    if(!this.cloudDocumentReady){
+      await this.attachProfile();
+      if(!window.__profileBootComplete) finishProfileBoot();
+    }
+    this.requestFlush();
   }
 };
 
@@ -1407,7 +1433,7 @@ $('#createProfile').onclick=()=>{
   const name=$('#firstName').value.trim();
   if(!name){$('#firstError').classList.add('show');return}
   $('#firstError').classList.remove('show');
-  S={ready:true,name,project:$('#firstProject').value,path:document.querySelector('[name="path"]:checked').value,style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:Date.now(),initialName:name}};
+  S={ready:true,name,project:$('#firstProject').value,path:document.querySelector('[name="path"]:checked').value,style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},account:{createdAt:Date.now(),initialName:name}};
   save();
   render();
 };
@@ -1853,13 +1879,14 @@ function applyDashTab(){
 
 load();
 
-
 render();
 applyDashTab();
 renderCloudSyncStatus();
-if(isUsableProfileState(S) && hasCompleteProfileContext(S)) finishProfileBoot();
+/* При подключённом Google интерфейс остаётся скрытым до чтения Firebase.
+ * Поэтому обновление старого телефона не успевает показать или отправить
+ * локальный кэш поверх данных, сделанных на компьютере. */
 CloudSync.init();
-window.addEventListener('online',()=>CloudSync.scheduleSave());
+window.addEventListener('online',()=>CloudSync.resume());
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible') CloudSync.scheduleSave();
+  if(document.visibilityState==='visible') CloudSync.resume();
 });

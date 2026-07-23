@@ -1,9 +1,9 @@
 {
-  "output": "RP_CABINET_v78_UNLIMITED_SCREENSHOTS",
-  "sourceBytes": 5350982,
-  "indexBytes": 21676,
-  "cssFiles": 9,
-  "scriptFiles": 28,
+  "output": "RP_CABINET_v79_REALTIME_CLOUD_SYNC",
+  "sourceBytes": 5371696,
+  "indexBytes": 21834,
+  "cssFiles": 11,
+  "scriptFiles": 33,
   "templates": [
     "academyInfoTemplate",
     "genericDepartmentInfoTemplate",
@@ -16,28 +16,37 @@
   "imageBytes": 4250049,
   "mobileLayout": "css/responsive/mobile.css",
   "mobileBehavior": "js/features/mobile-navigation.js",
-  "syncConflictResolver": "js/core/sync-merge.js",
-  "syncStrategy": "isolated v77 storage/cloud namespace retained + serialized per-task transactional patches",
-  "version": 78,
-  "progressSources": [
-    "Academy",
-    "MA",
-    "USAF",
-    "MP",
-    "DF",
-    "SD",
-    "ED"
+  "syncEngine": "js/core/sync-merge.js",
+  "syncStrategy": "Firebase canonical state + monotonic syncRevision + per-target revision guards + processed-operation deduplication + Firestore transactions + realtime onSnapshot + persisted targeted mutation queue",
+  "version": 79,
+  "label": "Realtime cloud sync",
+  "cloudProfile": "users/{uid}/profiles/default_v79_realtime",
+  "legacyMigration": [
+    "default_v77",
+    "default",
+    "v77 local cache keys"
   ],
+  "startupRule": "when Google is authenticated, cloud is read before UI is revealed; local cache never writes merely because the page opened or refreshed",
+  "realtimeRule": "all snapshots with a newer syncRevision are applied regardless of source device or browser tab",
+  "offlineRule": "only explicit user mutations are persisted and replayed over the latest cloud state after reconnection",
+  "conflictRule": "unrelated targets merge; an operation cannot overwrite a target changed after its baseRevision; causally newer same-session actions may supersede their own in-flight predecessor; already processed operation IDs are idempotent",
+  "progressSource": "progressByContext; tasks is only the current-context render mirror",
+  "progressAnimation": "same-target rerenders keep the active animation; changed targets continue from the visible value",
+  "maxFilesPerTask": null,
+  "fileCountLimit": "none (no fixed panel limit)",
+  "maxFileBytes": 15728640,
+  "proofRetentionDays": 8,
   "proofRequiredOnlyFor": [
     "Участие в СО",
     "Участие в ГМП"
   ],
-  "profileRecovery": "v77 local keys and default_v77 cloud document; one-time migration from legacy profile; complete context wins",
-  "progressAnimation": "same-target rerenders keep the active animation; changed targets continue from the visible value",
-  "progressChecks": "progressByContext is authoritative; every click updates the current context snapshot and enqueues the changed task",
-  "maxFilesPerTask": null,
-  "uploadAuth": "Firebase Identity Toolkit verification without Firebase Admin service credentials",
-  "label": "Unlimited screenshots",
-  "cloudBoot": "local complete context wins; legacy cloud only used without local profile; connected toast after confirmed Firestore write",
-  "fileCountLimit": "none (no fixed panel limit)"
+  "tests": [
+    "node syntax for every JS file",
+    "phone-to-PC and PC-to-phone targeted operation merge model",
+    "stale same-target mutation rejection and unrelated-target merge",
+    "processed-operation replay deduplication",
+    "causally newer same-target action after an in-flight predecessor",
+    "static startup/cloud path/revision/listener assertions"
+  ],
+  "browserSmoke": "Chromium dump-dom was unavailable in the container because the headless process did not exit; no claim of live Firebase end-to-end testing is made"
 }

@@ -1,4 +1,7 @@
-/* Постоянные ключи хранилища. Не менять из-за номера UI-версии. */
-const KEY='rp_panel_account_profile_V77_STABLE';
-const VERSION_KEY='rp_panel_v77_isolated_state_cache';
-const PROFILE_BACKUP_KEY='rp_panel_account_profile_V77_BACKUP';
+/*
+ * v79 меняет схему синхронизации, поэтому получает отдельный локальный кэш.
+ * Старые v77-ключи читаются только как источник одноразовой миграции.
+ */
+const KEY='rp_panel_account_profile_V79_REALTIME';
+const VERSION_KEY='rp_panel_v79_realtime_cache';
+const PROFILE_BACKUP_KEY='rp_panel_account_profile_V79_BACKUP';
