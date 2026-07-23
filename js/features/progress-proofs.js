@@ -3,6 +3,11 @@
   const rules=window.RP_PROOF_RULES||{isRequired:()=>true};
   const uploadProgress=new Map();
 
+  function configuredFileLimit(){
+    const value=Number(config.maxFilesPerTask);
+    return Number.isFinite(value)&&value>0?Math.floor(value):null;
+  }
+
   function esc(value){
     return String(value??'').replace(/[&<>"']/g,char=>({
       '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -113,7 +118,8 @@
     const proof=proofFor(task);
     const files=Array.isArray(proof.files)?proof.files:[];
     const progress=uploadProgress.get(task);
-    const canUpload=isServiceConfigured()&&!!authUser()&&files.length<Number(config.maxFilesPerTask||10);
+    const fileLimit=configuredFileLimit();
+    const canUpload=isServiceConfigured()&&!!authUser()&&(fileLimit===null||files.length<fileLimit);
     const status=required
       ? (files.length?`Загружено: ${files.length}`:'Ожидает скриншот')
       :'Подтверждение не требуется';
@@ -195,9 +201,9 @@
     if(!window.RPProofUploader?.upload) return showToast('Модуль загрузки не готов','Проверь сборку Vercel Blob Client');
     const current=proofFor(task);
     const existing=Array.isArray(current.files)?current.files:[];
-    const available=Math.max(0,Number(config.maxFilesPerTask||10)-existing.length);
-    const selected=files.slice(0,available);
-    if(!selected.length) return showToast('Лимит достигнут',`Для одного пункта можно загрузить до ${config.maxFilesPerTask||10} файлов`);
+    const fileLimit=configuredFileLimit();
+    const selected=fileLimit===null?files:files.slice(0,Math.max(0,fileLimit-existing.length));
+    if(!selected.length) return showToast('Лимит достигнут',`Для одного пункта можно загрузить до ${fileLimit} файлов`);
     try{
       const token=await authToken();
       const user=authUser();
@@ -234,7 +240,7 @@
       const store=ensureProofStore();
       store[task]={files:[...existing,...additions],updatedAt:Date.now()};
       save();
-      showToast('Скриншот загружен','Сохранён оригинал без обрезки');
+      showToast(additions.length===1?'Скриншот загружен':'Скриншоты загружены',additions.length===1?'Сохранён оригинал без обрезки':`Сохранено файлов: ${additions.length}`);
     }catch(error){
       console.warn('Proof upload failed',error);
       showToast('Не удалось загрузить',String(error.message||error).slice(0,140));
