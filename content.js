@@ -1,0 +1,99 @@
+/* Извлечено из v66. Порядок подключения сохранять. */
+#academy-kpp-exam .academy-test-question-head{
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  margin:0 0 10px!important;
+  padding:0 0 10px!important;
+  border-bottom:1px solid color-mix(in srgb,var(--accent) 18%,rgba(255,255,255,.08))!important;
+}
+body.academy-info-clean #departmentTestsContent #academy-kpp-exam .academy-test-question-head .question-text{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+#academy-kpp-exam .academy-test-answer-count{
+  flex:0 0 auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:26px!important;
+  padding:5px 9px!important;
+  border:1px solid color-mix(in srgb,var(--accent) 25%,rgba(255,255,255,.10))!important;
+  border-radius:999px!important;
+  background:rgba(0,0,0,.14)!important;
+  color:color-mix(in srgb,var(--accent) 74%,var(--text) 26%)!important;
+  font-size:11px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#academy-kpp-exam .academy-test-match-list li{
+  display:grid!important;
+  grid-template-columns:minmax(92px,auto) minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+#academy-kpp-exam .academy-test-match-list li b{
+  color:color-mix(in srgb,var(--accent) 78%,white 16%)!important;
+  font-size:13px!important;
+  font-weight:950!important;
+  line-height:1.25!important;
+}
+#academy-kpp-exam .academy-test-match-list li span{
+  color:var(--text)!important;
+  font-size:13px!important;
+  font-weight:820!important;
+  line-height:1.36!important;
+}
+#academy-kpp-exam .academy-test-text-answer-block{
+  display:grid!important;
+  gap:7px!important;
+}
+#academy-kpp-exam .academy-test-text-answer-label{
+  color:var(--muted)!important;
+  font-size:11px!important;
+  font-weight:950!important;
+  letter-spacing:.025em!important;
+  text-transform:uppercase!important;
+}
+#academy-kpp-exam .academy-test-text-answer{
+  margin:0!important;
+  border:1px solid rgba(255,255,255,.075)!important;
+  border-left:3px solid color-mix(in srgb,var(--accent) 72%,white 6%)!important;
+  border-radius:13px!important;
+  background:rgba(0,0,0,.14)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+  color:var(--text)!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  line-height:1.35!important;
+  user-select:all!important;
+  -webkit-user-select:all!important;
+  cursor:pointer!important;
+}
+#academy-kpp-exam .academy-test-text-answer.kiri-selected{
+  outline:2px solid color-mix(in srgb,var(--accent) 62%,transparent)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 0 0 4px color-mix(in srgb,var(--accent) 13%,transparent)!important;
+}
+#academy-kpp-exam .academy-test-text-answer-note{
+  color:var(--muted)!important;
+  font-size:12px!important;
+  font-weight:820!important;
+  line-height:1.35!important;
+}
+@media(max-width:620px){
+  #academy-kpp-exam .academy-test-question-head{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:8px!important;
+  }
+  #academy-kpp-exam .academy-test-answer-count{justify-self:start!important;}
+  #academy-kpp-exam .academy-test-match-list li{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:3px!important;
+  }
+}
