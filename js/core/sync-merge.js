@@ -123,6 +123,7 @@ function mergeSyncedProfileStates(localState,remoteState){
  * снимок телефона больше не заменяет весь прогресс целиком.
  */
 const PROFILE_PENDING_PATCH_KEY='kiri:rp-cabinet:v69:pending-sync-patch';
+const PROFILE_TASK_UI_LOCK_TTL=30000;
 
 function emptyProfileSyncPatch(){
   return {version:3,sequence:0,groups:{},progress:{contexts:{},levels:{}},proofs:{contexts:{}}};
@@ -279,11 +280,70 @@ function queuePendingProfileSyncDelta(baselineState,currentState,forceFull=false
 function queueProfileTaskSyncMutation(state,task,completed){
   const contextKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(state):'';
   if(!contextKey || !task) return readPendingProfileSyncPatch();
+  rememberProfileTaskUiLock(contextKey,task,completed===true);
   const delta=emptyProfileSyncPatch();
   delta.progress.contexts[contextKey]={[task]:completed===true};
   const merged=mergePendingProfileSyncPatches(readPendingProfileSyncPatch(),delta);
   writePendingProfileSyncPatch(merged);
   return merged;
+}
+
+function profileTaskUiLockStore(){
+  if(!window.__profileTaskUiLocks || typeof window.__profileTaskUiLocks!=='object'){
+    window.__profileTaskUiLocks={};
+  }
+  return window.__profileTaskUiLocks;
+}
+
+function rememberProfileTaskUiLock(contextKey,task,completed){
+  if(!contextKey || !task) return;
+  const store=profileTaskUiLockStore();
+  if(!store[contextKey] || typeof store[contextKey]!=='object') store[contextKey]={};
+  store[contextKey][task]={
+    value:completed===true,
+    expiresAt:Date.now()+PROFILE_TASK_UI_LOCK_TTL
+  };
+}
+
+function applyProfileTaskUiLocks(state){
+  const result=cloneProfileSyncValue(state)||{};
+  const store=profileTaskUiLockStore();
+  const now=Date.now();
+  if(!result.progressByContext || typeof result.progressByContext!=='object' || Array.isArray(result.progressByContext)){
+    result.progressByContext={};
+  }
+  Object.entries(store).forEach(([contextKey,tasks])=>{
+    const target=result.progressByContext[contextKey]&&typeof result.progressByContext[contextKey]==='object'
+      ? Object.assign({},result.progressByContext[contextKey])
+      : {};
+    Object.entries(tasks||{}).forEach(([task,lock])=>{
+      if(!lock || Number(lock.expiresAt||0)<=now){
+        delete tasks[task];
+        return;
+      }
+      if(lock.value===true) target[task]=true;
+      else delete target[task];
+    });
+    if(!Object.keys(tasks||{}).length) delete store[contextKey];
+    result.progressByContext[contextKey]=target;
+  });
+  const currentKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(result):'';
+  if(currentKey&&Object.prototype.hasOwnProperty.call(result.progressByContext,currentKey)){
+    result.tasks=cloneProfileSyncValue(result.progressByContext[currentKey])||{};
+  }
+  return result;
+}
+
+function acknowledgeProfileTaskUiLocks(committedState){
+  const store=profileTaskUiLockStore();
+  Object.entries(store).forEach(([contextKey,tasks])=>{
+    const committedTasks=committedState?.progressByContext?.[contextKey]||{};
+    Object.entries(tasks||{}).forEach(([task,lock])=>{
+      const committedValue=committedTasks?.[task]===true;
+      if(lock && committedValue===(lock.value===true)) delete tasks[task];
+    });
+    if(!Object.keys(tasks||{}).length) delete store[contextKey];
+  });
 }
 
 function queueProfileGroupSyncMutation(group,values){

@@ -8,8 +8,7 @@
     "check": "node --check api/upload.js && node --check api/reports.js && node --check api/proofs/delete.js && node --check api/cleanup.js"
   },
   "dependencies": {
-    "@vercel/blob": "^2.0.0",
-    "firebase-admin": "^13.4.0"
+    "@vercel/blob": "^2.0.0"
   },
   "devDependencies": {
     "esbuild": "^0.25.0"

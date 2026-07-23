@@ -160,10 +160,11 @@
       </div>
       <span class="proof-counter">${completed.length} из ${allTasks.length}</span>
     </div>
-    <div class="proof-service-note ${isServiceConfigured()?'is-ready':'is-wait'}">${esc(serviceNote)}</div>
-    ${completed.length
-      ? `<div class="proof-task-list">${completed.map(taskMarkup).join('')}</div>`
-      : '<div class="proof-empty">Сначала отметь выполненный пункт в прогрессе — он появится здесь.</div>'}
+    <div class="proof-guidance ${isServiceConfigured()?'is-ready':'is-wait'}">
+      <p class="proof-service-note">${esc(serviceNote)}</p>
+      ${completed.length?'':'<p class="proof-empty">Сначала отметь выполненный пункт в прогрессе — он появится здесь.</p>'}
+    </div>
+    ${completed.length?`<div class="proof-task-list">${completed.map(taskMarkup).join('')}</div>`:''}
     <div class="proof-report-actions">
       <div>
         <h4>Единая ссылка для Discord</h4>

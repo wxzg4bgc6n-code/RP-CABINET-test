@@ -9,7 +9,7 @@
 
 Cloudflare не используется.
 
-## Рабочее подключение v71
+## Рабочее подключение v72
 
 - проект Vercel: `rp-cabinet-proof-service`;
 - API: `https://rp-cabinet-proof-service.vercel.app`;
@@ -19,17 +19,19 @@ Cloudflare не используется.
 
 ## Первый запуск
 
-1. Загрузить содержимое папки v71 в GitHub.
+1. Загрузить содержимое папки v72 в GitHub.
 2. Серверную папку `proof-service` загрузить в отдельный проект Vercel через Drop либо подключить Git.
 3. При подключении всего репозитория в Root Directory выбрать `proof-service`.
 4. Создать Public Blob Store и подключить к проекту.
 5. Добавить переменные:
 
-   - `FIREBASE_PROJECT_ID=rp-cabinet`
+   - `FIREBASE_WEB_API_KEY` — публичный Web API Key проекта Firebase; значение уже указано в `.env.example`;
    - `CRON_SECRET` — длинная случайная строка;
    - `ALLOWED_ORIGINS` — адрес GitHub Pages без завершающего `/`; временно допускается `*`.
 
    `BLOB_READ_WRITE_TOKEN` появляется автоматически после подключения Blob Store.
+
+Firebase Admin и служебный JSON-ключ не требуются. Сервер проверяет ID token через Firebase Identity Toolkit. Это устраняет ошибку `Could not load the default credentials` на Vercel.
 
 6. Выполнить Deploy.
 7. Скопировать адрес вида `https://имя-проекта.vercel.app`.

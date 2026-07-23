@@ -1,5 +1,5 @@
-const TEST_VERSION="71";
-const TEST_VERSION_LABEL="Progress data and stable sync";
+const TEST_VERSION="72";
+const TEST_VERSION_LABEL="Profile and uploads stable";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

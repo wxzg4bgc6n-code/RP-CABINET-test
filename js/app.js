@@ -1,4 +1,4 @@
-/* Основное приложение v71. Данные и функции расширений подключаются до этого файла. */
+/* Основное приложение v72. Данные и функции расширений подключаются до этого файла. */
 window.__profileBootComplete=false;
 document.body.classList.add('profile-booting');
 let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:0,initialName:''}};
@@ -105,10 +105,28 @@ function profileCreatedTimestamp(){
 }
 function hasUsableProfileName(state){
   const name=typeof state?.name==='string' ? state.name.trim() : '';
-  return !!name && name.toLocaleLowerCase('ru-RU')!=='игрок';
+  return !!name;
 }
 function isUsableProfileState(state){
   return !!(state && typeof state==='object' && state.ready===true && hasUsableProfileName(state));
+}
+function isRecoverableProfileState(state){
+  if(!state || typeof state!=='object') return false;
+  const explicitProfileName=[
+    state.name,
+    state?.account?.initialName
+  ].find(value=>typeof value==='string'&&value.trim());
+  if(explicitProfileName) return true;
+  const googleName=typeof state?.cloud?.googleName==='string'&&state.cloud.googleName.trim();
+  if(!googleName) return false;
+  return !!(
+    state.ready===true
+    || state.configured===true
+    || state.org
+    || state.section
+    || Object.keys(state.progressByContext||{}).length
+    || Object.keys(state.selectedLevelBySection||{}).length
+  );
 }
 function ensureProfileCreatedAt(){
   if(!S.account || typeof S.account!=='object') S.account={};
@@ -151,13 +169,32 @@ function save(){
 }
 function normalizeProfileData(d){
   if(!d || typeof d!=='object') return null;
+  const wasRecoverableProfile=isRecoverableProfileState(d);
   const merged=Object.assign({}, S, d);
 
 
 
 
+  if(!String(merged.name||'').trim()){
+    const recoveredName=[
+      d?.account?.initialName,
+      d?.cloud?.googleName,
+      S?.name,
+      S?.account?.initialName,
+      S?.cloud?.googleName
+    ].find(value=>typeof value==='string'&&value.trim());
+    if(recoveredName) merged.name=recoveredName.trim();
+  }else{
+    merged.name=String(merged.name).trim();
+  }
   const hasRealProfile=hasUsableProfileName(merged);
-  merged.ready = hasRealProfile && (merged.ready===true || merged.configured===true || !!merged.org || !!merged.section);
+  merged.ready = hasRealProfile && (
+    wasRecoverableProfile
+    || merged.ready===true
+    || merged.configured===true
+    || !!merged.org
+    || !!merged.section
+  );
 
   if(!merged.project) merged.project='GTA5RP';
   if(!merged.path) merged.path='Государственная служба';
@@ -888,8 +925,9 @@ function cloudSafeState(sourceState){
   return copy;
 }
 function cloudProfileCompleteness(state){
-  if(!isUsableProfileState(state)) return -1;
+  if(!isRecoverableProfileState(state)) return -1;
   let score=100;
+  if(state.ready===true) score+=10;
   if(state.project) score+=5;
   if(state.path) score+=5;
   if(state.org) score+=20;
@@ -1001,7 +1039,7 @@ window.CloudSync={
       const local=normalizeProfileData(S);
       const cloudDoc=snap.exists ? (snap.data()||{}) : null;
       const rawCloudState=selectCloudProfileState(cloudDoc);
-      const cloud=isUsableProfileState(rawCloudState) ? normalizeProfileData(rawCloudState) : null;
+      const cloud=isRecoverableProfileState(rawCloudState) ? normalizeProfileData(rawCloudState) : null;
       this.lastCloudRevision=Number(cloudDoc?.syncRevision||0);
       if(cloud && cloud.ready && local && local.ready && cloudProfileCompleteness(local)>cloudProfileCompleteness(cloud)){
         S=local;
@@ -1051,7 +1089,7 @@ window.CloudSync={
         return;
       }
       const remoteSource=selectCloudProfileState(data);
-      if(!isUsableProfileState(remoteSource)) return;
+      if(!isRecoverableProfileState(remoteSource)) return;
       const remote=normalizeProfileData(remoteSource);
       if(!remote || !remote.ready) return;
       const keptLocal=this.applyRemoteState(remote, remoteUpdated, true, remoteRevision);
@@ -1083,7 +1121,7 @@ window.CloudSync={
       queuePendingProfileSyncDelta(beforeDateRepair,incoming,false);
     }
     const pending=readPendingProfileSyncPatch();
-    const resolved=normalizeProfileData(applyProfileSyncPatch(incoming,pending));
+    const resolved=normalizeProfileData(applyProfileTaskUiLocks(applyProfileSyncPatch(incoming,pending)));
     window.__cloudApplyingRemote=true;
     S=resolved;
     rememberGoogleProfileInfo(this.user);
@@ -1156,14 +1194,15 @@ window.CloudSync={
           sourceDevice:currentDevice,
           state:committedState,
           recoveryState:committedState,
-          clientVersion:71,
+          clientVersion:72,
           devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
         },{merge:true});
       });
       acknowledgePendingProfileSyncPatch(pending);
+      acknowledgeProfileTaskUiLocks(committedState);
       const remaining=readPendingProfileSyncPatch();
       window.__cloudApplyingRemote=true;
-      S=normalizeProfileData(applyProfileSyncPatch(committedState,remaining));
+      S=normalizeProfileData(applyProfileTaskUiLocks(applyProfileSyncPatch(committedState,remaining)));
       rememberGoogleProfileInfo(this.user);
       S.cloud=Object.assign({},S.cloud||{}, {lastSync:now,lastCloudUpdatedAt:now});
       save();

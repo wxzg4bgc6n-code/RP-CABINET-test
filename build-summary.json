@@ -1,5 +1,5 @@
 {
-  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v71_PROGRESS_SYNC_FIX",
+  "output": "C:\\Users\\KIRI_\\Documents\\RP CABINET\\RP_CABINET_v72_PROFILE_UPLOAD_STABLE",
   "sourceBytes": 6490540,
   "indexBytes": 21150,
   "cssFiles": 9,
@@ -18,8 +18,9 @@
   "mobileBehavior": "js/features/mobile-navigation.js",
   "syncConflictResolver": "js/core/sync-merge.js",
   "syncStrategy": "transactional cloud revision with per-field and per-task pending patches",
-  "version": "71",
+  "version": "72",
   "progressSources": ["Academy", "MA", "USAF", "MP", "DF", "SD", "ED"],
   "proofRequiredOnlyFor": ["Участие в СО", "Участие в ГМП"],
-  "profileRecovery": "stable local backup + Firestore recoveryState + explicit uncheck operations"
+  "profileRecovery": "recoverable partial profile + stable local backup + Firestore recoveryState + flicker-free explicit uncheck",
+  "uploadAuth": "Firebase Identity Toolkit verification without Firebase Admin service credentials"
 }

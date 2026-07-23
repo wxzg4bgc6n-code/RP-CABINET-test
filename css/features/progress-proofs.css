@@ -35,18 +35,26 @@
   font-weight:950;
   text-align:center;
 }
-.proof-service-note,
-.proof-empty{
+.proof-guidance{
   margin-top:14px;
   padding:12px 14px;
   border:1px solid var(--line);
   border-radius:14px;
   background:rgba(5,9,17,.52);
+}
+.proof-guidance.is-ready{border-left:4px solid var(--accent);}
+.proof-service-note,
+.proof-empty{
+  margin:0;
   color:var(--muted);
   font-size:12px;
   line-height:1.45;
 }
-.proof-service-note.is-ready{border-left:4px solid var(--accent);}
+.proof-empty{
+  margin-top:5px;
+  padding-top:5px;
+  border-top:1px solid color-mix(in srgb,var(--line) 68%,transparent);
+}
 .proof-task-list{display:grid;gap:10px;margin-top:14px;}
 .proof-task{
   padding:14px;
