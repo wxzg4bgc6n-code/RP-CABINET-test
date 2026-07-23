@@ -1,5 +1,5 @@
 {
-  "output": "RP_CABINET_v76_ISOLATED_STATE_SYNC",
+  "output": "RP_CABINET_v77_ISOLATED_STATE_SYNC",
   "sourceBytes": 5350982,
   "indexBytes": 21676,
   "cssFiles": 9,
@@ -17,8 +17,8 @@
   "mobileLayout": "css/responsive/mobile.css",
   "mobileBehavior": "js/features/mobile-navigation.js",
   "syncConflictResolver": "js/core/sync-merge.js",
-  "syncStrategy": "isolated v76 local/cloud namespace + serialized per-task transactional patches",
-  "version": "76",
+  "syncStrategy": "isolated v77 local/cloud namespace + serialized per-task transactional patches",
+  "version": 77,
   "progressSources": [
     "Academy",
     "MA",
@@ -32,9 +32,11 @@
     "Участие в СО",
     "Участие в ГМП"
   ],
-  "profileRecovery": "v76 local keys and default_v76 cloud document; one-time migration from legacy profile; complete context wins",
+  "profileRecovery": "v77 local keys and default_v77 cloud document; one-time migration from legacy profile; complete context wins",
   "progressAnimation": "same-target rerenders keep the active animation; changed targets continue from the visible value",
   "progressChecks": "progressByContext is authoritative; every click updates the current context snapshot and enqueues the changed task",
   "maxFilesPerTask": 10,
-  "uploadAuth": "Firebase Identity Toolkit verification without Firebase Admin service credentials"
+  "uploadAuth": "Firebase Identity Toolkit verification without Firebase Admin service credentials",
+  "label": "Cloud boot guard",
+  "cloudBoot": "local complete context wins; legacy cloud only used without local profile; connected toast after confirmed Firestore write"
 }

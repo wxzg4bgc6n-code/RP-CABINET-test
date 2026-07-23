@@ -975,7 +975,7 @@ const FIREBASE_CONFIG={
   appId:"1:686693815982:web:94fd42fdab2ddab6c53f3f",
   measurementId:"G-250D37LHFT"
 };
-const CLOUD_PROFILE_ID='default_v76';
+const CLOUD_PROFILE_ID='default_v77';
 const LEGACY_CLOUD_PROFILE_ID='default';
 const CLOUD_DEVICE_KEY='rp_cabinet_cloud_device_id';
 function getCloudDeviceId(){
@@ -1076,6 +1076,7 @@ window.CloudSync={
   unsub:null,
   saveTimer:null,
   saveAgainRequested:false,
+  showConnectedAfterSave:false,
   lastCloudRevision:0,
   async init(){
     try{
@@ -1151,7 +1152,12 @@ window.CloudSync={
       const local=normalizeProfileData(S);
       let cloudDoc=snap.exists ? (snap.data()||{}) : null;
       let migratedFromLegacyCloud=false;
-      if(!cloudDoc){
+      /*
+       * Критическое правило v77: старый облачный документ никогда не имеет
+       * права перезаписывать уже настроенный локальный профиль. Legacy читаем
+       * только когда на устройстве вообще нет восстановимого профиля.
+       */
+      if(!cloudDoc && !(local && local.ready)){
         const legacySnap=await this.db.doc(legacyCloudPath(this.user.uid)).get();
         if(legacySnap.exists){
           cloudDoc=legacySnap.data()||{};
@@ -1161,16 +1167,21 @@ window.CloudSync={
       const rawCloudState=selectCloudProfileState(cloudDoc);
       const cloud=isRecoverableProfileState(rawCloudState) ? normalizeProfileData(rawCloudState) : null;
       this.lastCloudRevision=snap.exists ? Number(cloudDoc?.syncRevision||0) : 0;
-      if(migratedFromLegacyCloud) needsCloudWrite=true;
-      if(cloud && cloud.ready && local && local.ready && cloudProfileCompleteness(local)>cloudProfileCompleteness(cloud)){
+      const localComplete=!!(local && local.ready && local.org && local.section && local.level && local.configured);
+      const cloudComplete=!!(cloud && cloud.ready && cloud.org && cloud.section && cloud.level && cloud.configured);
+      const localUpdated=Number(local?.updatedAt||0);
+      const cloudUpdated=Number(cloud?.updatedAt||cloudDoc?.state?.updatedAt||0);
+      const hasPendingLocal=profileSyncPatchHasChanges(readPendingProfileSyncPatch());
+
+      if(localComplete && (!cloudComplete || hasPendingLocal || localUpdated>=cloudUpdated)){
         S=local;
         rememberGoogleProfileInfo(this.user);
         queuePendingProfileSyncDelta({},S,true);
         needsCloudWrite=true;
-      }else if(cloud && cloud.ready){
-        const cloudUpdated=cloud.updatedAt || cloudDoc.state?.updatedAt || 0;
+      }else if(cloudComplete){
         needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision) || migratedFromLegacyCloud;
       }else if(local && local.ready){
+        S=local;
         rememberGoogleProfileInfo(this.user);
         S.cloud=Object.assign({},S.cloud||{}, {
           enabled:true,
@@ -1181,6 +1192,8 @@ window.CloudSync={
         });
         queuePendingProfileSyncDelta({},S,true);
         needsCloudWrite=true;
+      }else if(cloud && cloud.ready){
+        needsCloudWrite=this.applyRemoteState(cloud, cloudUpdated, true, this.lastCloudRevision) || migratedFromLegacyCloud;
       }
     }catch(e){
       console.warn('Cloud attach failed', e);
@@ -1189,8 +1202,8 @@ window.CloudSync={
     window.__cloudAttaching=false;
     if(needsCloudWrite){
       window.__profileBootComplete=true;
+      this.showConnectedAfterSave=true;
       this.scheduleSave();
-      showToast('Облако подключено','Локальный профиль подготовлен к синхронизации');
     }
     if(this.unsub) this.unsub();
     this.unsub=ref.onSnapshot(doc=>{
@@ -1217,6 +1230,7 @@ window.CloudSync={
       if(keptLocal) this.scheduleSave();
     }, err=>{
       console.warn('Cloud snapshot failed',err);
+      this.showConnectedAfterSave=false;
       setCloudStatus('error','Ошибка синхронизации','Не удалось слушать изменения Firebase.',String(err.message||err).slice(0,120));
     });
     renderCloudSyncStatus();
@@ -1328,7 +1342,7 @@ window.CloudSync={
           sourceDevice:currentDevice,
           state:committedState,
           recoveryState:committedState,
-          clientVersion:76,
+          clientVersion:77,
           devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
         },{merge:true});
       });
@@ -1347,6 +1361,10 @@ window.CloudSync={
       render();
       applyDashTab();
       renderCloudSyncStatus();
+      if(this.showConnectedAfterSave){
+        this.showConnectedAfterSave=false;
+        showToast('Облако подключено','Профиль подтверждённо сохранён в Firebase');
+      }
       const needsAnotherSave=this.saveAgainRequested || profileSyncPatchHasChanges(remaining);
       this.saveAgainRequested=false;
       if(needsAnotherSave) this.scheduleSave();
@@ -1354,6 +1372,7 @@ window.CloudSync={
     }catch(e){
       window.__cloudSaving=false;
       console.warn('Cloud save failed',e);
+      this.showConnectedAfterSave=false;
       setCloudStatus('error','Ошибка синхронизации','Не удалось записать данные в Firestore. Проверь правила доступа.',String(e.message||e).slice(0,120));
       if(this.saveAgainRequested || profileSyncPatchHasChanges(readPendingProfileSyncPatch())){
         this.saveAgainRequested=false;
