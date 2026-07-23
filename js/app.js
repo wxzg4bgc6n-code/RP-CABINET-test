@@ -1,5 +1,7 @@
-/* Основное приложение v69. Данные и функции расширений подключаются до этого файла. */
-let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},syncFieldUpdatedAt:{},account:{createdAt:Date.now(),initialName:''}};
+/* Основное приложение v70. Данные и функции расширений подключаются до этого файла. */
+window.__profileBootComplete=false;
+document.body.classList.add('profile-booting');
+let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:0,initialName:''}};
 let displayedProgress=0;
 let progressAnimationFrame=null;
 const $=s=>document.querySelector(s);
@@ -78,26 +80,35 @@ function changeProgressContext(mutator,restoreSavedLevel=false){
   displayedProgress=0;
 }
 
+function profileTimestampMs(value){
+  if(!value) return 0;
+  let ms=0;
+  if(typeof value==='number') ms=value;
+  else if(typeof value==='string') ms=Date.parse(value);
+  else if(typeof value==='object' && typeof value.toDate==='function') ms=value.toDate().getTime();
+  else if(typeof value==='object' && typeof value.seconds==='number') ms=value.seconds*1000;
+  const earliestAllowed=Date.UTC(2020,0,1);
+  const latestAllowed=Date.now()+86400000;
+  return Number.isFinite(ms) && ms>=earliestAllowed && ms<=latestAllowed ? ms : 0;
+}
+function earliestProfileTimestamp(...values){
+  const valid=values.map(profileTimestampMs).filter(Boolean);
+  return valid.length ? Math.min(...valid) : 0;
+}
 function profileCreatedTimestamp(){
-  const candidates=[
+  return earliestProfileTimestamp(
     S?.account?.createdAt,
     S?.createdAt,
     S?.profileCreatedAt,
-    S?.registeredAt,
-    S?.cloud?.createdAt,
-    S?.cloud?.firstSync,
-    S?.cloud?.googleCreatedAt
-  ];
-  for(const value of candidates){
-    if(!value) continue;
-    let ms=0;
-    if(typeof value==='number') ms=value;
-    else if(typeof value==='string') ms=Date.parse(value);
-    else if(typeof value==='object' && typeof value.toDate==='function') ms=value.toDate().getTime();
-    else if(typeof value==='object' && typeof value.seconds==='number') ms=value.seconds*1000;
-    if(Number.isFinite(ms) && ms>0) return ms;
-  }
-  return 0;
+    S?.registeredAt
+  );
+}
+function hasUsableProfileName(state){
+  const name=typeof state?.name==='string' ? state.name.trim() : '';
+  return !!name && name.toLocaleLowerCase('ru-RU')!=='игрок';
+}
+function isUsableProfileState(state){
+  return !!(state && typeof state==='object' && state.ready===true && hasUsableProfileName(state));
 }
 function ensureProfileCreatedAt(){
   if(!S.account || typeof S.account!=='object') S.account={};
@@ -106,9 +117,9 @@ function ensureProfileCreatedAt(){
     S.account.createdAt=current;
     return current;
   }
-  const now=Date.now();
-  S.account.createdAt=now;
-  return now;
+  if(!isUsableProfileState(S)) return 0;
+  S.account.createdAt=Date.now();
+  return S.account.createdAt;
 }
 function save(){
 
@@ -137,7 +148,7 @@ function save(){
   }catch(e){
     console.warn('Profile save failed',e);
   }
-  if(window.CloudSync && !passiveLoad && !window.__cloudSigningOut) window.CloudSync.scheduleSave();
+  if(window.CloudSync && window.__profileBootComplete && !passiveLoad && !window.__cloudSigningOut) window.CloudSync.scheduleSave();
 }
 function normalizeProfileData(d){
   if(!d || typeof d!=='object') return null;
@@ -146,13 +157,8 @@ function normalizeProfileData(d){
 
 
 
-  const hasRealProfile=!!(
-    (typeof merged.name==='string' && merged.name.trim()) ||
-    (typeof merged.org==='string' && merged.org.trim()) ||
-    (typeof merged.section==='string' && merged.section.trim()) ||
-    merged.configured===true
-  );
-  merged.ready = merged.ready===true || hasRealProfile;
+  const hasRealProfile=hasUsableProfileName(merged);
+  merged.ready = hasRealProfile && (merged.ready===true || merged.configured===true || !!merged.org || !!merged.section);
 
   if(!merged.project) merged.project='GTA5RP';
   if(!merged.path) merged.path='Государственная служба';
@@ -172,6 +178,34 @@ function normalizeProfileData(d){
   merged.selectedLevelBySection={};
   Object.keys(incomingLevels).forEach(key=>{
     if(typeof incomingLevels[key]==='string' && incomingLevels[key]) merged.selectedLevelBySection[key]=incomingLevels[key];
+  });
+  const incomingProofs=(d.proofsByContext && typeof d.proofsByContext==='object' && !Array.isArray(d.proofsByContext))
+    ? d.proofsByContext
+    : {};
+  merged.proofsByContext={};
+  Object.entries(incomingProofs).forEach(([contextKey,taskProofs])=>{
+    if(!taskProofs || typeof taskProofs!=='object' || Array.isArray(taskProofs)) return;
+    merged.proofsByContext[contextKey]={};
+    Object.entries(taskProofs).forEach(([task,proof])=>{
+      if(!proof || typeof proof!=='object' || Array.isArray(proof)) return;
+      const files=Array.isArray(proof.files)
+        ? proof.files.filter(file=>file&&typeof file==='object'&&typeof file.url==='string'&&file.url)
+        : [];
+      if(files.length) merged.proofsByContext[contextKey][task]={files,updatedAt:Number(proof.updatedAt||0)};
+    });
+  });
+  const incomingReports=(d.reportsByContext && typeof d.reportsByContext==='object' && !Array.isArray(d.reportsByContext))
+    ? d.reportsByContext
+    : {};
+  merged.reportsByContext={};
+  Object.entries(incomingReports).forEach(([contextKey,report])=>{
+    if(!report || typeof report!=='object' || Array.isArray(report) || typeof report.id!=='string') return;
+    merged.reportsByContext[contextKey]={
+      id:report.id,
+      url:typeof report.url==='string'?report.url:'',
+      createdAt:Number(report.createdAt||0),
+      expiresAt:Number(report.expiresAt||0)
+    };
   });
   const currentLevelKey=levelContextKeyFor(merged);
   const currentAllowedLevels=LEVELS[merged.section] || LEVELS.default || [];
@@ -193,18 +227,14 @@ function normalizeProfileData(d){
   if(!merged.account || typeof merged.account!=='object') merged.account={};
 
 
-  const mergedCreatedCandidates=[merged.account.createdAt, merged.createdAt, merged.profileCreatedAt, merged.registeredAt, merged.cloud?.createdAt, merged.cloud?.firstSync, merged.cloud?.googleCreatedAt, merged.cloud?.lastSync, merged.updatedAt];
-  let mergedCreatedAt=0;
-  for(const value of mergedCreatedCandidates){
-    if(!value) continue;
-    let ms=0;
-    if(typeof value==='number') ms=value;
-    else if(typeof value==='string') ms=Date.parse(value);
-    else if(typeof value==='object' && typeof value.toDate==='function') ms=value.toDate().getTime();
-    else if(typeof value==='object' && typeof value.seconds==='number') ms=value.seconds*1000;
-    if(Number.isFinite(ms) && ms>0){ mergedCreatedAt=ms; break; }
-  }
-  if(!merged.account.createdAt || !Number.isFinite(Number(merged.account.createdAt))) merged.account.createdAt=mergedCreatedAt || Date.now();
+  const mergedCreatedAt=earliestProfileTimestamp(
+    d?.account?.createdAt,
+    d?.createdAt,
+    d?.profileCreatedAt,
+    d?.registeredAt,
+    S?.account?.createdAt
+  );
+  merged.account.createdAt=mergedCreatedAt || (merged.ready ? Date.now() : 0);
   if(!merged.account.initialName) merged.account.initialName=merged.name||'';
   if(!merged.updatedAt) merged.updatedAt=Date.now();
   normalizeProfileSyncTimes(merged,d);
@@ -576,10 +606,6 @@ function rememberGoogleProfileInfo(user){
   if(!user) return;
   if(!S.cloud || typeof S.cloud!=='object') S.cloud={enabled:false,provider:'local',uid:'',lastSync:0};
   if(!S.account || typeof S.account!=='object') S.account={};
-  if(!S.account.createdAt && user.metadata && user.metadata.creationTime){
-    const googleCreated=Date.parse(user.metadata.creationTime);
-    if(Number.isFinite(googleCreated) && googleCreated>0) S.account.createdAt=googleCreated;
-  }
   if(user.metadata && user.metadata.creationTime){
     const googleCreated=Date.parse(user.metadata.creationTime);
     if(Number.isFinite(googleCreated) && googleCreated>0) S.cloud.googleCreatedAt=googleCreated;
@@ -826,6 +852,9 @@ function cloudSafeState(sourceState){
 }
 
 function finishProfileBoot(){
+  window.__profileBootComplete=true;
+  document.body.classList.remove('profile-booting');
+  document.documentElement.classList.remove('profile-booting');
   render();
   applyDashTab();
   renderCloudSyncStatus();
@@ -913,7 +942,8 @@ window.CloudSync={
       const snap=await ref.get();
       const local=normalizeProfileData(S);
       const cloudDoc=snap.exists ? (snap.data()||{}) : null;
-      const cloud=cloudDoc ? normalizeProfileData(cloudDoc.state) : null;
+      const rawCloudState=cloudDoc?.state;
+      const cloud=isUsableProfileState(rawCloudState) ? normalizeProfileData(rawCloudState) : null;
       this.lastCloudRevision=Number(cloudDoc?.syncRevision||0);
       if(cloud && cloud.ready){
         const cloudUpdated=cloud.updatedAt || cloudDoc.state?.updatedAt || 0;
@@ -928,15 +958,18 @@ window.CloudSync={
           googleEmail:this.user.email||S.cloud?.googleEmail||''
         });
         queuePendingProfileSyncDelta({},S,true);
-        await this.saveNow(true);
-        showToast('Облако подключено','Локальный профиль перенесён в Firebase');
+        needsCloudWrite=true;
       }
     }catch(e){
       console.warn('Cloud attach failed', e);
       setCloudStatus('error','Ошибка облака','Не удалось прочитать профиль из Firebase.',String(e.message||e).slice(0,120));
     }
     window.__cloudAttaching=false;
-    if(needsCloudWrite) this.scheduleSave();
+    if(needsCloudWrite){
+      window.__profileBootComplete=true;
+      this.scheduleSave();
+      showToast('Облако подключено','Локальный профиль подготовлен к синхронизации');
+    }
     if(this.unsub) this.unsub();
     this.unsub=ref.onSnapshot(doc=>{
       if(!doc.exists || window.__cloudSaving || window.__cloudAttaching) return;
@@ -954,6 +987,7 @@ window.CloudSync={
         renderCloudSyncStatus();
         return;
       }
+      if(!isUsableProfileState(data.state)) return;
       const remote=normalizeProfileData(data.state);
       if(!remote || !remote.ready) return;
       const keptLocal=this.applyRemoteState(remote, remoteUpdated, true, remoteRevision);
@@ -966,13 +1000,24 @@ window.CloudSync={
     
   },
   scheduleSave(){
-    if(!this.ready || !this.user || !S.ready || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
+    if(!this.ready || !this.user || !window.__profileBootComplete || !isUsableProfileState(S) || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
     clearTimeout(this.saveTimer);
     this.saveTimer=setTimeout(()=>this.saveNow(false),220);
   },
   applyRemoteState(remote, remoteUpdated, silent, remoteRevision=0){
-    if(!remote || !remote.ready || !this.user) return false;
+    if(!isUsableProfileState(remote) || !this.user) return false;
     const incoming=normalizeProfileData(remote);
+    const remoteCreatedAt=profileTimestampMs(incoming?.account?.createdAt);
+    const stableCreatedAt=earliestProfileTimestamp(S?.account?.createdAt,incoming?.account?.createdAt);
+    if(stableCreatedAt){
+      if(!incoming.account || typeof incoming.account!=='object') incoming.account={};
+      incoming.account.createdAt=stableCreatedAt;
+    }
+    if(stableCreatedAt && remoteCreatedAt!==stableCreatedAt){
+      const beforeDateRepair=JSON.parse(JSON.stringify(incoming));
+      beforeDateRepair.account.createdAt=remoteCreatedAt||0;
+      queuePendingProfileSyncDelta(beforeDateRepair,incoming,false);
+    }
     const pending=readPendingProfileSyncPatch();
     const resolved=normalizeProfileData(applyProfileSyncPatch(incoming,pending));
     window.__cloudApplyingRemote=true;
@@ -999,7 +1044,7 @@ window.CloudSync={
     return keptLocal;
   },
   async saveNow(force){
-    if(!this.ready || !this.user || !S.ready || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
+    if(!this.ready || !this.user || !window.__profileBootComplete || !isUsableProfileState(S) || window.__cloudApplyingRemote || window.__cloudAttaching || window.__cloudSigningOut) return;
     let pending=readPendingProfileSyncPatch();
     if(force && !profileSyncPatchHasChanges(pending)) pending=queuePendingProfileSyncDelta({},S,true);
     if(!profileSyncPatchHasChanges(pending)){
@@ -1020,6 +1065,11 @@ window.CloudSync={
         const serverData=serverSnap.exists ? (serverSnap.data()||{}) : {};
         const serverState=serverData.state&&typeof serverData.state==='object' ? serverData.state : {};
         const mergedRaw=applyProfileSyncPatch(serverState,pending);
+        const stableCreatedAt=earliestProfileTimestamp(serverState?.account?.createdAt,S?.account?.createdAt,mergedRaw?.account?.createdAt);
+        if(stableCreatedAt){
+          if(!mergedRaw.account || typeof mergedRaw.account!=='object') mergedRaw.account={};
+          mergedRaw.account.createdAt=stableCreatedAt;
+        }
         const normalized=normalizeProfileData(mergedRaw)||mergedRaw;
         normalized.cloud=Object.assign({},normalized.cloud||{}, {
           enabled:true,
@@ -1091,7 +1141,7 @@ $('#createProfile').onclick=()=>{
   const name=$('#firstName').value.trim();
   if(!name){$('#firstError').classList.add('show');return}
   $('#firstError').classList.remove('show');
-  S={ready:true,name,project:$('#firstProject').value,path:document.querySelector('[name="path"]:checked').value,style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},syncFieldUpdatedAt:{},account:{createdAt:Date.now(),initialName:name}};
+  S={ready:true,name,project:$('#firstProject').value,path:document.querySelector('[name="path"]:checked').value,style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:Date.now(),initialName:name}};
   save();
   render();
 };

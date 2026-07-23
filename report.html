@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Отчёт о прогрессе · RP Cabinet</title>
+  <link rel="stylesheet" href="css/report.css">
+</head>
+<body>
+  <main class="report-shell">
+    <header class="report-brand">
+      <div class="report-logo">RP</div>
+      <div>
+        <span>RP Cabinet</span>
+        <h1>Отчёт о прогрессе</h1>
+      </div>
+      <button id="copyReportUrl" type="button">Копировать ссылку</button>
+    </header>
+    <section class="report-state" id="reportState">
+      <div class="report-loader"></div>
+      <h2>Загружаю отчёт</h2>
+      <p>Проверяю данные и оригиналы скриншотов.</p>
+    </section>
+    <section id="reportContent" hidden></section>
+    <footer>Скриншоты показываются целиком, без обрезки. Отчёт хранится 8 дней.</footer>
+  </main>
+  <script src="js/config/proof-service.js"></script>
+  <script src="js/report.js"></script>
+</body>
+</html>

@@ -1,7 +1,11 @@
-const TEST_VERSION="69";
-const TEST_VERSION_LABEL="Mobile UI and transactional sync";
-document.addEventListener("DOMContentLoaded",()=>{
+const TEST_VERSION="70";
+const TEST_VERSION_LABEL="Proof reports and safe profile boot";
+function renderTestVersion(){
+  const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
-    el.textContent=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
+    if(el.textContent!==label) el.textContent=label;
   });
-});
+}
+renderTestVersion();
+document.addEventListener("DOMContentLoaded",renderTestVersion);
+new MutationObserver(renderTestVersion).observe(document.documentElement,{childList:true,subtree:true});

@@ -611,6 +611,24 @@ select{font:inherit;}
 button{cursor:pointer;}
 body.ready .first-screen,
 body:not(.ready) .app{display:none;}
+body.profile-booting .first-screen,
+body.profile-booting .app,
+html.profile-booting .first-screen,
+html.profile-booting .app{visibility:hidden!important;pointer-events:none!important;}
+body.profile-booting::after,
+html.profile-booting body::after{
+  content:"Загружаю профиль…";
+  position:fixed;
+  inset:0;
+  z-index:20000;
+  display:grid;
+  place-items:center;
+  color:var(--text);
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.02em;
+  background:var(--bg,#050811);
+}
 .first-screen{min-height:100vh;display:grid;place-items:center;padding:18px;}
 .first-card{width:min(620px,100%);border:1px solid var(--line);border-radius:34px;background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.025)),rgba(12,16,27,.92);box-shadow:var(--shadow);padding:28px;}
 h1{margin:18px 0 8px;font-size:clamp(36px,8vw,62px);line-height:.92;letter-spacing:-.065em;}
@@ -1866,10 +1884,12 @@ body[data-active-dash-tab="profile"] #dashboardProfileInfo.profile-top-strip{dis
 .panel-outline-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:1.08em!important;height:1.08em!important;color:var(--accent)!important;vertical-align:-.12em!important;flex:0 0 auto!important;}
 .panel-outline-icon svg{width:100%!important;height:100%!important;display:block!important;fill:none!important;stroke:currentColor!important;stroke-width:1.85!important;stroke-linecap:round!important;stroke-linejoin:round!important;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 28%, transparent));}
 .path-step-icon .career-inline-svg{width:18px!important;height:18px!important;display:block!important;fill:none!important;stroke:currentColor!important;stroke-width:1.85!important;stroke-linecap:round!important;stroke-linejoin:round!important;color:color-mix(in srgb,var(--accent) 82%, white 10%)!important;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 24%, transparent))!important;}
-.kiri-test-version-badge{position:fixed;left:14px;bottom:14px;z-index:10000;display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border-radius:999px;border:1px solid rgba(178,140,255,.55);background:rgba(8,12,22,.92);color:var(--text);box-shadow:0 12px 30px rgba(0,0,0,.38);backdrop-filter:blur(14px);font-size:12px;font-weight:950;letter-spacing:.01em;pointer-events:none;}
+.kiri-test-version-badge{position:fixed;left:14px;bottom:14px;z-index:10000;display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border-radius:999px;border:1px solid rgba(178,140,255,.55);background:rgba(8,12,22,.92);color:var(--text);box-shadow:0 12px 30px rgba(0,0,0,.38);backdrop-filter:blur(14px);font-size:0;font-weight:950;letter-spacing:.01em;pointer-events:none;}
 .kiri-test-version-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);}
+.kiri-test-version-badge::after{content:"TEST v70 · Proof reports";font-size:12px;}
 @media(max-width:620px){
-.kiri-test-version-badge{left:10px;bottom:10px;font-size:11px;min-height:30px;padding:0 9px;}
+.kiri-test-version-badge{left:10px;bottom:10px;min-height:30px;padding:0 9px;}
+.kiri-test-version-badge::after{font-size:11px;}
 }
 .level-row,
 .editable-row.level-row{min-width: 0 !important;}

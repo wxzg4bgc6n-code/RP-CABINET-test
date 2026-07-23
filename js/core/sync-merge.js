@@ -7,9 +7,10 @@ const PROFILE_SYNC_GROUPS=Object.freeze({
   name:['name'],
   style:['style'],
   context:['project','path','org','section','level','configured'],
-  progress:['tasks','progressByContext','selectedLevelBySection'],
+  progress:['tasks','progressByContext','selectedLevelBySection','proofsByContext'],
   pins:['pinnedDepartmentBlocks','pinnedAcademyBlocks'],
-  account:['account']
+  account:['account'],
+  reports:['reportsByContext']
 });
 
 function cloneProfileSyncValue(value){
@@ -124,17 +125,20 @@ function mergeSyncedProfileStates(localState,remoteState){
 const PROFILE_PENDING_PATCH_KEY='kiri:rp-cabinet:v69:pending-sync-patch';
 
 function emptyProfileSyncPatch(){
-  return {version:2,sequence:0,groups:{},progress:{contexts:{},levels:{}}};
+  return {version:3,sequence:0,groups:{},progress:{contexts:{},levels:{}},proofs:{contexts:{}}};
 }
 
 function readPendingProfileSyncPatch(){
   try{
     const parsed=JSON.parse(localStorage.getItem(PROFILE_PENDING_PATCH_KEY)||'null');
-    if(!parsed || parsed.version!==2) return null;
+    if(!parsed || (parsed.version!==2 && parsed.version!==3)) return null;
+    parsed.version=3;
     parsed.groups=parsed.groups&&typeof parsed.groups==='object'?parsed.groups:{};
     parsed.progress=parsed.progress&&typeof parsed.progress==='object'?parsed.progress:{};
     parsed.progress.contexts=parsed.progress.contexts&&typeof parsed.progress.contexts==='object'?parsed.progress.contexts:{};
     parsed.progress.levels=parsed.progress.levels&&typeof parsed.progress.levels==='object'?parsed.progress.levels:{};
+    parsed.proofs=parsed.proofs&&typeof parsed.proofs==='object'?parsed.proofs:{};
+    parsed.proofs.contexts=parsed.proofs.contexts&&typeof parsed.proofs.contexts==='object'?parsed.proofs.contexts:{};
     return parsed;
   }catch(e){return null;}
 }
@@ -153,7 +157,8 @@ function profileSyncPatchHasChanges(patch){
   if(!patch) return false;
   if(Object.keys(patch.groups||{}).length) return true;
   if(Object.keys(patch.progress?.levels||{}).length) return true;
-  return Object.values(patch.progress?.contexts||{}).some(tasks=>tasks&&Object.keys(tasks).length);
+  if(Object.values(patch.progress?.contexts||{}).some(tasks=>tasks&&Object.keys(tasks).length)) return true;
+  return Object.values(patch.proofs?.contexts||{}).some(proofs=>proofs&&Object.keys(proofs).length);
 }
 
 function normalizedProgressContexts(state){
@@ -166,6 +171,11 @@ function normalizedSelectedLevels(state){
   return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
 }
 
+function normalizedProofContexts(state){
+  const source=state?.proofsByContext;
+  return source&&typeof source==='object'&&!Array.isArray(source)?source:{};
+}
+
 function buildProfileSyncDelta(baselineState,currentState,forceFull=false){
   const before=baselineState&&typeof baselineState==='object'?baselineState:{};
   const after=currentState&&typeof currentState==='object'?currentState:{};
@@ -175,7 +185,8 @@ function buildProfileSyncDelta(baselineState,currentState,forceFull=false){
     style:['style'],
     context:['project','path','org','section','level','configured'],
     pins:['pinnedDepartmentBlocks','pinnedAcademyBlocks'],
-    account:['account']
+    account:['account'],
+    reports:['reportsByContext']
   };
 
   Object.entries(scalarGroups).forEach(([group,fields])=>{
@@ -213,13 +224,28 @@ function buildProfileSyncDelta(baselineState,currentState,forceFull=false){
     const newValue=typeof afterLevels[key]==='string'?afterLevels[key]:'';
     if(forceFull ? !!newValue : oldValue!==newValue) patch.progress.levels[key]=newValue||null;
   });
+
+  const beforeProofs=normalizedProofContexts(before);
+  const afterProofs=normalizedProofContexts(after);
+  new Set([...Object.keys(beforeProofs),...Object.keys(afterProofs)]).forEach(contextKey=>{
+    const oldTaskProofs=beforeProofs[contextKey]&&typeof beforeProofs[contextKey]==='object'?beforeProofs[contextKey]:{};
+    const newTaskProofs=afterProofs[contextKey]&&typeof afterProofs[contextKey]==='object'?afterProofs[contextKey]:{};
+    new Set([...Object.keys(oldTaskProofs),...Object.keys(newTaskProofs)]).forEach(task=>{
+      const oldValue=oldTaskProofs[task]||null;
+      const newValue=newTaskProofs[task]||null;
+      if((forceFull && newValue) || JSON.stringify(oldValue)!==JSON.stringify(newValue)){
+        if(!patch.proofs.contexts[contextKey]) patch.proofs.contexts[contextKey]={};
+        patch.proofs.contexts[contextKey][task]=newValue ? cloneProfileSyncValue(newValue) : null;
+      }
+    });
+  });
   return patch;
 }
 
 function mergePendingProfileSyncPatches(previous,next){
   const merged=previous?cloneProfileSyncValue(previous):emptyProfileSyncPatch();
   const incoming=next||emptyProfileSyncPatch();
-  merged.version=2;
+  merged.version=3;
   merged.sequence=Math.max(Number(merged.sequence||0),Number(incoming.sequence||0))+1;
   merged.groups=Object.assign({},merged.groups||{},cloneProfileSyncValue(incoming.groups)||{});
   merged.progress=merged.progress||{contexts:{},levels:{}};
@@ -228,6 +254,11 @@ function mergePendingProfileSyncPatches(previous,next){
     merged.progress.contexts[contextKey]=Object.assign({},merged.progress.contexts[contextKey]||{},cloneProfileSyncValue(tasks)||{});
   });
   merged.progress.levels=Object.assign({},merged.progress.levels||{},cloneProfileSyncValue(incoming.progress?.levels)||{});
+  merged.proofs=merged.proofs||{contexts:{}};
+  merged.proofs.contexts=merged.proofs.contexts||{};
+  Object.entries(incoming.proofs?.contexts||{}).forEach(([contextKey,taskProofs])=>{
+    merged.proofs.contexts[contextKey]=Object.assign({},merged.proofs.contexts[contextKey]||{},cloneProfileSyncValue(taskProofs)||{});
+  });
   merged.changedAt=Date.now();
   return merged;
 }
@@ -243,6 +274,7 @@ function queuePendingProfileSyncDelta(baselineState,currentState,forceFull=false
 function applyProfileSyncPatch(baseState,patch){
   const result=cloneProfileSyncValue(baseState)||{};
   if(!patch) return result;
+  const originalCreatedAt=result?.account?.createdAt;
   Object.values(patch.groups||{}).forEach(values=>{
     Object.entries(values||{}).forEach(([field,value])=>{
       if(value===null || value===undefined) delete result[field];
@@ -268,6 +300,28 @@ function applyProfileSyncPatch(baseState,patch){
     else delete result.selectedLevelBySection[key];
   });
 
+  if(!result.proofsByContext || typeof result.proofsByContext!=='object' || Array.isArray(result.proofsByContext)) result.proofsByContext={};
+  Object.entries(patch.proofs?.contexts||{}).forEach(([contextKey,taskProofs])=>{
+    const target=result.proofsByContext[contextKey]&&typeof result.proofsByContext[contextKey]==='object'
+      ? Object.assign({},result.proofsByContext[contextKey])
+      : {};
+    Object.entries(taskProofs||{}).forEach(([task,value])=>{
+      if(value&&typeof value==='object') target[task]=cloneProfileSyncValue(value);
+      else delete target[task];
+    });
+    result.proofsByContext[contextKey]=target;
+  });
+
+  const patchedCreatedAt=result?.account?.createdAt;
+  const createdCandidates=[originalCreatedAt,patchedCreatedAt].map(value=>{
+    const parsed=typeof value==='number'?value:Date.parse(value||'');
+    return Number.isFinite(parsed)&&parsed>=Date.UTC(2020,0,1)&&parsed<=Date.now()+86400000?parsed:0;
+  }).filter(Boolean);
+  if(createdCandidates.length){
+    if(!result.account || typeof result.account!=='object') result.account={};
+    result.account.createdAt=Math.min(...createdCandidates);
+  }
+
   const currentKey=typeof progressContextKeyFor==='function'?progressContextKeyFor(result):'';
   if(currentKey&&Object.prototype.hasOwnProperty.call(result.progressByContext,currentKey)){
     result.tasks=cloneProfileSyncValue(result.progressByContext[currentKey])||{};
@@ -275,7 +329,7 @@ function applyProfileSyncPatch(baseState,patch){
   const now=Date.now();
   if(!result.syncFieldUpdatedAt || typeof result.syncFieldUpdatedAt!=='object') result.syncFieldUpdatedAt={};
   Object.keys(patch.groups||{}).forEach(group=>{result.syncFieldUpdatedAt[group]=now;});
-  if(Object.keys(patch.progress?.contexts||{}).length||Object.keys(patch.progress?.levels||{}).length) result.syncFieldUpdatedAt.progress=now;
+  if(Object.keys(patch.progress?.contexts||{}).length||Object.keys(patch.progress?.levels||{}).length||Object.keys(patch.proofs?.contexts||{}).length) result.syncFieldUpdatedAt.progress=now;
   result.updatedAt=now;
   return result;
 }
