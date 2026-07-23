@@ -113,7 +113,7 @@
     const proof=proofFor(task);
     const files=Array.isArray(proof.files)?proof.files:[];
     const progress=uploadProgress.get(task);
-    const canUpload=isServiceConfigured()&&!!authUser()&&files.length<Number(config.maxFilesPerTask||6);
+    const canUpload=isServiceConfigured()&&!!authUser()&&files.length<Number(config.maxFilesPerTask||10);
     const status=required
       ? (files.length?`Загружено: ${files.length}`:'Ожидает скриншот')
       :'Подтверждение не требуется';
@@ -195,9 +195,9 @@
     if(!window.RPProofUploader?.upload) return showToast('Модуль загрузки не готов','Проверь сборку Vercel Blob Client');
     const current=proofFor(task);
     const existing=Array.isArray(current.files)?current.files:[];
-    const available=Math.max(0,Number(config.maxFilesPerTask||6)-existing.length);
+    const available=Math.max(0,Number(config.maxFilesPerTask||10)-existing.length);
     const selected=files.slice(0,available);
-    if(!selected.length) return showToast('Лимит достигнут',`Для одного пункта можно загрузить до ${config.maxFilesPerTask||6} файлов`);
+    if(!selected.length) return showToast('Лимит достигнут',`Для одного пункта можно загрузить до ${config.maxFilesPerTask||10} файлов`);
     try{
       const token=await authToken();
       const user=authUser();

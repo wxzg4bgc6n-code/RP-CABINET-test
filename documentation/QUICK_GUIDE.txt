@@ -1,6 +1,6 @@
-RP CABINET v72 — КРАТКАЯ ПАМЯТКА
+RP CABINET v73 — КРАТКАЯ ПАМЯТКА
 
-1. На GitHub загружать всё содержимое папки v72, включая report.html, css, data, js, documentation и proof-service.
+1. На GitHub загружать всё содержимое папки v73, включая report.html, css, data, js, documentation и proof-service.
 2. Не загружать proof-service/node_modules и локальные .env/.env.local.
 3. В GitHub Pages остаются index.html и report.html. Папка proof-service развёрнута отдельным проектом Vercel.
 4. Рабочий API указан в js/config/proof-service.js: https://rp-cabinet-proof-service.vercel.app.
@@ -25,6 +25,8 @@ RP CABINET v72 — КРАТКАЯ ПАМЯТКА
 23. До подтверждения облаком удерживать последнее нажатое состояние галочки через UI-lock в js/core/sync-merge.js.
 24. Vercel проверяет Firebase ID token через Identity Toolkit; Firebase Admin и служебный JSON-ключ не использовать.
 25. Проект Vercel должен быть связан с GitHub и иметь Root Directory proof-service.
-26. При новой версии менять номер сразу в js/core/version.js, css/core.css, meta index.html, README, build-summary и памятке.
-27. После публикации полностью обновить страницу на ПК и телефоне.
-28. Перед включением пользователям проверить страницу GitHub Pages и Vercel без VPN с ПК и телефона.
+26. Последний подтверждённый выбор организации, отдела и ступени хранить в отдельной контрольной точке v73; пассивный облачный снимок не должен её перезаписывать.
+27. На один пункт отчёта разрешать до 10 оригинальных скриншотов.
+28. При новой версии менять номер сразу в js/core/version.js, css/core.css, meta index.html, README, build-summary и памятке.
+29. После публикации полностью обновить страницу на ПК и телефоне.
+30. Перед включением пользователям проверить страницу GitHub Pages и Vercel без VPN с ПК и телефона.

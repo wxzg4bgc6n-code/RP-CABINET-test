@@ -5,6 +5,6 @@
 window.RP_PROOF_SERVICE=Object.freeze({
   apiBase:'https://rp-cabinet-proof-service.vercel.app',
   maxFileBytes:15*1024*1024,
-  maxFilesPerTask:6,
+  maxFilesPerTask:10,
   reportLifetimeDays:8
 });

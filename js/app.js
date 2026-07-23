@@ -1,10 +1,64 @@
-/* Основное приложение v72. Данные и функции расширений подключаются до этого файла. */
+/* Основное приложение v73. Данные и функции расширений подключаются до этого файла. */
 window.__profileBootComplete=false;
 document.body.classList.add('profile-booting');
 let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},syncFieldUpdatedAt:{},account:{createdAt:0,initialName:''}};
 let displayedProgress=0;
 let progressAnimationFrame=null;
 const $=s=>document.querySelector(s);
+const PROFILE_CONTEXT_CHECKPOINT_KEY='kiri:rp-cabinet:v73:context-checkpoint';
+
+function profileContextValues(state){
+  return {
+    project:typeof state?.project==='string'?state.project:'',
+    path:typeof state?.path==='string'?state.path:'',
+    org:typeof state?.org==='string'?state.org:'',
+    section:typeof state?.section==='string'?state.section:'',
+    level:typeof state?.level==='string'?state.level:'',
+    configured:state?.configured===true
+  };
+}
+function hasCompleteProfileContext(state){
+  return !!(state?.org && state?.section && state?.level && state?.configured===true);
+}
+function readProfileContextCheckpoint(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(PROFILE_CONTEXT_CHECKPOINT_KEY)||'null');
+    if(!parsed || parsed.version!==1 || !parsed.context || typeof parsed.context!=='object') return null;
+    return parsed;
+  }catch(e){return null;}
+}
+function rememberProfileContextCheckpoint(state){
+  try{
+    localStorage.setItem(PROFILE_CONTEXT_CHECKPOINT_KEY,JSON.stringify({
+      version:1,
+      name:String(state?.name||'').trim(),
+      updatedAt:Date.now(),
+      context:profileContextValues(state)
+    }));
+  }catch(e){console.warn('Profile context checkpoint failed',e);}
+}
+function recoverProfileContextState(state,fallbackState){
+  const result=Object.assign({},state||{});
+  if(hasCompleteProfileContext(result)) return {state:result,recovered:false};
+  const isBlank=!result.org && !result.section && !result.level && result.configured!==true;
+  if(!isBlank) return {state:result,recovered:false};
+  const checkpoint=readProfileContextCheckpoint();
+  const candidates=[
+    fallbackState,
+    checkpoint?.context
+  ].filter(hasCompleteProfileContext);
+  const targetName=String(result.name||result?.account?.initialName||'').trim().toLocaleLowerCase('ru-RU');
+  const checkpointName=String(checkpoint?.name||'').trim().toLocaleLowerCase('ru-RU');
+  const candidate=candidates.find(item=>{
+    if(item===checkpoint?.context && targetName && checkpointName && targetName!==checkpointName) return false;
+    if(result.project && item.project && result.project!==item.project) return false;
+    if(result.path && item.path && result.path!==item.path) return false;
+    return true;
+  });
+  if(!candidate) return {state:result,recovered:false};
+  Object.assign(result,profileContextValues(candidate),{configured:true});
+  return {state:result,recovered:true};
+}
 
 function cleanTaskState(tasks){
   const clean={};
@@ -142,9 +196,10 @@ function save(){
 
   persistProgressForState(S);
   persistSelectedLevelForState(S);
+  const passiveLoad = !!(window.__cloudApplyingRemote || window.__profileHydrating || window.__cloudAttaching || window.__cloudInternalWrite);
+  if(!passiveLoad) rememberProfileContextCheckpoint(S);
   const normalized=normalizeProfileData(S);
   if(normalized && normalized.ready) S=normalized;
-  const passiveLoad = !!(window.__cloudApplyingRemote || window.__profileHydrating || window.__cloudAttaching || window.__cloudInternalWrite);
   if(!passiveLoad){
     queuePendingProfileSyncDelta(window.__profileSyncBaselineState,S,false);
     const now=Date.now();
@@ -358,6 +413,11 @@ function load(){
 
   if(result.best && result.best.ready){
     S=result.best;
+    const recoveredContext=recoverProfileContextState(S,null);
+    if(recoveredContext.recovered){
+      S=recoveredContext.state;
+      queueProfileGroupSyncMutation('context',profileContextValues(S));
+    }
     const allRecoveryKeys=[...new Set([...primaryKeys,...legacyKeys])];
     const activeName=String(S.name||'').trim().toLocaleLowerCase('ru-RU');
     const storedDates=[];
@@ -1108,7 +1168,11 @@ window.CloudSync={
   },
   applyRemoteState(remote, remoteUpdated, silent, remoteRevision=0){
     if(!isUsableProfileState(remote) || !this.user) return false;
-    const incoming=normalizeProfileData(remote);
+    const recoveredContext=recoverProfileContextState(remote,S);
+    if(recoveredContext.recovered){
+      queueProfileGroupSyncMutation('context',profileContextValues(recoveredContext.state));
+    }
+    const incoming=normalizeProfileData(recoveredContext.state);
     const remoteCreatedAt=profileTimestampMs(incoming?.account?.createdAt);
     const stableCreatedAt=earliestProfileTimestamp(S?.account?.createdAt,incoming?.account?.createdAt);
     if(stableCreatedAt){
@@ -1194,7 +1258,7 @@ window.CloudSync={
           sourceDevice:currentDevice,
           state:committedState,
           recoveryState:committedState,
-          clientVersion:72,
+          clientVersion:73,
           devices:{[currentDevice]:{label:deviceLabel(),lastSeen:now,userAgent:(navigator.userAgent||'').slice(0,180)}}
         },{merge:true});
       });
