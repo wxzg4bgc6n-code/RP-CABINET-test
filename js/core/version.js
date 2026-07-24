@@ -1,5 +1,5 @@
-const TEST_VERSION="85";
-const TEST_VERSION_LABEL="ordered promotion materials";
+const TEST_VERSION="86";
+const TEST_VERSION_LABEL="exact promotion materials";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

@@ -132,8 +132,6 @@
     if(name.indexOf("устава") >= 0 && name.indexOf("тен-код") >= 0) return "usaf-test-regulations-ten";
     if(name.indexOf("усложнённый устав") >= 0 || name.indexOf("усложненный устав") >= 0) return "usaf-test-advanced-regulations";
     if(name.indexOf("протокол") >= 0) return "usaf-test-protocols";
-    if(name.indexOf("frogger") >= 0 || name.indexOf("swift") >= 0 || name.indexOf("miljet") >= 0) return "usaf-test-aircraft";
-    if(name.indexOf("пилотирован") >= 0) return "usaf-test-aircraft";
     if(name.indexOf("воздушн") >= 0 && name.indexOf("патрул") >= 0) return "usaf-patrols";
     return "";
   }

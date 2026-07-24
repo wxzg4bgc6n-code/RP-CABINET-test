@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v85_ORDERED_PROMOTION_MATERIALS",
-  "testVersion": 85,
-  "label": "ordered promotion materials",
+  "output": "RP_CABINET_v86_EXACT_PROMOTION_MATERIALS",
+  "testVersion": 86,
+  "label": "exact promotion materials",
   "usafLawGuide": {
     "location": "after quick reports and before USAF ten-codes",
     "source": "data/usaf/law-guide.js",
@@ -17,12 +17,13 @@
     "articleNumbersEmbedded": false,
     "automaticPromotionStage": "all USAF stages",
     "automaticMaterialOrder": "current progress task order",
-    "missingMaterialRule": "skip task without a real source",
+    "matchingRule": "exact task meaning only; similar general exams are not used",
+    "missingMaterialRule": "skip task without a separate exact source",
     "manualPinsOverrideAutomatic": true
   },
   "surfaceState": {
     "storage": "sessionStorage",
-    "key": "rpCabinetOpenDetails_v85",
+    "key": "rpCabinetOpenDetails_v86",
     "restoredAfterVisibilityChange": true,
     "scopes": [
       "department information",
@@ -70,7 +71,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v85-ordered-materials.mjs",
+    "_tools/test-v86-exact-materials.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],
