@@ -1,7 +1,21 @@
 {
-  "output": "RP_CABINET_v82_COLLAPSIBLE_PROOF_GALLERIES",
-  "testVersion": 82,
-  "label": "Collapsible proof galleries",
+  "output": "RP_CABINET_v83_USAF_LAW_FIELD_GUIDE",
+  "testVersion": 83,
+  "label": "USAF law field guide",
+  "usafLawGuide": {
+    "location": "bottom of USAF information",
+    "source": "data/usaf/law-guide.js",
+    "scope": [
+      "USAF and MP authority boundary",
+      "detention and transfer workflow",
+      "ready-to-use phrases",
+      "MP call codes",
+      "checkpoint inspection",
+      "army-related UAK study themes",
+      "exam preparation questions"
+    ],
+    "articleNumbersEmbedded": false
+  },
   "proofGalleries": {
     "collapsible": true,
     "uploadButtonAlwaysVisible": true,
@@ -42,7 +56,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v82-realtime-sync.mjs",
+    "_tools/test-v83-realtime-sync.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],

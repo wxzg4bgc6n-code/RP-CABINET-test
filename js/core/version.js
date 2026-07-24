@@ -1,5 +1,5 @@
-const TEST_VERSION="82";
-const TEST_VERSION_LABEL="Collapsible proof galleries";
+const TEST_VERSION="83";
+const TEST_VERSION_LABEL="USAF law field guide";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
