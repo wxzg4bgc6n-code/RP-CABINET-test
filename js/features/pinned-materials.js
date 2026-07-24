@@ -118,15 +118,32 @@
     var section = low(txt("infoSection"));
     return section === "usaf" || section.indexOf("united states air force") >= 0 || section.indexOf("военно-воздуш") >= 0;
   }
-  function normalizedLevel(){
-    return low(txt("infoLevel")).replace(/\s+/g, "").replace(/[–—]/g, "-").replace(/→/g, "->");
-  }
-  function hasStage(from, to){
-    var level = normalizedLevel();
-    return level.indexOf(from + "->" + to) >= 0 || level.indexOf(from + "-" + to) >= 0 || level.indexOf(from + "/" + to) >= 0;
-  }
   function currentPromotionTasks(){
     return low(txt("tasks"));
+  }
+  function currentPromotionTaskTitles(){
+    return Array.from(document.querySelectorAll("#tasks input[data-task]"))
+      .map(function(input){ return (input.dataset.task || "").trim(); })
+      .filter(Boolean);
+  }
+  function usafMaterialForTask(task){
+    var name = low(task);
+    if(name.indexOf("уак") >= 0 && name.indexOf("пк") >= 0) return "usaf-law";
+    if(name.indexOf("устава") >= 0 && name.indexOf("тен-код") >= 0) return "usaf-test-regulations-ten";
+    if(name.indexOf("усложнённый устав") >= 0 || name.indexOf("усложненный устав") >= 0) return "usaf-test-advanced-regulations";
+    if(name.indexOf("протокол") >= 0) return "usaf-test-protocols";
+    if(name.indexOf("frogger") >= 0 || name.indexOf("swift") >= 0 || name.indexOf("miljet") >= 0) return "usaf-test-aircraft";
+    if(name.indexOf("пилотирован") >= 0) return "usaf-test-aircraft";
+    if(name.indexOf("воздушн") >= 0 && name.indexOf("патрул") >= 0) return "usaf-patrols";
+    return "";
+  }
+  function orderedUsafMaterials(){
+    var seen = new Set();
+    return currentPromotionTaskTitles().map(usafMaterialForTask).filter(function(id){
+      if(!id || seen.has(id) || !sourceNode(id)) return false;
+      seen.add(id);
+      return true;
+    });
   }
   function needsUsafLawGuide(){
     var tasks = currentPromotionTasks();
@@ -149,22 +166,7 @@
     var level = low(txt("infoLevel"));
     var rank = rankNum();
     if(isUsaf()){
-      if(hasStage(3,4)){
-        return ["usaf-ten", "usaf-patrols", "usaf-test-aircraft"];
-      }
-      if(hasStage(4,5)){
-        return ["usaf-protocols", "usaf-test-protocols", "usaf-quick"];
-      }
-      if(hasStage(5,6)){
-        return ["usaf-law", "usaf-posts", "usaf-patrols", "usaf-test-aircraft", "usaf-test-sd-driving"];
-      }
-      if(hasStage(6,7)){
-        return ["usaf-ten", "usaf-protocols", "usaf-test-advanced-regulations", "usaf-test-aircraft"];
-      }
-      if(hasStage(7,8)){
-        return ["usaf-ten", "usaf-patrols", "usaf-test-aircraft", "usaf-quick"];
-      }
-      return ["usaf-quick", "usaf-ten", "usaf-posts"];
+      return orderedUsafMaterials();
     }
     if(isAcademy()){
       if(isAcademyRankTwoToThree()){
@@ -178,14 +180,14 @@
     return ["academy-main", "academy-codes", "academy-rules"];
   }
 
-  function withMandatoryMaterials(ids){
+  function withMandatoryMaterials(ids, manualPins){
     var out = (ids || []).filter(function(id){
       return id && !(isUsaf() && id === "usaf-test-mp-uak-pk");
     });
     if(isAcademyRankTwoToThree() && out.indexOf("academy-rp-situation") < 0){
       out.push("academy-rp-situation");
     }
-    if(needsUsafLawGuide() && out.indexOf("usaf-law") < 0 && sourceNode("usaf-law")){
+    if(!manualPins && needsUsafLawGuide() && out.indexOf("usaf-law") < 0 && sourceNode("usaf-law")){
       out.unshift("usaf-law");
     }
     return out;
@@ -205,12 +207,14 @@
            byId(id);
   }
   function validPinned(){
-    return getPinned().filter(function(id){ return !!sourceNode(id); });
+    return getPinned().filter(function(id){
+      return !(isUsaf() && id === "usaf-test-mp-uak-pk") && !!sourceNode(id);
+    });
   }
   function planIds(){
     var pins = validPinned();
     var ids = pins.length ? pins : autoIds().filter(function(id){ return !!sourceNode(id); });
-    return withMandatoryMaterials(ids);
+    return withMandatoryMaterials(ids, pins.length > 0);
   }
 
   function ensureShell(){
