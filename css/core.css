@@ -615,19 +615,83 @@ body.profile-booting .first-screen,
 body.profile-booting .app,
 html.profile-booting .first-screen,
 html.profile-booting .app{visibility:hidden!important;pointer-events:none!important;}
-body.profile-booting::after,
-html.profile-booting body::after{
-  content:"Загружаю профиль…";
+.profile-boot-screen{
   position:fixed;
   inset:0;
   z-index:20000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .28s ease,visibility 0s linear .28s;
+  background:
+    radial-gradient(circle at 50% 43%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 30%),
+    var(--bg,#050811);
+}
+html.profile-booting .profile-boot-screen,
+body.profile-booting .profile-boot-screen{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transition-delay:0s;
+}
+html.profile-boot-leaving .profile-boot-screen,
+body.profile-boot-leaving .profile-boot-screen{
+  opacity:0;
+  visibility:visible;
+  pointer-events:none;
+  transition-delay:0s;
+}
+.profile-boot-mark{
+  position:relative;
+  width:82px;
+  height:82px;
   display:grid;
   place-items:center;
+  border-radius:26px;
+  color:#07101f;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 0 42px color-mix(in srgb,var(--accent) 34%,transparent);
+}
+.profile-boot-mark::before{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  border-radius:32px;
+  border:2px solid transparent;
+  border-top-color:var(--accent);
+  border-right-color:color-mix(in srgb,var(--accent2) 72%,transparent);
+  filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 45%,transparent));
+  animation:profileBootSpin .9s linear infinite;
+}
+.profile-boot-mark span{
+  font-size:30px;
+  font-weight:950;
+  letter-spacing:-.06em;
+  animation:profileBootPulse 1.45s ease-in-out infinite;
+}
+.profile-boot-screen p{
+  margin:0;
   color:var(--text);
-  font-size:14px;
+  font-size:13px;
   font-weight:900;
-  letter-spacing:.02em;
-  background:var(--bg,#050811);
+  letter-spacing:.035em;
+}
+@keyframes profileBootSpin{
+  to{transform:rotate(360deg);}
+}
+@keyframes profileBootPulse{
+  0%,100%{transform:scale(1);opacity:1;}
+  50%{transform:scale(.92);opacity:.72;}
+}
+@media (prefers-reduced-motion:reduce){
+  .profile-boot-screen{transition-duration:.01ms;}
+  .profile-boot-mark::before,
+  .profile-boot-mark span{animation:none;}
 }
 .first-screen{min-height:100vh;display:grid;place-items:center;padding:18px;}
 .first-card{width:min(620px,100%);border:1px solid var(--line);border-radius:34px;background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.025)),rgba(12,16,27,.92);box-shadow:var(--shadow);padding:28px;}
@@ -1886,7 +1950,7 @@ body[data-active-dash-tab="profile"] #dashboardProfileInfo.profile-top-strip{dis
 .path-step-icon .career-inline-svg{width:18px!important;height:18px!important;display:block!important;fill:none!important;stroke:currentColor!important;stroke-width:1.85!important;stroke-linecap:round!important;stroke-linejoin:round!important;color:color-mix(in srgb,var(--accent) 82%, white 10%)!important;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 24%, transparent))!important;}
 .kiri-test-version-badge{position:fixed;left:14px;bottom:14px;z-index:10000;display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border-radius:999px;border:1px solid rgba(178,140,255,.55);background:rgba(8,12,22,.92);color:var(--text);box-shadow:0 12px 30px rgba(0,0,0,.38);backdrop-filter:blur(14px);font-size:0;font-weight:950;letter-spacing:.01em;pointer-events:none;}
 .kiri-test-version-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);}
-.kiri-test-version-badge::after{content:"TEST v80 · True realtime Firebase sync";font-size:12px;}
+.kiri-test-version-badge::after{content:"TEST v81 · Profile sync loader";font-size:12px;}
 @media(max-width:620px){
 .kiri-test-version-badge{left:10px;bottom:10px;min-height:30px;padding:0 9px;}
 .kiri-test-version-badge::after{font-size:11px;}

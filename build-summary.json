@@ -1,7 +1,12 @@
 {
-  "output": "RP_CABINET_v80_TRUE_REALTIME_SYNC",
-  "testVersion": 80,
-  "label": "True realtime Firebase sync",
+  "output": "RP_CABINET_v81_PROFILE_SYNC_LOADER",
+  "testVersion": 81,
+  "label": "Profile sync loader",
+  "profileLoader": {
+    "label": "Синхронизация профиля…",
+    "fadeOutMs": 280,
+    "reducedMotion": true
+  },
   "architecture": "Firebase canonical document + native onSnapshot + field-level update paths + Firestore IndexedDB persistence",
   "syncEngine": "js/core/realtime-state.js",
   "cloudProfile": "users/{uid}/profiles/default_realtime",
@@ -32,7 +37,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v80-realtime-sync.mjs",
+    "_tools/test-v81-realtime-sync.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],

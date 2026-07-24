@@ -38,12 +38,15 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v80 · True realtime Firebase sync')) failures.push('index badge is not v80');
-if(!version.includes('const TEST_VERSION="80"')) failures.push('TEST_VERSION is not 80');
-if(!version.includes('True realtime Firebase sync')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v80 · True realtime Firebase sync')) failures.push('CSS badge mismatch');
+if(!index.includes('TEST v81 · Profile sync loader')) failures.push('index badge is not v81');
+if(!version.includes('const TEST_VERSION="81"')) failures.push('TEST_VERSION is not 81');
+if(!version.includes('Profile sync loader')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v81 · Profile sync loader')) failures.push('CSS badge mismatch');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=80')) failures.push('realtime-state.js is not connected with v80 cache-busting');
+if(!index.includes('realtime-state.js?v=81')) failures.push('realtime-state.js is not connected with v81 cache-busting');
+if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
+if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
+if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
 if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sync-merge.js still exists');
 for(const forbidden of ['queuePendingProfileSyncDelta','readPendingProfileSyncPatch','applyProfileSyncPatchWithGuards','targetMutationIds','syncRevision']){
   if(fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes(forbidden)) failures.push(`Old sync symbol remains active: ${forbidden}`);
@@ -58,4 +61,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v80 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v81 build audit: OK\n${notes.join('\n')}`);

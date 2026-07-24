@@ -1,5 +1,5 @@
-const TEST_VERSION="80";
-const TEST_VERSION_LABEL="True realtime Firebase sync";
+const TEST_VERSION="81";
+const TEST_VERSION_LABEL="Profile sync loader";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

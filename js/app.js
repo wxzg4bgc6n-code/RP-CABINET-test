@@ -1164,14 +1164,25 @@ function chooseInitialRealtimeSeed(candidates){
   return usable[0]?.state||null;
 }
 function finishProfileBoot(){
-  if(window.__profileBootComplete&&!document.documentElement.classList.contains('profile-booting')&&!document.body.classList.contains('profile-booting')) return;
+  if(window.__profileBootComplete||window.__profileBootFinishing) return;
+  window.__profileBootFinishing=true;
   window.__profileBootComplete=true;
   rememberRealtimeLocalBaseline(S);
-  document.body.classList.remove('profile-booting');
-  document.documentElement.classList.remove('profile-booting');
   render();
   applyDashTab();
   renderCloudSyncStatus();
+  const root=document.documentElement;
+  root.classList.add('profile-boot-leaving');
+  document.body.classList.add('profile-boot-leaving');
+  requestAnimationFrame(()=>{
+    document.body.classList.remove('profile-booting');
+    root.classList.remove('profile-booting');
+    setTimeout(()=>{
+      root.classList.remove('profile-boot-leaving');
+      document.body.classList.remove('profile-boot-leaving');
+      window.__profileBootFinishing=false;
+    },320);
+  });
 }
 
 window.CloudSync={
