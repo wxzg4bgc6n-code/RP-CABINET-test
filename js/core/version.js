@@ -1,5 +1,5 @@
-const TEST_VERSION="81";
-const TEST_VERSION_LABEL="Profile sync loader";
+const TEST_VERSION="82";
+const TEST_VERSION_LABEL="Collapsible proof galleries";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

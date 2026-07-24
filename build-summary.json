@@ -1,7 +1,12 @@
 {
-  "output": "RP_CABINET_v81_PROFILE_SYNC_LOADER",
-  "testVersion": 81,
-  "label": "Profile sync loader",
+  "output": "RP_CABINET_v82_COLLAPSIBLE_PROOF_GALLERIES",
+  "testVersion": 82,
+  "label": "Collapsible proof galleries",
+  "proofGalleries": {
+    "collapsible": true,
+    "uploadButtonAlwaysVisible": true,
+    "stateStorage": "sessionStorage"
+  },
   "profileLoader": {
     "label": "Синхронизация профиля…",
     "fadeOutMs": 280,
@@ -37,7 +42,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v81-realtime-sync.mjs",
+    "_tools/test-v82-realtime-sync.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],

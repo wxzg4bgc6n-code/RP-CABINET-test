@@ -1,6 +1,6 @@
-RP CABINET v81 — КРАТКАЯ ПАМЯТКА
+RP CABINET v82 — КРАТКАЯ ПАМЯТКА
 
-1. На GitHub загружать всё содержимое папки v81, включая report.html, css, data, js, documentation и proof-service.
+1. На GitHub загружать всё содержимое папки v82, включая report.html, css, data, js, documentation и proof-service.
 2. Не загружать proof-service/node_modules и локальные .env/.env.local.
 3. Телефон и ПК должны быть авторизованы в одном Google-аккаунте.
 4. Firebase после Google-входа — единственный источник актуального профиля.

@@ -38,12 +38,12 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v81 · Profile sync loader')) failures.push('index badge is not v81');
-if(!version.includes('const TEST_VERSION="81"')) failures.push('TEST_VERSION is not 81');
-if(!version.includes('Profile sync loader')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v81 · Profile sync loader')) failures.push('CSS badge mismatch');
+if(!index.includes('TEST v82 · Collapsible proof galleries')) failures.push('index badge is not v82');
+if(!version.includes('const TEST_VERSION="82"')) failures.push('TEST_VERSION is not 82');
+if(!version.includes('Collapsible proof galleries')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v82 · Collapsible proof galleries')) failures.push('CSS badge mismatch');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=81')) failures.push('realtime-state.js is not connected with v81 cache-busting');
+if(!index.includes('realtime-state.js?v=82')) failures.push('realtime-state.js is not connected with v82 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
@@ -61,4 +61,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v81 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v82 build audit: OK\n${notes.join('\n')}`);

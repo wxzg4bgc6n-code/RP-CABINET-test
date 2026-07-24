@@ -2,6 +2,15 @@
   const config=window.RP_PROOF_SERVICE||{};
   const rules=window.RP_PROOF_RULES||{isRequired:()=>true};
   const uploadProgress=new Map();
+  const COLLAPSED_GALLERIES_KEY='kiri:rp-cabinet:v82:collapsed-proof-galleries';
+  const collapsedGalleries=new Set((()=>{
+    try{
+      const saved=JSON.parse(sessionStorage.getItem(COLLAPSED_GALLERIES_KEY)||'[]');
+      return Array.isArray(saved)?saved.filter(value=>typeof value==='string'):[];
+    }catch(error){
+      return [];
+    }
+  })());
 
   function configuredFileLimit(){
     const value=Number(config.maxFilesPerTask);
@@ -38,6 +47,34 @@
 
   function proofFor(task){
     return ensureProofStore()[task]||{files:[]};
+  }
+
+  function galleryStateKey(task){
+    return `${currentContextKey()}\u0000${String(task||'')}`;
+  }
+
+  function galleryId(task){
+    const source=galleryStateKey(task);
+    let hash=2166136261;
+    for(let index=0;index<source.length;index++){
+      hash^=source.charCodeAt(index);
+      hash=Math.imul(hash,16777619);
+    }
+    return `proof-gallery-${(hash>>>0).toString(36)}`;
+  }
+
+  function isGalleryCollapsed(task){
+    return collapsedGalleries.has(galleryStateKey(task));
+  }
+
+  function toggleGallery(task){
+    const key=galleryStateKey(task);
+    if(collapsedGalleries.has(key)) collapsedGalleries.delete(key);
+    else collapsedGalleries.add(key);
+    try{
+      sessionStorage.setItem(COLLAPSED_GALLERIES_KEY,JSON.stringify([...collapsedGalleries]));
+    }catch(error){}
+    render();
   }
 
   function ensureRoot(){
@@ -120,6 +157,8 @@
     const progress=uploadProgress.get(task);
     const fileLimit=configuredFileLimit();
     const canUpload=isServiceConfigured()&&!!authUser()&&(fileLimit===null||files.length<fileLimit);
+    const collapsed=files.length>0&&isGalleryCollapsed(task);
+    const gallery=galleryId(task);
     const status=required
       ? (files.length?`Загружено: ${files.length}`:'Ожидает скриншот')
       :'Подтверждение не требуется';
@@ -129,12 +168,18 @@
           <span class="proof-status">${esc(status)}</span>
           <h4>${esc(task)}</h4>
         </div>
-        ${required?`<label class="proof-upload ${canUpload?'':'is-disabled'}">
-          <input type="file" accept="image/png,image/jpeg,image/webp" multiple data-proof-upload="${esc(task)}" ${canUpload?'':'disabled'}>
-          <span>${progress!==undefined?`Загрузка ${Math.round(progress)}%`:(files.length?'Добавить ещё':'Загрузить скриншот')}</span>
-        </label>`:'<span class="proof-done-mark">Выполнено</span>'}
+        <div class="proof-task-actions">
+          ${files.length?`<button class="proof-files-toggle" type="button" data-proof-toggle="${esc(task)}" aria-expanded="${collapsed?'false':'true'}" aria-controls="${gallery}">
+            <span>${collapsed?'Показать скриншоты':'Скрыть скриншоты'}</span>
+            <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m5 7.5 5 5 5-5"></path></svg>
+          </button>`:''}
+          ${required?`<label class="proof-upload ${canUpload?'':'is-disabled'}">
+            <input type="file" accept="image/png,image/jpeg,image/webp" multiple data-proof-upload="${esc(task)}" ${canUpload?'':'disabled'}>
+            <span>${progress!==undefined?`Загрузка ${Math.round(progress)}%`:(files.length?'Добавить ещё':'Загрузить скриншот')}</span>
+          </label>`:'<span class="proof-done-mark">Выполнено</span>'}
+        </div>
       </div>
-      ${files.length?`<div class="proof-files">${files.map((file,index)=>fileMarkup(task,file,index)).join('')}</div>`:''}
+      ${files.length?`<div class="proof-files${collapsed?' is-collapsed':''}" id="${gallery}" ${collapsed?'hidden':''}>${files.map((file,index)=>fileMarkup(task,file,index)).join('')}</div>`:''}
     </article>`;
   }
 
@@ -189,6 +234,9 @@
     });
     root.querySelectorAll('[data-proof-delete]').forEach(button=>{
       button.addEventListener('click',()=>deleteFile(button.dataset.proofDelete,Number(button.dataset.fileIndex)));
+    });
+    root.querySelectorAll('[data-proof-toggle]').forEach(button=>{
+      button.addEventListener('click',()=>toggleGallery(button.dataset.proofToggle));
     });
     root.querySelector('#generateProofReport')?.addEventListener('click',generateReport);
     root.querySelector('#copyProofReport')?.addEventListener('click',()=>copyReportLink(report));
