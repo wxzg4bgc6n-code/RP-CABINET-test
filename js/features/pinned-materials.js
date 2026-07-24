@@ -31,22 +31,25 @@
     }catch(e){ return null; }
   }
   var localPinsAtBoot = readLocalPins();
-  var hasLocalPinsAtBoot = localPinsAtBoot !== null;
-  var initialPins = hasLocalPinsAtBoot ? localPinsAtBoot : [];
+  var initialPins = [];
   try{
     if(typeof S !== "undefined" && S){
+      var hasStatePins = Array.isArray(S.pinnedDepartmentBlocks) || Array.isArray(S.pinnedAcademyBlocks);
       var savedPins = Array.isArray(S.pinnedDepartmentBlocks) ? S.pinnedDepartmentBlocks : S.pinnedAcademyBlocks;
-      if(!hasLocalPinsAtBoot && Array.isArray(savedPins)) initialPins = normalizePins(savedPins);
+      initialPins = hasStatePins ? normalizePins(savedPins) : normalizePins(localPinsAtBoot || []);
       S.pinnedDepartmentBlocks = initialPins.slice();
       S.pinnedAcademyBlocks = initialPins.slice();
+    }else{
+      initialPins = normalizePins(localPinsAtBoot || []);
     }
-  }catch(e){}
+  }catch(e){ initialPins = normalizePins(localPinsAtBoot || []); }
   window.__kiriInitialPinnedAcademyBlocks = initialPins.slice();
   function getPinned(){
-    var localPins = readLocalPins();
-    if(localPins !== null) return localPins;
-    if(window.__kiriInitialPinnedAcademyBlocks && window.__kiriInitialPinnedAcademyBlocks.length){
-      return normalizePins(window.__kiriInitialPinnedAcademyBlocks);
+    if(typeof S !== "undefined" && S && Array.isArray(S.pinnedDepartmentBlocks)){
+      return normalizePins(S.pinnedDepartmentBlocks);
+    }
+    if(typeof S !== "undefined" && S && Array.isArray(S.pinnedAcademyBlocks)){
+      return normalizePins(S.pinnedAcademyBlocks);
     }
     if(window.S && Array.isArray(window.S.pinnedDepartmentBlocks)){
       return normalizePins(window.S.pinnedDepartmentBlocks);
@@ -54,17 +57,10 @@
     if(window.S && Array.isArray(window.S.pinnedAcademyBlocks)){
       return normalizePins(window.S.pinnedAcademyBlocks);
     }
-    if(typeof S !== "undefined" && S && Array.isArray(S.pinnedDepartmentBlocks)){
-      return normalizePins(S.pinnedDepartmentBlocks);
-    }
-    if(typeof S !== "undefined" && S && Array.isArray(S.pinnedAcademyBlocks)){
-      return normalizePins(S.pinnedAcademyBlocks);
-    }
-    return [];
+    return normalizePins(window.__kiriInitialPinnedAcademyBlocks || []);
   }
   function setPinned(list){
     var clean = normalizePins(list);
-    try{ localStorage.setItem(PIN_KEY, JSON.stringify(clean.length ? clean : [EMPTY_PIN_SENTINEL])); }catch(e){}
     window.__kiriInitialPinnedAcademyBlocks = clean.slice();
     try{
       if(typeof S !== "undefined" && S){
@@ -573,4 +569,5 @@
   }, true);
   document.addEventListener("kiri:profile-pins-changed", schedule);
   document.addEventListener("kiri:source-blocks-updated", function(){ watchSources(); scheduleSourceRefresh(); });
+  window.KiriPinnedMaterialsSync = function(){ schedule(); };
 })();

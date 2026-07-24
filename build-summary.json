@@ -1,52 +1,57 @@
 {
-  "output": "RP_CABINET_v79_REALTIME_CLOUD_SYNC",
-  "sourceBytes": 5371696,
-  "indexBytes": 21834,
-  "cssFiles": 11,
-  "scriptFiles": 33,
-  "templates": [
-    "academyInfoTemplate",
-    "genericDepartmentInfoTemplate",
-    "academyTestsTemplate",
-    "usafTestsTemplate",
-    "usafInfoTemplateV20",
-    "usafTestsTemplateV20"
-  ],
-  "images": 23,
-  "imageBytes": 4250049,
-  "mobileLayout": "css/responsive/mobile.css",
-  "mobileBehavior": "js/features/mobile-navigation.js",
-  "syncEngine": "js/core/sync-merge.js",
-  "syncStrategy": "Firebase canonical state + monotonic syncRevision + per-target revision guards + processed-operation deduplication + Firestore transactions + realtime onSnapshot + persisted targeted mutation queue",
-  "version": 79,
-  "label": "Realtime cloud sync",
-  "cloudProfile": "users/{uid}/profiles/default_v79_realtime",
-  "legacyMigration": [
+  "output": "RP_CABINET_v80_TRUE_REALTIME_SYNC",
+  "testVersion": 80,
+  "label": "True realtime Firebase sync",
+  "architecture": "Firebase canonical document + native onSnapshot + field-level update paths + Firestore IndexedDB persistence",
+  "syncEngine": "js/core/realtime-state.js",
+  "cloudProfile": "users/{uid}/profiles/default_realtime",
+  "legacyCloudProfiles": [
+    "default_v79_realtime",
     "default_v77",
-    "default",
-    "v77 local cache keys"
+    "default"
   ],
-  "startupRule": "when Google is authenticated, cloud is read before UI is revealed; local cache never writes merely because the page opened or refreshed",
-  "realtimeRule": "all snapshots with a newer syncRevision are applied regardless of source device or browser tab",
-  "offlineRule": "only explicit user mutations are persisted and replayed over the latest cloud state after reconnection",
-  "conflictRule": "unrelated targets merge; an operation cannot overwrite a target changed after its baseRevision; causally newer same-session actions may supersede their own in-flight predecessor; already processed operation IDs are idempotent",
-  "progressSource": "progressByContext; tasks is only the current-context render mirror",
-  "progressAnimation": "same-target rerenders keep the active animation; changed targets continue from the visible value",
-  "maxFilesPerTask": null,
-  "fileCountLimit": "none (no fixed panel limit)",
-  "maxFileBytes": 15728640,
-  "proofRetentionDays": 8,
-  "proofRequiredOnlyFor": [
-    "Участие в СО",
-    "Участие в ГМП"
+  "localCacheKeys": [
+    "rp_panel_account_profile_V80_REALTIME",
+    "rp_panel_v80_realtime_cache",
+    "rp_panel_account_profile_V80_BACKUP"
   ],
+  "removedActiveSystems": [
+    "js/core/sync-merge.js",
+    "custom mutation queue",
+    "whole-state cloud replacement",
+    "local updatedAt winner selection"
+  ],
+  "realtimeRule": "page load is read-only; each user action updates only its Firestore field path; every server snapshot is applied to all open devices",
+  "screenshots": {
+    "countLimit": null,
+    "maxFileBytes": 15728640,
+    "formats": [
+      "png",
+      "jpeg",
+      "webp"
+    ]
+  },
   "tests": [
-    "node syntax for every JS file",
-    "phone-to-PC and PC-to-phone targeted operation merge model",
-    "stale same-target mutation rejection and unrelated-target merge",
-    "processed-operation replay deduplication",
-    "causally newer same-target action after an in-flight predecessor",
-    "static startup/cloud path/revision/listener assertions"
+    "_tools/test-v80-realtime-sync.mjs",
+    "node --check for all JavaScript files",
+    "HTML dependency audit"
   ],
-  "browserSmoke": "Chromium dump-dom was unavailable in the container because the headless process did not exit; no claim of live Firebase end-to-end testing is made"
+  "syncedState": [
+    "profile",
+    "career context",
+    "progress tasks",
+    "selected levels",
+    "pinned materials",
+    "premium activities",
+    "proof metadata",
+    "report links"
+  ],
+  "migrationRule": "create default_realtime once from the freshest complete legacy-cloud or local candidate; afterward Firebase is authoritative",
+  "verifiedScenarios": [
+    "phone task -> PC",
+    "PC task -> phone without losing previous task",
+    "stale closed device opens read-only",
+    "unrelated concurrent fields merge",
+    "pinned materials and premium items use cloud state"
+  ]
 }
