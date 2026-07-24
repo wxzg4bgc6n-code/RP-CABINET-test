@@ -42,17 +42,17 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v86 · exact promotion materials')) failures.push('index badge is not v86');
-if(!version.includes('const TEST_VERSION="86"')) failures.push('TEST_VERSION is not 86');
-if(!version.includes('exact promotion materials')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v86 · exact promotion materials')) failures.push('CSS badge mismatch');
+if(!index.includes('TEST v87 · report loading dividers')) failures.push('index badge is not v87');
+if(!version.includes('const TEST_VERSION="87"')) failures.push('TEST_VERSION is not 87');
+if(!version.includes('report loading dividers')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v87 · report loading dividers')) failures.push('CSS badge mismatch');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=86')) failures.push('realtime-state.js is not connected with v86 cache-busting');
+if(!index.includes('realtime-state.js?v=87')) failures.push('realtime-state.js is not connected with v87 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
-if(!index.includes('data/usaf/law-guide.js?v=86')) failures.push('USAF law guide is not connected');
-if(!mainCss.includes('features/usaf-law.css?v=86')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('data/usaf/law-guide.js?v=87')) failures.push('USAF law guide is not connected');
+if(!mainCss.includes('features/usaf-law.css?v=87')) failures.push('USAF law guide styles are not connected');
 if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sync-merge.js still exists');
 for(const forbidden of ['queuePendingProfileSyncDelta','readPendingProfileSyncPatch','applyProfileSyncPatchWithGuards','targetMutationIds','syncRevision']){
   if(fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes(forbidden)) failures.push(`Old sync symbol remains active: ${forbidden}`);
@@ -68,4 +68,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v86 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v87 build audit: OK\n${notes.join('\n')}`);

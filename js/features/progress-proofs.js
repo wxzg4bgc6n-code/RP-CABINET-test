@@ -2,6 +2,7 @@
   const config=window.RP_PROOF_SERVICE||{};
   const rules=window.RP_PROOF_RULES||{isRequired:()=>true};
   const uploadProgress=new Map();
+  let reportGenerating=false;
   const COLLAPSED_GALLERIES_KEY='kiri:rp-cabinet:v82:collapsed-proof-galleries';
   const collapsedGalleries=new Set((()=>{
     try{
@@ -27,6 +28,19 @@
     return typeof config.apiBase==='string'
       && /^https:\/\//i.test(config.apiBase)
       && !config.apiBase.includes('YOUR-RP-CABINET');
+  }
+
+  async function fetchWithTimeout(url,options,timeoutMs=20000){
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),timeoutMs);
+    try{
+      return await fetch(url,{...(options||{}),signal:controller.signal});
+    }catch(error){
+      if(error?.name==='AbortError') throw new Error('Сервис не ответил за 20 секунд. Попробуй сформировать отчёт ещё раз.');
+      throw error;
+    }finally{
+      clearTimeout(timeout);
+    }
   }
 
   function currentContextKey(){
@@ -199,7 +213,7 @@
     const requiredCompleted=completed.filter(task=>rules.isRequired(task,S));
     const missing=requiredCompleted.filter(task=>!(proofFor(task).files||[]).length);
     const fullProgress=allTasks.length>0&&allTasks.every(task=>S.tasks?.[task]===true);
-    const canGenerate=isServiceConfigured()&&!!authUser()&&fullProgress&&!missing.length&&!report;
+    const canGenerate=isServiceConfigured()&&!!authUser()&&fullProgress&&!missing.length&&!report&&!reportGenerating;
     const serviceNote=!isServiceConfigured()
       ? 'Хранилище ещё не подключено. Интерфейс готов; после адреса Vercel загрузка включится без переделки панели.'
       : (!authUser()?'Для загрузки и удаления файлов подключи Google в настройках профиля.':'Оригиналы загружаются без сжатия и автоматически удаляются через 8 дней.');
@@ -221,7 +235,7 @@
         <h4>Единая ссылка для Discord</h4>
         <p>${report?'Сначала удали текущий отчёт, если нужно сформировать новый.':!fullProgress?'Ссылка станет доступна после выполнения всех пунктов.':missing.length?`Не хватает скриншотов: ${missing.length}.`:'Отчёт готов к формированию.'}</p>
       </div>
-      <button class="btn" type="button" id="generateProofReport" ${canGenerate?'':'disabled'}>Сформировать отчёт</button>
+      <button class="btn" type="button" id="generateProofReport" ${canGenerate?'':'disabled'}>${reportGenerating?'Формирую отчёт…':'Сформировать отчёт'}</button>
     </div>
     ${report?`<div class="proof-report-ready">
       <div><span>Последний отчёт</span><a href="${esc(report.url||currentShareUrl(report.id))}" target="_blank" rel="noopener">${esc(report.url||currentShareUrl(report.id))}</a><small>Доступен до ${new Date(report.expiresAt).toLocaleString('ru-RU')}</small></div>
@@ -322,8 +336,11 @@
   }
 
   async function generateReport(){
+    if(reportGenerating) return;
     const contextKey=currentContextKey();
     const allTasks=tasks();
+    reportGenerating=true;
+    render();
     try{
       const token=await authToken();
       const payload={
@@ -335,7 +352,7 @@
           return {title,completed,required,files:completed?(proofFor(title).files||[]):[]};
         })
       };
-      const response=await fetch(`${config.apiBase}/api/reports`,{
+      const response=await fetchWithTimeout(`${config.apiBase}/api/reports`,{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
         body:JSON.stringify(payload)
@@ -350,6 +367,9 @@
       showToast('Отчёт готов','Ссылка скопирована. Её можно отправить в Discord');
     }catch(error){
       showToast('Отчёт не создан',String(error.message||error).slice(0,140));
+    }finally{
+      reportGenerating=false;
+      render();
     }
   }
 

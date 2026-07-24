@@ -84,6 +84,17 @@ button{font:inherit}
   font-size:24px;
   font-weight:1000;
 }
+.report-retry{
+  margin-top:16px;
+  padding:10px 15px;
+  border:1px solid color-mix(in srgb,var(--accent) 55%,var(--line));
+  border-radius:12px;
+  background:rgba(183,150,255,.1);
+  color:var(--text);
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
 @keyframes spin{to{transform:rotate(360deg)}}
 .report-hero{
   display:flex;
@@ -109,15 +120,21 @@ button{font:inherit}
 .report-meta span,.report-meta b{display:block}
 .report-meta span{color:var(--muted);font-size:10px;font-weight:950;text-transform:uppercase}
 .report-meta b{margin-top:4px;font-size:13px}
-.report-task-list{display:grid;gap:12px}
+.report-task-list{display:grid;gap:0}
+.report-task-separator{display:flex;align-items:center;gap:12px;margin:22px 2px}
+.report-task-separator::before,.report-task-separator::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 45%,var(--line)))}
+.report-task-separator::after{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 45%,var(--line)),transparent)}
+.report-task-separator span{flex:none;padding:6px 11px;border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line));border-radius:999px;background:rgba(183,150,255,.08);color:var(--accent);font-size:10px;font-weight:950;letter-spacing:.06em;text-transform:uppercase}
 .report-task{
   overflow:hidden;
   border:1px solid color-mix(in srgb,var(--accent) 32%,var(--line));
   border-left:4px solid var(--accent);
   border-radius:18px;
   background:var(--panel);
+  box-shadow:0 12px 30px rgba(0,0,0,.2);
 }
-.report-task-title{display:grid;grid-template-columns:38px minmax(0,1fr) 34px;align-items:center;gap:12px;padding:15px}
+.report-task-title{display:grid;grid-template-columns:38px minmax(0,1fr) 34px;align-items:center;gap:12px;padding:15px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 9%,var(--surface)),var(--panel))}
+.report-task.has-files .report-task-title{border-bottom:1px solid color-mix(in srgb,var(--accent) 24%,var(--line))}
 .report-task-title>span,.report-task-title>i{display:grid;width:34px;height:34px;place-items:center;border-radius:11px;background:rgba(183,150,255,.1);color:var(--accent);font-style:normal;font-weight:1000}
 .report-task-title h3{margin:0;font-size:15px;line-height:1.35}
 .report-task-title p{margin:4px 0 0;color:var(--muted);font-size:11px;font-weight:750}
@@ -140,6 +157,7 @@ footer{padding:22px 2px 0;color:var(--muted);font-size:11px;text-align:center}
   .report-level{min-width:0}
   .report-meta{grid-template-columns:1fr}
   .report-task-title{grid-template-columns:32px minmax(0,1fr) 28px;gap:9px;padding:12px}
+  .report-task-separator{gap:8px;margin:18px 0}
   .report-task-title>span,.report-task-title>i{width:30px;height:30px}
   .report-proofs{padding:0 10px 10px}
   .report-proof a{padding:5px}

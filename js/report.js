@@ -2,6 +2,7 @@
   const config=window.RP_PROOF_SERVICE||{};
   const state=document.getElementById('reportState');
   const content=document.getElementById('reportContent');
+  let loadSequence=0;
 
   function esc(value){
     return String(value??'').replace(/[&<>"']/g,char=>({
@@ -9,10 +10,38 @@
     })[char]);
   }
 
+  function finishLoading(){
+    if(typeof window.__rpReportStopWatchdog==='function') window.__rpReportStopWatchdog();
+  }
+
+  function showLoading(attempt){
+    state.hidden=false;
+    state.classList.remove('is-error');
+    content.hidden=true;
+    state.innerHTML=`<div class="report-loader"></div><h2>${attempt>1?'Повторно загружаю отчёт':'Загружаю отчёт'}</h2><p>${attempt>1?'Сервис не ответил сразу — выполняю ещё одну попытку.':'Проверяю данные и оригиналы скриншотов.'}</p>`;
+  }
+
   function showError(title,message){
-    state.innerHTML=`<div class="report-error-mark">!</div><h2>${esc(title)}</h2><p>${esc(message)}</p>`;
+    finishLoading();
+    state.hidden=false;
+    state.innerHTML=`<div class="report-error-mark">!</div><h2>${esc(title)}</h2><p>${esc(message)}</p><button class="report-retry" type="button">Попробовать снова</button>`;
     state.classList.add('is-error');
     content.hidden=true;
+    state.querySelector('.report-retry')?.addEventListener('click',load);
+  }
+
+  function delay(ms){
+    return new Promise(resolve=>setTimeout(resolve,ms));
+  }
+
+  async function fetchWithTimeout(url,timeoutMs=10000){
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),timeoutMs);
+    try{
+      return await fetch(url,{cache:'no-store',signal:controller.signal});
+    }finally{
+      clearTimeout(timeout);
+    }
   }
 
   function fileCard(file){
@@ -39,6 +68,7 @@
 
   function render(report){
     const profile=report.profile||{};
+    finishLoading();
     state.hidden=true;
     content.hidden=false;
     document.title=`${profile.name||'Игрок'} · отчёт RP Cabinet`;
@@ -55,24 +85,45 @@
       <div><span>Доступен до</span><b>${new Date(report.expiresAt).toLocaleString('ru-RU')}</b></div>
       <div><span>Выполнено</span><b>${report.tasks?.length||0} пунктов</b></div>
     </section>
-    <section class="report-task-list">${(report.tasks||[]).map(taskCard).join('')}</section>`;
+    <section class="report-task-list">${(report.tasks||[]).map((task,index)=>`${index?`<div class="report-task-separator" aria-hidden="true"><span>Пункт ${index+1}</span></div>`:''}${taskCard(task,index)}`).join('')}</section>`;
   }
 
   async function load(){
+    const sequence=++loadSequence;
     const id=new URLSearchParams(location.search).get('id')||'';
     if(!/^[a-f0-9]{36}$/i.test(id)) return showError('Неверная ссылка','В адресе нет корректного номера отчёта.');
     if(!/^https:\/\//i.test(config.apiBase||'') || String(config.apiBase).includes('YOUR-RP-CABINET')){
       return showError('Хранилище ещё не подключено','Адрес сервиса Vercel будет добавлен после первого развёртывания.');
     }
-    try{
-      const response=await fetch(`${config.apiBase}/api/reports?id=${encodeURIComponent(id)}`,{cache:'no-store'});
-      const data=await response.json().catch(()=>null);
-      if(response.status===410) return showError('Срок отчёта закончился','Прошло 8 дней, поэтому ссылка и скриншоты удалены.');
-      if(!response.ok) return showError('Отчёт не найден',data?.error||'Возможно, владелец удалил его вручную.');
-      render(data);
-    }catch(error){
-      showError('Не удалось открыть отчёт','Проверь интернет и доступность сервиса без VPN.');
+    let lastError=null;
+    for(let attempt=1;attempt<=2;attempt++){
+      if(sequence!==loadSequence) return;
+      showLoading(attempt);
+      try{
+        const response=await fetchWithTimeout(`${config.apiBase}/api/reports?id=${encodeURIComponent(id)}`);
+        const data=await response.json().catch(()=>null);
+        if(sequence!==loadSequence) return;
+        if(response.status===410) return showError('Срок отчёта закончился','Прошло 8 дней, поэтому ссылка и скриншоты удалены.');
+        if(response.ok) return render(data);
+        lastError=new Error(data?.error||'Отчёт пока не найден.');
+        if(attempt===1&&(response.status===404||response.status>=500)){
+          await delay(1200);
+          continue;
+        }
+        return showError('Отчёт не найден',lastError.message);
+      }catch(error){
+        lastError=error;
+        if(attempt===1){
+          await delay(1200);
+          continue;
+        }
+      }
     }
+    const timedOut=lastError?.name==='AbortError';
+    showError(
+      timedOut?'Сервис не ответил вовремя':'Не удалось открыть отчёт',
+      timedOut?'Сервис дважды не ответил за отведённое время. Попробуй ещё раз.':'Проверь интернет и доступность сервиса без VPN.'
+    );
   }
 
   document.getElementById('copyReportUrl').addEventListener('click',async()=>{

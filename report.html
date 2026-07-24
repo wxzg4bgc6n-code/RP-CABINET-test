@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>Отчёт о прогрессе · RP Cabinet</title>
-  <link rel="stylesheet" href="css/report.css?v=86">
+  <link rel="stylesheet" href="css/report.css?v=87">
 </head>
 <body>
   <main class="report-shell">
@@ -25,7 +25,21 @@
     <section id="reportContent" hidden></section>
     <footer>Скриншоты показываются целиком, без обрезки. Отчёт хранится 8 дней.</footer>
   </main>
-  <script src="js/config/proof-service.js?v=86"></script>
-  <script src="js/report.js?v=86"></script>
+  <script>
+    window.__rpReportWatchdog=setTimeout(function(){
+      var state=document.getElementById('reportState');
+      var content=document.getElementById('reportContent');
+      if(!state||state.hidden||!content||!content.hidden)return;
+      state.classList.add('is-error');
+      state.innerHTML='<div class="report-error-mark">!</div><h2>Отчёт не загрузился</h2><p>Сервис слишком долго не отвечает. Обнови страницу или попробуй ещё раз.</p><button class="report-retry" type="button">Попробовать снова</button>';
+      state.querySelector('.report-retry').addEventListener('click',function(){location.reload();});
+    },26000);
+    window.__rpReportStopWatchdog=function(){
+      clearTimeout(window.__rpReportWatchdog);
+      window.__rpReportWatchdog=0;
+    };
+  </script>
+  <script src="js/config/proof-service.js?v=87"></script>
+  <script src="js/report.js?v=87"></script>
 </body>
 </html>
