@@ -125,6 +125,13 @@
     var level = normalizedLevel();
     return level.indexOf(from + "->" + to) >= 0 || level.indexOf(from + "-" + to) >= 0 || level.indexOf(from + "/" + to) >= 0;
   }
+  function currentPromotionTasks(){
+    return low(txt("tasks"));
+  }
+  function needsUsafLawGuide(){
+    var tasks = currentPromotionTasks();
+    return isUsaf() && tasks.indexOf("уак") >= 0 && tasks.indexOf("пк") >= 0;
+  }
   function isAcademyRankTwoToThree(){
     var level = low(txt("infoLevel"));
     var compact = level
@@ -149,7 +156,7 @@
         return ["usaf-protocols", "usaf-test-protocols", "usaf-quick"];
       }
       if(hasStage(5,6)){
-        return ["usaf-posts", "usaf-patrols", "usaf-test-aircraft", "usaf-test-mp-uak-pk", "usaf-test-sd-driving"];
+        return ["usaf-law", "usaf-posts", "usaf-patrols", "usaf-test-aircraft", "usaf-test-sd-driving"];
       }
       if(hasStage(6,7)){
         return ["usaf-ten", "usaf-protocols", "usaf-test-advanced-regulations", "usaf-test-aircraft"];
@@ -172,9 +179,14 @@
   }
 
   function withMandatoryMaterials(ids){
-    var out = (ids || []).filter(Boolean);
+    var out = (ids || []).filter(function(id){
+      return id && !(isUsaf() && id === "usaf-test-mp-uak-pk");
+    });
     if(isAcademyRankTwoToThree() && out.indexOf("academy-rp-situation") < 0){
       out.push("academy-rp-situation");
+    }
+    if(needsUsafLawGuide() && out.indexOf("usaf-law") < 0 && sourceNode("usaf-law")){
+      out.unshift("usaf-law");
     }
     return out;
   }

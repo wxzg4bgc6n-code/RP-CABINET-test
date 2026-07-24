@@ -1,9 +1,9 @@
 {
-  "output": "RP_CABINET_v83_USAF_LAW_FIELD_GUIDE",
-  "testVersion": 83,
-  "label": "USAF law field guide",
+  "output": "RP_CABINET_v84_PROMOTION_MATERIALS_STATE",
+  "testVersion": 84,
+  "label": "USAF promotion materials",
   "usafLawGuide": {
-    "location": "bottom of USAF information",
+    "location": "after quick reports and before USAF ten-codes",
     "source": "data/usaf/law-guide.js",
     "scope": [
       "USAF and MP authority boundary",
@@ -14,7 +14,19 @@
       "army-related UAK study themes",
       "exam preparation questions"
     ],
-    "articleNumbersEmbedded": false
+    "articleNumbersEmbedded": false,
+    "automaticPromotionStage": "USAF 5 → 6",
+    "automaticMaterialId": "usaf-law"
+  },
+  "surfaceState": {
+    "storage": "sessionStorage",
+    "key": "rpCabinetOpenDetails_v84",
+    "restoredAfterVisibilityChange": true,
+    "scopes": [
+      "department information",
+      "department tests",
+      "promotion materials"
+    ]
   },
   "proofGalleries": {
     "collapsible": true,
@@ -56,7 +68,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v83-realtime-sync.mjs",
+    "_tools/test-v84-realtime-sync.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],

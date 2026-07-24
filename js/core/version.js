@@ -1,5 +1,5 @@
-const TEST_VERSION="83";
-const TEST_VERSION_LABEL="USAF law field guide";
+const TEST_VERSION="84";
+const TEST_VERSION_LABEL="USAF promotion materials";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
