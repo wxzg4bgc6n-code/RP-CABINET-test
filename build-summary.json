@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v87_REPORT_LOADING_DIVIDERS",
-  "testVersion": 87,
-  "label": "report loading dividers",
+  "output": "RP_CABINET_v88_REPORT_AVATAR_LOADER_FIX",
+  "testVersion": 88,
+  "label": "report avatar loader fix",
   "usafLawGuide": {
     "location": "after quick reports and before USAF ten-codes",
     "source": "data/usaf/law-guide.js",
@@ -23,7 +23,7 @@
   },
   "surfaceState": {
     "storage": "sessionStorage",
-    "key": "rpCabinetOpenDetails_v87",
+    "key": "rpCabinetOpenDetails_v88",
     "restoredAfterVisibilityChange": true,
     "scopes": [
       "department information",
@@ -46,7 +46,11 @@
     "maxAttempts": 2,
     "bootWatchdogMs": 26000,
     "retryButton": true,
-    "taskSeparators": true
+    "taskSeparators": true,
+    "hiddenStateOverride": true,
+    "profileAvatar": true,
+    "avatarFallback": "profile initials",
+    "existingReportCompatibility": true
   },
   "reportCreation": {
     "timeoutMs": 20000,
@@ -82,7 +86,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v87-report-loading.mjs",
+    "_tools/test-v88-report-avatar-loader.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],

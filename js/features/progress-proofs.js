@@ -345,7 +345,17 @@
       const token=await authToken();
       const payload={
         contextKey,
-        profile:{name:S.name,project:S.project,path:S.path,org:S.org,section:S.section,level:S.level},
+        profile:{
+          name:S.name,
+          project:S.project,
+          path:S.path,
+          org:S.org,
+          section:S.section,
+          level:S.level,
+          avatarUrl:typeof getGoogleProfilePhoto==='function'
+            ? getGoogleProfilePhoto()
+            : (S.account?.googlePhotoURL||S.cloud?.googlePhotoURL||'')
+        },
         tasks:allTasks.map(title=>{
           const completed=S.tasks?.[title]===true;
           const required=!!rules.isRequired(title,S);

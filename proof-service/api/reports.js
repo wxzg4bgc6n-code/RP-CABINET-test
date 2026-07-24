@@ -24,6 +24,16 @@ function cleanFile(file,uid){
   };
 }
 
+function cleanAvatarUrl(value){
+  try{
+    const url=new URL(String(value||'').trim());
+    if(url.protocol!=='https:') return '';
+    return cleanText(url.href,1200);
+  }catch(error){
+    return '';
+  }
+}
+
 export default async function handler(req,res){
   if(applyCors(req,res)) return;
   if(req.method==='GET'){
@@ -62,7 +72,7 @@ export default async function handler(req,res){
       const id=crypto.randomBytes(18).toString('hex');
       const profile=body.profile||{};
       const manifest={
-        version:1,
+        version:2,
         id,
         ownerUid:user.uid,
         contextKey:cleanText(body.contextKey,900),
@@ -72,7 +82,8 @@ export default async function handler(req,res){
           path:cleanText(profile.path,160),
           org:cleanText(profile.org,100),
           section:cleanText(profile.section,120),
-          level:cleanText(profile.level,180)
+          level:cleanText(profile.level,180),
+          avatarUrl:cleanAvatarUrl(profile.avatarUrl)
         },
         tasks,
         createdAt:now,

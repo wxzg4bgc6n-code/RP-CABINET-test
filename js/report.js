@@ -14,19 +14,24 @@
     if(typeof window.__rpReportStopWatchdog==='function') window.__rpReportStopWatchdog();
   }
 
+  function setReportView(showState){
+    state.hidden=!showState;
+    state.style.display=showState?'':'none';
+    content.hidden=showState;
+    content.style.display=showState?'none':'';
+  }
+
   function showLoading(attempt){
-    state.hidden=false;
+    setReportView(true);
     state.classList.remove('is-error');
-    content.hidden=true;
     state.innerHTML=`<div class="report-loader"></div><h2>${attempt>1?'Повторно загружаю отчёт':'Загружаю отчёт'}</h2><p>${attempt>1?'Сервис не ответил сразу — выполняю ещё одну попытку.':'Проверяю данные и оригиналы скриншотов.'}</p>`;
   }
 
   function showError(title,message){
     finishLoading();
-    state.hidden=false;
+    setReportView(true);
     state.innerHTML=`<div class="report-error-mark">!</div><h2>${esc(title)}</h2><p>${esc(message)}</p><button class="report-retry" type="button">Попробовать снова</button>`;
     state.classList.add('is-error');
-    content.hidden=true;
     state.querySelector('.report-retry')?.addEventListener('click',load);
   }
 
@@ -66,11 +71,32 @@
     </article>`;
   }
 
+  function profileInitials(name){
+    return (String(name||'RP').trim().split(/\s+/).map(part=>part[0]).join('').slice(0,2)||'RP').toUpperCase();
+  }
+
+  function renderProfileAvatar(profile){
+    const avatar=document.getElementById('reportProfileAvatar');
+    if(!avatar) return;
+    const fallback=document.createElement('span');
+    fallback.textContent=profileInitials(profile?.name);
+    avatar.replaceChildren(fallback);
+    const rawUrl=String(profile?.avatarUrl||'').trim();
+    if(!/^https:\/\//i.test(rawUrl)) return;
+    const image=document.createElement('img');
+    image.alt=`Аватар ${profile?.name||'профиля'}`;
+    image.referrerPolicy='no-referrer';
+    image.addEventListener('error',()=>avatar.replaceChildren(fallback),{once:true});
+    image.src=rawUrl;
+    avatar.replaceChildren(image);
+  }
+
   function render(report){
     const profile=report.profile||{};
     finishLoading();
-    state.hidden=true;
-    content.hidden=false;
+    setReportView(false);
+    state.classList.remove('is-error');
+    renderProfileAvatar(profile);
     document.title=`${profile.name||'Игрок'} · отчёт RP Cabinet`;
     content.innerHTML=`<section class="report-hero">
       <div>

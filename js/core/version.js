@@ -1,5 +1,5 @@
-const TEST_VERSION="87";
-const TEST_VERSION_LABEL="report loading dividers";
+const TEST_VERSION="88";
+const TEST_VERSION_LABEL="report avatar loader fix";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

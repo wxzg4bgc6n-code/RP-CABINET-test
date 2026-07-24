@@ -1,60 +1,60 @@
-/* v87: practical UAK/PK field guide for USAF */
+/* v88: practical UAK/PK field guide for USAF */
 :is(html body.usaf-info-clean #departmentInfoContent,html #profileRankMaterials) #usaf-law > details.section-toggle.academy-expand-card[open]{background:rgba(12,16,27,.42)!important;background-image:none!important;border-color:color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.14))!important;box-shadow:none!important}
 :is(html body.usaf-info-clean #departmentInfoContent,html #profileRankMaterials) #usaf-law > details > summary{background:transparent!important;box-shadow:none!important}
-:is(html body.usaf-info-clean #departmentInfoContent,html #profileRankMaterials) #usaf-law .usaf-law-content-v87{padding:20px!important;border-top:1px solid color-mix(in srgb,var(--accent) 36%,transparent)!important;background:transparent!important}
-.usaf-law-board-v87{display:grid;gap:15px}
-.usaf-law-warning-v87,.usaf-law-group-v87,.usaf-law-footer-v87{min-width:0;border:1px solid color-mix(in srgb,var(--accent) 24%,rgba(255,255,255,.12));border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),rgba(7,10,17,.5)}
-.usaf-law-warning-v87{padding:15px 17px;border-left:4px solid var(--accent);background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,transparent),rgba(12,16,27,.55))}
-.usaf-law-warning-v87 strong,.usaf-law-footer-v87 strong{display:block;margin-bottom:5px;color:color-mix(in srgb,var(--accent) 86%,var(--text) 14%);font-size:14px;font-weight:950}
-.usaf-law-warning-v87 p,.usaf-law-footer-v87 p{margin:0;color:var(--text);font-size:13px;font-weight:750;line-height:1.48}
-.usaf-law-group-v87{padding:17px;border-left:3px solid var(--accent)}
-.usaf-law-group-head-v87{display:block;margin-bottom:13px;padding:0;border:0}
-.usaf-law-group-head-v87 h3{margin:0;color:var(--text);font-size:17px;font-weight:950;line-height:1.25}
-.usaf-law-fact-grid-v87{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.usaf-law-fact-v87,.usaf-law-script-v87,.usaf-law-split-v87 article,.usaf-law-compare-v87 article,.usaf-law-call-notes-v87{border:1px solid color-mix(in srgb,var(--accent) 21%,rgba(255,255,255,.10));border-radius:14px;background:rgba(255,255,255,.025)}
-.usaf-law-fact-v87{padding:13px}
-.usaf-law-fact-v87 > strong{display:inline-grid;place-items:center;min-width:35px;min-height:26px;margin-bottom:9px;padding:4px 8px;border-radius:8px;background:color-mix(in srgb,var(--accent) 15%,rgba(255,255,255,.04));color:color-mix(in srgb,var(--accent) 86%,white 14%);font-size:12px;font-weight:950}
-.usaf-law-fact-v87 h4,.usaf-law-split-v87 h4,.usaf-law-compare-v87 h4{margin:0 0 6px;color:var(--text);font-size:13.5px;font-weight:950}
-.usaf-law-fact-v87 p,.usaf-law-compare-v87 p{margin:0;color:var(--muted);font-size:12.25px;font-weight:720;line-height:1.42}
-.usaf-law-flow-v87{display:grid;gap:8px;margin:0;padding:0;list-style:none}
-.usaf-law-flow-v87 li{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:0;padding:13px 15px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.022)}
-.usaf-law-flow-v87 b{display:block;width:100%;color:var(--text);font-size:13px;font-weight:950;line-height:1.38}
-.usaf-law-flow-v87 span{display:block;width:100%;max-width:920px;color:var(--muted);font-size:12.55px;font-weight:720;line-height:1.48}
-.usaf-law-script-grid-v87{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.usaf-law-script-v87{padding:12px}
-.usaf-law-script-v87 > span{display:block;margin:0 0 8px;color:color-mix(in srgb,var(--accent) 85%,var(--text) 15%);font-size:12px;font-weight:950}
-#usaf-law .usaf-law-script-v87 .report-command{margin:0!important;padding:11px 12px!important;border-radius:11px!important;font-size:12.25px!important;line-height:1.45!important;white-space:normal!important}
-.usaf-law-script-v87 > p{margin:8px 1px 0;color:var(--muted);font-size:11.75px;font-weight:720;line-height:1.4}
-.usaf-law-call-grid-v87{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.usaf-law-call-grid-v87 article{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.025)}
-.usaf-law-call-grid-v87 strong{min-width:52px;color:color-mix(in srgb,var(--accent) 88%,white 12%);font-size:13px;font-weight:950}
-.usaf-law-call-grid-v87 span{color:var(--text);font-size:12.5px;font-weight:800}
-.usaf-law-call-notes-v87{display:grid;gap:7px;margin-top:10px;padding:12px 13px}
-.usaf-law-call-notes-v87 p{margin:0;color:var(--muted);font-size:12.35px;font-weight:720;line-height:1.42}
-.usaf-law-call-notes-v87 b{color:var(--text);font-weight:950}
-.usaf-law-split-v87,.usaf-law-compare-v87,.usaf-law-case-grid-v87{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.usaf-law-split-v87 article,.usaf-law-compare-v87 article,.usaf-law-case-grid-v87 article{padding:13px;border:1px solid color-mix(in srgb,var(--accent) 21%,rgba(255,255,255,.10));border-radius:14px;background:rgba(255,255,255,.025)}
-.usaf-law-case-grid-v87{grid-template-columns:repeat(3,minmax(0,1fr))}
-.usaf-law-case-grid-v87 h4{margin:0 0 6px;color:var(--text);font-size:13.25px;font-weight:950}
-.usaf-law-case-grid-v87 p,.usaf-law-study-note-v87{margin:0;color:var(--muted);font-size:12.2px;font-weight:720;line-height:1.42}
-.usaf-law-study-note-v87{margin-top:10px;padding:11px 13px;border-left:3px solid var(--accent);border-radius:0 11px 11px 0;background:color-mix(in srgb,var(--accent) 7%,transparent)}
-.usaf-law-split-v87 ul{margin:0;padding-left:18px;color:var(--muted);font-size:12.35px;font-weight:720;line-height:1.43}
-.usaf-law-split-v87 li{margin:5px 0}
-.usaf-law-split-v87 li::marker{color:var(--accent);font-weight:950}
-.usaf-law-qa-v87{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.usaf-law-qa-v87 details{border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.024);overflow:hidden}
-.usaf-law-qa-v87 summary{position:relative;padding:12px 36px 12px 13px;cursor:pointer;color:var(--text);font-size:12.5px;font-weight:900;line-height:1.38;list-style:none}
-.usaf-law-qa-v87 summary::-webkit-details-marker{display:none}
-.usaf-law-qa-v87 summary::after{content:"+";position:absolute;right:13px;top:50%;translate:0 -50%;color:var(--accent);font-size:18px;font-weight:900}
-.usaf-law-qa-v87 details[open] summary::after{content:"−"}
-.usaf-law-qa-v87 details[open] summary{border-bottom:1px solid rgba(255,255,255,.08)}
-.usaf-law-qa-v87 p{margin:0;padding:11px 13px;color:var(--muted);font-size:12.25px;font-weight:720;line-height:1.43}
-.usaf-law-footer-v87{padding:14px 16px;border-left:4px solid var(--accent)}
-.usaf-law-footer-v87 strong{color:color-mix(in srgb,var(--accent) 86%,white 14%)}
-@media(max-width:980px){.usaf-law-fact-grid-v87,.usaf-law-case-grid-v87{grid-template-columns:repeat(2,minmax(0,1fr))}}
+:is(html body.usaf-info-clean #departmentInfoContent,html #profileRankMaterials) #usaf-law .usaf-law-content-v88{padding:20px!important;border-top:1px solid color-mix(in srgb,var(--accent) 36%,transparent)!important;background:transparent!important}
+.usaf-law-board-v88{display:grid;gap:15px}
+.usaf-law-warning-v88,.usaf-law-group-v88,.usaf-law-footer-v88{min-width:0;border:1px solid color-mix(in srgb,var(--accent) 24%,rgba(255,255,255,.12));border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),rgba(7,10,17,.5)}
+.usaf-law-warning-v88{padding:15px 17px;border-left:4px solid var(--accent);background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,transparent),rgba(12,16,27,.55))}
+.usaf-law-warning-v88 strong,.usaf-law-footer-v88 strong{display:block;margin-bottom:5px;color:color-mix(in srgb,var(--accent) 86%,var(--text) 14%);font-size:14px;font-weight:950}
+.usaf-law-warning-v88 p,.usaf-law-footer-v88 p{margin:0;color:var(--text);font-size:13px;font-weight:750;line-height:1.48}
+.usaf-law-group-v88{padding:17px;border-left:3px solid var(--accent)}
+.usaf-law-group-head-v88{display:block;margin-bottom:13px;padding:0;border:0}
+.usaf-law-group-head-v88 h3{margin:0;color:var(--text);font-size:17px;font-weight:950;line-height:1.25}
+.usaf-law-fact-grid-v88{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.usaf-law-fact-v88,.usaf-law-script-v88,.usaf-law-split-v88 article,.usaf-law-compare-v88 article,.usaf-law-call-notes-v88{border:1px solid color-mix(in srgb,var(--accent) 21%,rgba(255,255,255,.10));border-radius:14px;background:rgba(255,255,255,.025)}
+.usaf-law-fact-v88{padding:13px}
+.usaf-law-fact-v88 > strong{display:inline-grid;place-items:center;min-width:35px;min-height:26px;margin-bottom:9px;padding:4px 8px;border-radius:8px;background:color-mix(in srgb,var(--accent) 15%,rgba(255,255,255,.04));color:color-mix(in srgb,var(--accent) 86%,white 14%);font-size:12px;font-weight:950}
+.usaf-law-fact-v88 h4,.usaf-law-split-v88 h4,.usaf-law-compare-v88 h4{margin:0 0 6px;color:var(--text);font-size:13.5px;font-weight:950}
+.usaf-law-fact-v88 p,.usaf-law-compare-v88 p{margin:0;color:var(--muted);font-size:12.25px;font-weight:720;line-height:1.42}
+.usaf-law-flow-v88{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.usaf-law-flow-v88 li{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:0;padding:13px 15px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.022)}
+.usaf-law-flow-v88 b{display:block;width:100%;color:var(--text);font-size:13px;font-weight:950;line-height:1.38}
+.usaf-law-flow-v88 span{display:block;width:100%;max-width:920px;color:var(--muted);font-size:12.55px;font-weight:720;line-height:1.48}
+.usaf-law-script-grid-v88{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.usaf-law-script-v88{padding:12px}
+.usaf-law-script-v88 > span{display:block;margin:0 0 8px;color:color-mix(in srgb,var(--accent) 85%,var(--text) 15%);font-size:12px;font-weight:950}
+#usaf-law .usaf-law-script-v88 .report-command{margin:0!important;padding:11px 12px!important;border-radius:11px!important;font-size:12.25px!important;line-height:1.45!important;white-space:normal!important}
+.usaf-law-script-v88 > p{margin:8px 1px 0;color:var(--muted);font-size:11.75px;font-weight:720;line-height:1.4}
+.usaf-law-call-grid-v88{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.usaf-law-call-grid-v88 article{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.025)}
+.usaf-law-call-grid-v88 strong{min-width:52px;color:color-mix(in srgb,var(--accent) 88%,white 12%);font-size:13px;font-weight:950}
+.usaf-law-call-grid-v88 span{color:var(--text);font-size:12.5px;font-weight:800}
+.usaf-law-call-notes-v88{display:grid;gap:7px;margin-top:10px;padding:12px 13px}
+.usaf-law-call-notes-v88 p{margin:0;color:var(--muted);font-size:12.35px;font-weight:720;line-height:1.42}
+.usaf-law-call-notes-v88 b{color:var(--text);font-weight:950}
+.usaf-law-split-v88,.usaf-law-compare-v88,.usaf-law-case-grid-v88{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.usaf-law-split-v88 article,.usaf-law-compare-v88 article,.usaf-law-case-grid-v88 article{padding:13px;border:1px solid color-mix(in srgb,var(--accent) 21%,rgba(255,255,255,.10));border-radius:14px;background:rgba(255,255,255,.025)}
+.usaf-law-case-grid-v88{grid-template-columns:repeat(3,minmax(0,1fr))}
+.usaf-law-case-grid-v88 h4{margin:0 0 6px;color:var(--text);font-size:13.25px;font-weight:950}
+.usaf-law-case-grid-v88 p,.usaf-law-study-note-v88{margin:0;color:var(--muted);font-size:12.2px;font-weight:720;line-height:1.42}
+.usaf-law-study-note-v88{margin-top:10px;padding:11px 13px;border-left:3px solid var(--accent);border-radius:0 11px 11px 0;background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.usaf-law-split-v88 ul{margin:0;padding-left:18px;color:var(--muted);font-size:12.35px;font-weight:720;line-height:1.43}
+.usaf-law-split-v88 li{margin:5px 0}
+.usaf-law-split-v88 li::marker{color:var(--accent);font-weight:950}
+.usaf-law-qa-v88{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.usaf-law-qa-v88 details{border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.024);overflow:hidden}
+.usaf-law-qa-v88 summary{position:relative;padding:12px 36px 12px 13px;cursor:pointer;color:var(--text);font-size:12.5px;font-weight:900;line-height:1.38;list-style:none}
+.usaf-law-qa-v88 summary::-webkit-details-marker{display:none}
+.usaf-law-qa-v88 summary::after{content:"+";position:absolute;right:13px;top:50%;translate:0 -50%;color:var(--accent);font-size:18px;font-weight:900}
+.usaf-law-qa-v88 details[open] summary::after{content:"−"}
+.usaf-law-qa-v88 details[open] summary{border-bottom:1px solid rgba(255,255,255,.08)}
+.usaf-law-qa-v88 p{margin:0;padding:11px 13px;color:var(--muted);font-size:12.25px;font-weight:720;line-height:1.43}
+.usaf-law-footer-v88{padding:14px 16px;border-left:4px solid var(--accent)}
+.usaf-law-footer-v88 strong{color:color-mix(in srgb,var(--accent) 86%,white 14%)}
+@media(max-width:980px){.usaf-law-fact-grid-v88,.usaf-law-case-grid-v88{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){
-  :is(html body.usaf-info-clean #departmentInfoContent,html #profileRankMaterials) #usaf-law .usaf-law-content-v87{padding:14px!important}
-  .usaf-law-group-v87{padding:14px}
-  .usaf-law-fact-grid-v87,.usaf-law-script-grid-v87,.usaf-law-call-grid-v87,.usaf-law-split-v87,.usaf-law-compare-v87,.usaf-law-case-grid-v87,.usaf-law-qa-v87{grid-template-columns:1fr}
-  .usaf-law-flow-v87 li{gap:5px;padding:12px 13px}
+  :is(html body.usaf-info-clean #departmentInfoContent,html #profileRankMaterials) #usaf-law .usaf-law-content-v88{padding:14px!important}
+  .usaf-law-group-v88{padding:14px}
+  .usaf-law-fact-grid-v88,.usaf-law-script-grid-v88,.usaf-law-call-grid-v88,.usaf-law-split-v88,.usaf-law-compare-v88,.usaf-law-case-grid-v88,.usaf-law-qa-v88{grid-template-columns:1fr}
+  .usaf-law-flow-v88 li{gap:5px;padding:12px 13px}
 }
