@@ -280,10 +280,18 @@
       state.query=event.target.value;
       renderResults();
     });
+    const searchSettings=document.getElementById('smartSearchSettings');
+    searchSettings?.addEventListener('toggle',()=>{
+      const dialog=searchSettings.closest('.smart-search-dialog');
+      dialog?.classList.toggle('filter-open',searchSettings.open);
+      if(searchSettings.open && window.matchMedia && window.matchMedia('(max-width: 820px)').matches){
+        document.getElementById('smartSearchInput')?.blur();
+      }
+    });
     document.getElementById('smartSearchUseCurrent')?.addEventListener('click',()=>{
       state.customScope=false;
       syncDefaultScope(true);
-      document.getElementById('smartSearchSettings').open=false;
+      searchSettings.open=false;
       document.getElementById('smartSearchInput')?.focus();
     });
     document.getElementById('smartSearchTree')?.addEventListener('change',event=>{
@@ -407,6 +415,9 @@
     const modal=document.getElementById('smartSearchModal');
     modal?.classList.remove('open');
     modal?.setAttribute('aria-hidden','true');
+    modal?.querySelector('.smart-search-dialog')?.classList.remove('filter-open');
+    const searchSettings=document.getElementById('smartSearchSettings');
+    if(searchSettings) searchSettings.open=false;
     document.body.classList.remove('smart-search-open');
   }
 

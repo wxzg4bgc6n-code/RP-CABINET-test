@@ -42,26 +42,28 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v91 · responsive ownership and visible search filters')) failures.push('index badge is not v91');
-if(!version.includes('const TEST_VERSION="91"')) failures.push('TEST_VERSION is not 91');
-if(!version.includes('responsive ownership and visible search filters')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v91 · responsive ownership and visible search filters')) failures.push('CSS badge mismatch');
-if(!index.includes('modular-v91-responsive-ownership-search-filter')) failures.push('Architecture meta marker mismatch');
+if(!index.includes('TEST v92 · mobile full-height search filters')) failures.push('index badge is not v92');
+if(!version.includes('const TEST_VERSION="92"')) failures.push('TEST_VERSION is not 92');
+if(!version.includes('mobile full-height search filters')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v92 · mobile full-height search filters')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v92-mobile-filter-panel')) failures.push('Architecture meta marker mismatch');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=91')) failures.push('realtime-state.js is not connected with v91 cache-busting');
+if(!index.includes('realtime-state.js?v=92')) failures.push('realtime-state.js is not connected with v92 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
-if(!index.includes('data/usaf/law-guide.js?v=91')) failures.push('USAF law guide is not connected');
-if(!mainCss.includes('features/usaf-law.css?v=91')) failures.push('USAF law guide styles are not connected');
-if(!index.includes('features/smart-context-search.js?v=91')) failures.push('Smart search script is not connected');
-if(!mainCss.includes('features/smart-context-search.css?v=91')) failures.push('Smart search styles are not connected');
-if(!mainCss.includes('responsive/mobile.css?v=91')) failures.push('Mobile styles are not connected');
-if(mainCss.indexOf('features/smart-context-search.css?v=91')>mainCss.indexOf('responsive/mobile.css?v=91')) failures.push('Mobile styles must load after common smart-search styles');
+if(!index.includes('data/usaf/law-guide.js?v=92')) failures.push('USAF law guide is not connected');
+if(!mainCss.includes('features/usaf-law.css?v=92')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('features/smart-context-search.js?v=92')) failures.push('Smart search script is not connected');
+if(!mainCss.includes('features/smart-context-search.css?v=92')) failures.push('Smart search styles are not connected');
+if(!mainCss.includes('responsive/mobile.css?v=92')) failures.push('Mobile styles are not connected');
+if(mainCss.indexOf('features/smart-context-search.css?v=92')>mainCss.indexOf('responsive/mobile.css?v=92')) failures.push('Mobile styles must load after common smart-search styles');
 const smartSearchCss=fs.readFileSync(path.join(root,'css/features/smart-context-search.css'),'utf8');
 const mobileCss=fs.readFileSync(path.join(root,'css/responsive/mobile.css'),'utf8');
 if(/@media\s*\(\s*max-width/.test(smartSearchCss)) failures.push('Mobile search CSS remains in the common feature stylesheet');
 if(!mobileCss.includes('.smart-search-nav-button{display:flex!important;')) failures.push('Mobile search navigation rule is missing from mobile.css');
+if(!mobileCss.includes('.smart-search-dialog.filter-open .smart-search-results{display:none;}')) failures.push('Mobile full-height filter mode is missing');
+if(!fs.readFileSync(path.join(root,'js/features/smart-context-search.js'),'utf8').includes("classList.toggle('filter-open',searchSettings.open)")) failures.push('Search filter toggle state is missing');
 if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sync-merge.js still exists');
 for(const forbidden of ['queuePendingProfileSyncDelta','readPendingProfileSyncPatch','applyProfileSyncPatchWithGuards','targetMutationIds','syncRevision']){
   if(fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes(forbidden)) failures.push(`Old sync symbol remains active: ${forbidden}`);
@@ -77,4 +79,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v91 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v92 build audit: OK\n${notes.join('\n')}`);

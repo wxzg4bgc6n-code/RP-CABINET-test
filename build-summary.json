@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v91_MOBILE_STRUCTURE",
-  "testVersion": 91,
-  "label": "responsive ownership and visible search filters",
+  "output": "RP_CABINET_v92_MOBILE_FILTER_PANEL",
+  "testVersion": 92,
+  "label": "mobile full-height search filters",
   "usafLawGuide": {
     "location": "after quick reports and before USAF ten-codes",
     "source": "data/usaf/law-guide.js",
@@ -23,7 +23,7 @@
   },
   "surfaceState": {
     "storage": "sessionStorage",
-    "key": "rpCabinetOpenDetails_v91",
+    "key": "rpCabinetOpenDetails_v92",
     "restoredAfterVisibilityChange": true,
     "scopes": [
       "department information",
@@ -67,6 +67,9 @@
     "filterAlwaysVisible": true,
     "filterScroll": "independent",
     "resultsScroll": "remaining dialog height",
+    "mobileFilterMode": "full remaining dialog height",
+    "mobileKeyboardDismissOnFilterOpen": true,
+    "mobileResultsHiddenWhileFiltering": true,
     "commonStyles": "css/features/smart-context-search.css",
     "mobileStyles": "css/responsive/mobile.css",
     "mobileStylesLoadedLast": true
@@ -101,7 +104,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v91-mobile-structure-search-filter.mjs",
+    "_tools/test-v92-mobile-filter-panel.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],
