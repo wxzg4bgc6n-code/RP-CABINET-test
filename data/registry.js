@@ -1,12 +1,12 @@
-/* Реестр контента. Метаданные path/organization используются умным поиском. */
+/* Реестр контента. Новый отдел сначала регистрируется здесь. */
 window.RPCabinetSectionRegistry = Object.freeze({
-  Academy:{path:'Государственная служба',organization:'ARMY',infoTemplate:'academyInfoTemplate',tests:['academyTestsTemplate']},
-  MA:{path:'Государственная служба',organization:'ARMY',infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
-  USAF:{path:'Государственная служба',organization:'ARMY',infoTemplate:'usafInfoTemplateV20',tests:['usafTestsTemplateV20','usafTestsTemplate']},
-  MP:{path:'Государственная служба',organization:'ARMY',infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
-  DF:{path:'Государственная служба',organization:'ARMY',infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
-  SD:{path:'Государственная служба',organization:'ARMY',infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
-  RAP:{path:'Государственная служба',organization:'ARMY',infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
-  SAS:{path:'Государственная служба',organization:'ARMY',infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
-  ED:{path:'Государственная служба',organization:'ARMY',infoTemplate:'genericDepartmentInfoTemplate',tests:[]}
+  Academy:{infoTemplate:'academyInfoTemplate',tests:['academyTestsTemplate']},
+  MA:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
+  USAF:{infoTemplate:'usafInfoTemplateV20',tests:['usafTestsTemplateV20','usafTestsTemplate']},
+  MP:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
+  DF:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
+  SD:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
+  RAP:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
+  SAS:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]},
+  ED:{infoTemplate:'genericDepartmentInfoTemplate',tests:[]}
 });

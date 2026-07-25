@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v89_SMART_CONTEXT_SEARCH",
-  "testVersion": 89,
-  "label": "smart context search",
+  "output": "RP_CABINET_v90_DEFAULT_CONTEXT_SEARCH",
+  "testVersion": 90,
+  "label": "default context mobile search",
   "usafLawGuide": {
     "location": "after quick reports and before USAF ten-codes",
     "source": "data/usaf/law-guide.js",
@@ -23,7 +23,7 @@
   },
   "surfaceState": {
     "storage": "sessionStorage",
-    "key": "rpCabinetOpenDetails_v88",
+    "key": "rpCabinetOpenDetails_v90",
     "restoredAfterVisibilityChange": true,
     "scopes": [
       "department information",
@@ -56,6 +56,15 @@
     "timeoutMs": 20000,
     "busyButton": true
   },
+  "smartSearch": {
+    "source": "existing Academy and USAF templates",
+    "defaultScope": "current profile organization and section",
+    "recomputedOnOpen": true,
+    "firebaseHydrationSafe": true,
+    "manualScopeOverride": true,
+    "mobilePlacement": "sixth item inside bottom dashboard-tabs",
+    "floatingMobileButton": false
+  },
   "architecture": "Firebase canonical document + native onSnapshot + field-level update paths + Firestore IndexedDB persistence",
   "syncEngine": "js/core/realtime-state.js",
   "cloudProfile": "users/{uid}/profiles/default_realtime",
@@ -86,9 +95,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v89-regression.mjs",
-    "_tools/test-v89-smart-search.mjs",
-    "_tools/audit-build.mjs",
+    "_tools/test-v90-default-context-search.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],
@@ -109,48 +116,5 @@
     "stale closed device opens read-only",
     "unrelated concurrent fields merge",
     "pinned materials and premium items use cloud state"
-  ],
-  "smartSearch": {
-    "defaultScope": "current path + organization + department",
-    "projectFilter": false,
-    "hierarchy": [
-      "ГОСК / Крайм",
-      "organization",
-      "available department"
-    ],
-    "multiDepartmentSelection": true,
-    "source": "existing registered DOM templates; no duplicated content database",
-    "indexedContent": [
-      "section titles",
-      "body text",
-      "terms",
-      "radio commands",
-      "numeric codes",
-      "test questions",
-      "answer options"
-    ],
-    "liveDelayMs": 35,
-    "numericPrefixExamples": [
-      "3 -> 3.1",
-      "3 -> 3.11",
-      "3 -> 3-1"
-    ],
-    "matching": [
-      "exact",
-      "prefix",
-      "code prefix",
-      "Russian stemming",
-      "known abbreviations",
-      "small typo tolerance"
-    ],
-    "currentDepartmentAction": "switch tab, expand details, scroll and highlight",
-    "otherDepartmentAction": "preview without changing profile context",
-    "mobile": "fixed bottom trigger + near-full-height bottom sheet",
-    "theme": "var(--accent) only",
-    "files": [
-      "js/features/smart-search.js",
-      "css/features/smart-search.css",
-      "data/registry.js"
-    ]
-  }
+  ]
 }

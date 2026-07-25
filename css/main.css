@@ -1,12 +1,12 @@
 /* Единая точка подключения оформления RP Cabinet. */
-@import url("./core.css?v=89");
-@import url("./animations.css?v=89");
-@import url("./features/tests.css?v=89");
-@import url("./features/surfaces.css?v=89");
-@import url("./features/usaf-speech.css?v=89");
-@import url("./features/usaf-law.css?v=89");
-@import url("./features/pinned-materials.css?v=89");
-@import url("./features/sidebar-promo.css?v=89");
-@import url("./features/progress-proofs.css?v=89");
-@import url("./features/smart-search.css?v=89");
-@import url("./responsive/mobile.css?v=89");
+@import url("./core.css?v=90");
+@import url("./animations.css?v=90");
+@import url("./features/tests.css?v=90");
+@import url("./features/surfaces.css?v=90");
+@import url("./features/usaf-speech.css?v=90");
+@import url("./features/usaf-law.css?v=90");
+@import url("./features/pinned-materials.css?v=90");
+@import url("./features/sidebar-promo.css?v=90");
+@import url("./features/progress-proofs.css?v=90");
+@import url("./responsive/mobile.css?v=90");
+@import url("./features/smart-context-search.css?v=90");

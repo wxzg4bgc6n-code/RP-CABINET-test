@@ -1,5 +1,5 @@
-const TEST_VERSION="89";
-const TEST_VERSION_LABEL="smart context search";
+const TEST_VERSION="90";
+const TEST_VERSION_LABEL="default context mobile search";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

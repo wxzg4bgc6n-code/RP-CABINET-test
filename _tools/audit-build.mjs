@@ -42,17 +42,20 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v89 · smart context search')) failures.push('index badge is not v89');
-if(!version.includes('const TEST_VERSION="89"')) failures.push('TEST_VERSION is not 88');
-if(!version.includes('smart context search')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v89 · smart context search')) failures.push('CSS badge mismatch');
+if(!index.includes('TEST v90 · default context mobile search')) failures.push('index badge is not v90');
+if(!version.includes('const TEST_VERSION="90"')) failures.push('TEST_VERSION is not 90');
+if(!version.includes('default context mobile search')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v90 · default context mobile search')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v90-default-context-mobile-search')) failures.push('Architecture meta marker mismatch');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=89')) failures.push('realtime-state.js is not connected with v89 cache-busting');
+if(!index.includes('realtime-state.js?v=90')) failures.push('realtime-state.js is not connected with v90 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
-if(!index.includes('data/usaf/law-guide.js?v=89')) failures.push('USAF law guide is not connected');
-if(!mainCss.includes('features/usaf-law.css?v=89')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('data/usaf/law-guide.js?v=90')) failures.push('USAF law guide is not connected');
+if(!mainCss.includes('features/usaf-law.css?v=90')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('features/smart-context-search.js?v=90')) failures.push('Smart search script is not connected');
+if(!mainCss.includes('features/smart-context-search.css?v=90')) failures.push('Smart search styles are not connected');
 if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sync-merge.js still exists');
 for(const forbidden of ['queuePendingProfileSyncDelta','readPendingProfileSyncPatch','applyProfileSyncPatchWithGuards','targetMutationIds','syncRevision']){
   if(fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes(forbidden)) failures.push(`Old sync symbol remains active: ${forbidden}`);
@@ -60,11 +63,6 @@ for(const forbidden of ['queuePendingProfileSyncDelta','readPendingProfileSyncPa
 for(const expected of ["enablePersistence({synchronizeTabs:true})","get({source:'server'})","profileRef().update(payload)","CLOUD_PROFILE_ID='default_realtime'"]){
   if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes(expected)) failures.push(`Missing realtime guarantee: ${expected}`);
 }
-if(!index.includes('js/features/smart-search.js?v=89')) failures.push('Smart search module is not connected');
-if(!mainCss.includes('features/smart-search.css?v=89')) failures.push('Smart search styles are not connected');
-if(!index.includes('id="smartSearchModal"')) failures.push('Smart search modal is missing');
-if(!index.includes('id="smartSearchMobileTrigger"')) failures.push('Mobile search trigger is missing');
-if(!fs.readFileSync(path.join(root,'data/registry.js'),'utf8').includes("organization:'ARMY'")) failures.push('Search source metadata is missing');
 if(files.some(file=>file.includes(`${path.sep}node_modules${path.sep}`))) failures.push('node_modules is present');
 notes.push(`Files: ${files.length}`);
 notes.push(`Local references checked: ${localRefs.size}`);
@@ -73,4 +71,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v89 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v90 build audit: OK\n${notes.join('\n')}`);
