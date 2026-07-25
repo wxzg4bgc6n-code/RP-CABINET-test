@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v88_REPORT_AVATAR_LOADER_FIX",
-  "testVersion": 88,
-  "label": "report avatar loader fix",
+  "output": "RP_CABINET_v89_SMART_CONTEXT_SEARCH",
+  "testVersion": 89,
+  "label": "smart context search",
   "usafLawGuide": {
     "location": "after quick reports and before USAF ten-codes",
     "source": "data/usaf/law-guide.js",
@@ -86,7 +86,9 @@
     ]
   },
   "tests": [
-    "_tools/test-v88-report-avatar-loader.mjs",
+    "_tools/test-v89-regression.mjs",
+    "_tools/test-v89-smart-search.mjs",
+    "_tools/audit-build.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],
@@ -107,5 +109,48 @@
     "stale closed device opens read-only",
     "unrelated concurrent fields merge",
     "pinned materials and premium items use cloud state"
-  ]
+  ],
+  "smartSearch": {
+    "defaultScope": "current path + organization + department",
+    "projectFilter": false,
+    "hierarchy": [
+      "ГОСК / Крайм",
+      "organization",
+      "available department"
+    ],
+    "multiDepartmentSelection": true,
+    "source": "existing registered DOM templates; no duplicated content database",
+    "indexedContent": [
+      "section titles",
+      "body text",
+      "terms",
+      "radio commands",
+      "numeric codes",
+      "test questions",
+      "answer options"
+    ],
+    "liveDelayMs": 35,
+    "numericPrefixExamples": [
+      "3 -> 3.1",
+      "3 -> 3.11",
+      "3 -> 3-1"
+    ],
+    "matching": [
+      "exact",
+      "prefix",
+      "code prefix",
+      "Russian stemming",
+      "known abbreviations",
+      "small typo tolerance"
+    ],
+    "currentDepartmentAction": "switch tab, expand details, scroll and highlight",
+    "otherDepartmentAction": "preview without changing profile context",
+    "mobile": "fixed bottom trigger + near-full-height bottom sheet",
+    "theme": "var(--accent) only",
+    "files": [
+      "js/features/smart-search.js",
+      "css/features/smart-search.css",
+      "data/registry.js"
+    ]
+  }
 }
