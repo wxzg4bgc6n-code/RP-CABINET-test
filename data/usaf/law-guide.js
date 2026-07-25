@@ -1,4 +1,4 @@
-/* v90: практическая памятка УАК/ПК для USAF. */
+/* v91: практическая памятка УАК/ПК для USAF. */
 (function attachUsafLawGuide(){
   const registry = window.RPCabinetTemplates || [];
   const usafTemplate = registry.find((item) => item && item.id === "usafInfoTemplateV20");
@@ -11,26 +11,26 @@
       <h2>УАК и ПК для USAF: задержание и передача</h2>
       <p class="section-desc">Практическая памятка для сдачи: полномочия бойца, порядок действий, готовые фразы и вопросы, связанные с армией.</p>
     </summary>
-    <div class="academy-expand-content usaf-expand-content usaf-law-content-v90">
-      <div class="usaf-law-board-v90">
-        <aside class="usaf-law-warning-v90">
+    <div class="academy-expand-content usaf-expand-content usaf-law-content-v91">
+      <div class="usaf-law-board-v91">
+        <aside class="usaf-law-warning-v91">
           <strong>Главное правило</strong>
           <p>Не придумывай статью и не проводи полный арест только потому, что увидел нарушение. Обычный боец USAF обеспечивает безопасность, фиксирует событие и передаёт нарушителя MP. Самостоятельные процессуальные действия выполняются только тогда, когда это прямо разрешено действующей редакцией законодательства и твоими полномочиями.</p>
         </aside>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-basis-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-basis-v90">Что нужно запомнить в первую очередь</h3></header>
-          <div class="usaf-law-fact-grid-v90">
-            <article class="usaf-law-fact-v90"><strong>4+</strong><h4>Наручники</h4><p>Использовать наручники можно с 4-го порядкового звания, только при веской причине и с обязательной видеофиксацией на включённую бодикамеру.</p></article>
-            <article class="usaf-law-fact-v90"><strong>6+</strong><h4>Тазер USAF</h4><p>Боец USAF может иметь и применять тазер с 6-го порядкового звания — законно, соразмерно угрозе и в рамках стадий применения силы.</p></article>
-            <article class="usaf-law-fact-v90"><strong>MP</strong><h4>Основной вызов</h4><p>Нарушения на территории форта передаются Military Police. MP осуществляет надзор за подразделениями NG и пресекает правонарушения.</p></article>
-            <article class="usaf-law-fact-v90"><strong>3 пункта</strong><h4>Передача</h4><p>Прибывшему MP назови основание задержания, предполагаемую статью и покажи видеофиксацию нарушения.</p></article>
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-basis-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-basis-v91">Что нужно запомнить в первую очередь</h3></header>
+          <div class="usaf-law-fact-grid-v91">
+            <article class="usaf-law-fact-v91"><strong>4+</strong><h4>Наручники</h4><p>Использовать наручники можно с 4-го порядкового звания, только при веской причине и с обязательной видеофиксацией на включённую бодикамеру.</p></article>
+            <article class="usaf-law-fact-v91"><strong>6+</strong><h4>Тазер USAF</h4><p>Боец USAF может иметь и применять тазер с 6-го порядкового звания — законно, соразмерно угрозе и в рамках стадий применения силы.</p></article>
+            <article class="usaf-law-fact-v91"><strong>MP</strong><h4>Основной вызов</h4><p>Нарушения на территории форта передаются Military Police. MP осуществляет надзор за подразделениями NG и пресекает правонарушения.</p></article>
+            <article class="usaf-law-fact-v91"><strong>3 пункта</strong><h4>Передача</h4><p>Прибывшему MP назови основание задержания, предполагаемую статью и покажи видеофиксацию нарушения.</p></article>
           </div>
         </section>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-flow-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-flow-v90">Алгоритм обычного бойца USAF</h3></header>
-          <ol class="usaf-law-flow-v90">
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-flow-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-flow-v91">Алгоритм обычного бойца USAF</h3></header>
+          <ol class="usaf-law-flow-v91">
             <li><b>Включи бодикамеру.</b><span>Зафиксируй само нарушение, дальнейшие команды, применение спецсредств и передачу сотруднику MP.</span></li>
             <li><b>Обозначь себя и дай понятное законное требование.</b><span>Говори спокойно, конкретно и один раз повтори требование, если человек его не понял.</span></li>
             <li><b>Оцени угрозу.</b><span>Если непосредственной угрозы нет, не переходи сразу к тазеру или оружию. Применяется только необходимая и соразмерная сила.</span></li>
@@ -41,21 +41,21 @@
           </ol>
         </section>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-speech-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-speech-v90">Что говорить: готовый сценарий</h3></header>
-          <div class="usaf-law-script-grid-v90">
-            <article class="usaf-law-script-v90"><span>Первичный контакт</span><div class="report-command" role="textbox" aria-readonly="true">Гражданин, остановитесь. Я военнослужащий National Guard, [звание, имя]. Ведётся видеофиксация. Выполните законное требование: [требование].</div></article>
-            <article class="usaf-law-script-v90"><span>Проверка на КПП</span><div class="report-command" role="textbox" aria-readonly="true">Предъявите документы через ограждение. После разрешения покиньте транспорт, поднимите руки за голову и встаньте лицом к стене для досмотра.</div></article>
-            <article class="usaf-law-script-v90"><span>Временное задержание</span><div class="report-command" role="textbox" aria-readonly="true">Вы временно задержаны по подозрению в [кратко назвать нарушение]. Не сопротивляйтесь. Для дальнейшего разбирательства вызвана Military Police.</div></article>
-            <article class="usaf-law-script-v90"><span>Вызов MP</span><div class="report-command" role="textbox" aria-readonly="true">/r 911-2, КПП-2. Задержано подозрительное лицо, требуется сотрудник MP.</div></article>
-            <article class="usaf-law-script-v90"><span>Передача сотруднику MP</span><div class="report-command" role="textbox" aria-readonly="true">Сэр/Мэм, гражданин задержан на [место] за [что сделал]. Подозревается по статье [номер и краткое название]. Нарушение и задержание записаны на бодикамеру.</div></article>
-            <article class="usaf-law-script-v90"><span>Если полный процесс разрешён</span><div class="report-command" role="textbox" aria-readonly="true">Вы вправе молчать; сказанное может быть использовано против вас. Вам доступны один телефонный звонок и адвокат. Права понятны?</div><p>Эту часть произносит тот, кто законно ведёт полную процедуру. При непонимании права разъясняются повторно.</p></article>
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-speech-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-speech-v91">Что говорить: готовый сценарий</h3></header>
+          <div class="usaf-law-script-grid-v91">
+            <article class="usaf-law-script-v91"><span>Первичный контакт</span><div class="report-command" role="textbox" aria-readonly="true">Гражданин, остановитесь. Я военнослужащий National Guard, [звание, имя]. Ведётся видеофиксация. Выполните законное требование: [требование].</div></article>
+            <article class="usaf-law-script-v91"><span>Проверка на КПП</span><div class="report-command" role="textbox" aria-readonly="true">Предъявите документы через ограждение. После разрешения покиньте транспорт, поднимите руки за голову и встаньте лицом к стене для досмотра.</div></article>
+            <article class="usaf-law-script-v91"><span>Временное задержание</span><div class="report-command" role="textbox" aria-readonly="true">Вы временно задержаны по подозрению в [кратко назвать нарушение]. Не сопротивляйтесь. Для дальнейшего разбирательства вызвана Military Police.</div></article>
+            <article class="usaf-law-script-v91"><span>Вызов MP</span><div class="report-command" role="textbox" aria-readonly="true">/r 911-2, КПП-2. Задержано подозрительное лицо, требуется сотрудник MP.</div></article>
+            <article class="usaf-law-script-v91"><span>Передача сотруднику MP</span><div class="report-command" role="textbox" aria-readonly="true">Сэр/Мэм, гражданин задержан на [место] за [что сделал]. Подозревается по статье [номер и краткое название]. Нарушение и задержание записаны на бодикамеру.</div></article>
+            <article class="usaf-law-script-v91"><span>Если полный процесс разрешён</span><div class="report-command" role="textbox" aria-readonly="true">Вы вправе молчать; сказанное может быть использовано против вас. Вам доступны один телефонный звонок и адвокат. Права понятны?</div><p>Эту часть произносит тот, кто законно ведёт полную процедуру. При непонимании права разъясняются повторно.</p></article>
           </div>
         </section>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-call-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-call-v90">Кого вызывать</h3></header>
-          <div class="usaf-law-call-grid-v90">
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-call-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-call-v91">Кого вызывать</h3></header>
+          <div class="usaf-law-call-grid-v91">
             <article><strong>911-1</strong><span>MP на КПП-1</span></article>
             <article><strong>911-2</strong><span>MP на КПП-2</span></article>
             <article><strong>911-3</strong><span>MP к АК</span></article>
@@ -63,24 +63,24 @@
             <article><strong>911-5</strong><span>MP к складу</span></article>
             <article><strong>911-48</strong><span>MP на плац</span></article>
           </div>
-          <div class="usaf-law-call-notes-v90">
+          <div class="usaf-law-call-notes-v91">
             <p><b>Нарушил военнослужащий:</b> фиксируй и сообщай командующему составу его подразделения, MP или Генеральскому составу.</p>
             <p><b>Нужна обычная полиция:</b> общий код 10-200. Используй его по ситуации или по указанию MP/старшего состава.</p>
             <p><b>Запрошен адвокат или звонок:</b> не игнорируй запрос и не обещай ложный результат — немедленно передай его сотруднику, который ведёт процессуальные действия.</p>
           </div>
         </section>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-items-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-items-v90">Досмотр и запрещённые предметы</h3></header>
-          <div class="usaf-law-split-v90">
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-items-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-items-v91">Досмотр и запрещённые предметы</h3></header>
+          <div class="usaf-law-split-v91">
             <article><h4>При досмотре на КПП</h4><ul><li>Запроси документы и действуй по правилам конкретного КПП.</li><li>Попроси человека покинуть ТС, поднять руки и встать лицом к стене.</li><li>Проведи предусмотренный правилами досмотр человека и транспорта.</li><li>При алкоголе, наркотиках, кальяне/бонге, отмычках, стяжках или нелегальном оружии вызывай MP.</li></ul></article>
             <article><h4>Предмет лежит на территории FZ</h4><ul><li>Нелегальное оружие и запрещённые средства не подбирай — вызови MP.</li><li>Боеприпасы, бронежилет или аптечки можно вернуть на склад.</li><li>Исключение для нелегального оружия: нападение на поставку, патруль или СО за пределами FZ — найденное передаётся Капралу Клиффорду.</li><li>Не уничтожай и не скрывай возможное доказательство.</li></ul></article>
           </div>
         </section>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-difference-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-difference-v90">Не путать на экзамене</h3></header>
-          <div class="usaf-law-compare-v90">
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-difference-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-difference-v91">Не путать на экзамене</h3></header>
+          <div class="usaf-law-compare-v91">
             <article><h4>Задержание</h4><p>Временное ограничение свободы для проверки обстоятельств и дальнейшей передачи. Это ещё не признание виновным и не наказание.</p></article>
             <article><h4>Арест</h4><p>Назначение и исполнение наказания уполномоченным сотрудником после установления оснований и соблюдения процедуры.</p></article>
             <article><h4>Досмотр</h4><p>Проверка человека или транспорта в предусмотренной законом и правилами ситуации, в том числе при въезде на охраняемую территорию.</p></article>
@@ -88,9 +88,9 @@
           </div>
         </section>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-cases-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-cases-v90">Какие темы УАК учить для армии</h3></header>
-          <div class="usaf-law-case-grid-v90">
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-cases-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-cases-v91">Какие темы УАК учить для армии</h3></header>
+          <div class="usaf-law-case-grid-v91">
             <article><h4>Проникновение на FZ</h4><p>Незаконный вход, въезд или прорыв на закрытую и охраняемую территорию.</p></article>
             <article><h4>Законное требование</h4><p>Отказ выполнить понятное законное требование военнослужащего или воспрепятствование его работе.</p></article>
             <article><h4>Угроза и нападение</h4><p>Угроза, применение силы или оружия против военнослужащего либо другого государственного сотрудника.</p></article>
@@ -98,12 +98,12 @@
             <article><h4>Военное имущество</h4><p>Кража, угон, повреждение или незаконное использование техники, амуниции и имущества NG.</p></article>
             <article><h4>Побег и помощь нарушителю</h4><p>Попытка скрыться после законного задержания, освобождение задержанного или иное содействие.</p></article>
           </div>
-          <p class="usaf-law-study-note-v90">Для каждой темы отдельно выучи по актуальному УАК: номер статьи, краткое название, состав нарушения и наказание. Номера в памятку намеренно не зашиты — редакции законодательства на серверах меняются.</p>
+          <p class="usaf-law-study-note-v91">Для каждой темы отдельно выучи по актуальному УАК: номер статьи, краткое название, состав нарушения и наказание. Номера в памятку намеренно не зашиты — редакции законодательства на серверах меняются.</p>
         </section>
 
-        <section class="usaf-law-group-v90" aria-labelledby="usaf-law-qa-v90">
-          <header class="usaf-law-group-head-v90"><h3 id="usaf-law-qa-v90">Важные вопросы для сдачи</h3></header>
-          <div class="usaf-law-qa-v90">
+        <section class="usaf-law-group-v91" aria-labelledby="usaf-law-qa-v91">
+          <header class="usaf-law-group-head-v91"><h3 id="usaf-law-qa-v91">Важные вопросы для сдачи</h3></header>
+          <div class="usaf-law-qa-v91">
             <details><summary>С какого звания можно использовать наручники?</summary><p>С 4-го порядкового звания. Нужна веская причина и обязательная запись на включённую бодикамеру.</p></details>
             <details><summary>С какого звания USAF может использовать тазер?</summary><p>С 6-го порядкового звания, при законном и соразмерном применении силы.</p></details>
             <details><summary>Кого вызывать при подозрительном лице на КПП?</summary><p>Military Police соответствующим 911-кодом по месту. После прибытия передать задержанного, основание, предполагаемую статью и видео.</p></details>
@@ -117,7 +117,7 @@
           </div>
         </section>
 
-        <footer class="usaf-law-footer-v90"><strong>Перед самой сдачей</strong><p>Перепроверь номера статей по текущим редакциям УАК и ПК своего сервера: формулировки и нумерация меняются. Эта памятка учит правильной логике USAF и не заменяет полный текст законодательства.</p></footer>
+        <footer class="usaf-law-footer-v91"><strong>Перед самой сдачей</strong><p>Перепроверь номера статей по текущим редакциям УАК и ПК своего сервера: формулировки и нумерация меняются. Эта памятка учит правильной логике USAF и не заменяет полный текст законодательства.</p></footer>
       </div>
     </div>
   </details>

@@ -55,6 +55,25 @@
   .modal-card{width:100%!important;max-width:none!important;max-height:calc(var(--mobile-vh,1vh)*92)!important;padding:16px!important;border-radius:22px 22px 16px 16px!important;}
   .modal-actions{grid-template-columns:1fr 1fr!important;position:sticky;bottom:-16px;padding:10px 0 0;background:linear-gradient(180deg,transparent,rgba(10,14,24,.98) 25%);}
   .toast{left:10px!important;right:10px!important;bottom:calc(82px + env(safe-area-inset-bottom,0px))!important;width:auto!important;}
+
+  /* Умный поиск: только телефонная компоновка, без копии общей логики. */
+  .smart-search-profile-button{display:none!important;}
+  .profile-card > .dashboard-tabs .smart-search-nav-button{display:flex!important;}
+  .profile-card > .dashboard-tabs{grid-template-columns:repeat(6,minmax(0,1fr))!important;}
+  .smart-search-modal{align-items:flex-end;padding:0;}
+  .smart-search-dialog{width:100%;height:calc(var(--mobile-vh,1vh)*100);max-height:none;border-width:1px 0 0;border-radius:22px 22px 0 0;}
+  .smart-search-head{padding:13px 14px 10px;}
+  .smart-search-head h2{font-size:20px;}
+  .smart-search-input-wrap{margin:10px 12px 8px;}
+  .smart-search-input-wrap input{min-height:52px;padding-right:45px;font-size:16px;}
+  .smart-search-input-wrap kbd{display:none;}
+  .smart-search-scope,.smart-search-settings{margin-inline:12px;}
+  .smart-search-settings>summary{min-height:50px;padding:11px 12px;}
+  .smart-search-settings>summary::after{padding:5px 7px;font-size:8px;}
+  .smart-search-filter-body{max-height:min(43vh,360px);}
+  .smart-search-tree{grid-template-columns:1fr;}
+  .smart-search-results{padding:0 12px calc(18px + env(safe-area-inset-bottom,0px));}
+  .smart-search-result{padding:12px;}
 }
 
 @media (max-width:420px){
@@ -70,6 +89,12 @@
   .profile-card > .dashboard-tabs{left:5px!important;right:5px!important;grid-template-columns:repeat(auto-fit,minmax(52px,1fr))!important;gap:2px!important;padding:5px!important;}
   .profile-card > .dashboard-tabs .dash-tab{height:76px!important;min-height:76px!important;padding-inline:2px!important;}
   .profile-card > .dashboard-tabs .dash-tab-label{font-size:10px!important;}
+  .profile-card > .dashboard-tabs{grid-template-columns:repeat(6,minmax(0,1fr))!important;}
+  .profile-card > .dashboard-tabs .smart-search-nav-button{min-width:0!important;}
+  .smart-search-scope{align-items:flex-start;flex-direction:column;gap:3px;}
+  .smart-search-settings>summary small{display:none;}
+  .smart-search-settings>summary::after{content:"Открыть";}
+  .smart-search-settings[open]>summary::after{content:"Закрыть";}
   .profile-card .profile-info .row,
   .profile-card .profile-info .editable-row,
   .profile-card .profile-info .level-row{grid-template-columns:90px minmax(0,1fr) 24px!important;column-gap:6px!important;}

@@ -3,7 +3,7 @@
   const scopeSelector="#departmentInfoContent,#departmentTestsContent,#profileRankMaterials";
   const detailsSelector="#departmentInfoContent details,#departmentTestsContent details,#profileRankMaterials details";
   const testBlockSelector="#departmentInfoContent .test-highlight-block,#departmentTestsContent .test-highlight-block,#profileRankMaterials .test-highlight-block";
-  const storageKey="rpCabinetOpenDetails_v90";
+  const storageKey="rpCabinetOpenDetails_v91";
   let scheduled=false;
   let applying=false;
   let openState=readState();

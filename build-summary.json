@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v90_DEFAULT_CONTEXT_SEARCH",
-  "testVersion": 90,
-  "label": "default context mobile search",
+  "output": "RP_CABINET_v91_MOBILE_STRUCTURE",
+  "testVersion": 91,
+  "label": "responsive ownership and visible search filters",
   "usafLawGuide": {
     "location": "after quick reports and before USAF ten-codes",
     "source": "data/usaf/law-guide.js",
@@ -23,7 +23,7 @@
   },
   "surfaceState": {
     "storage": "sessionStorage",
-    "key": "rpCabinetOpenDetails_v90",
+    "key": "rpCabinetOpenDetails_v91",
     "restoredAfterVisibilityChange": true,
     "scopes": [
       "department information",
@@ -63,7 +63,13 @@
     "firebaseHydrationSafe": true,
     "manualScopeOverride": true,
     "mobilePlacement": "sixth item inside bottom dashboard-tabs",
-    "floatingMobileButton": false
+    "floatingMobileButton": false,
+    "filterAlwaysVisible": true,
+    "filterScroll": "independent",
+    "resultsScroll": "remaining dialog height",
+    "commonStyles": "css/features/smart-context-search.css",
+    "mobileStyles": "css/responsive/mobile.css",
+    "mobileStylesLoadedLast": true
   },
   "architecture": "Firebase canonical document + native onSnapshot + field-level update paths + Firestore IndexedDB persistence",
   "syncEngine": "js/core/realtime-state.js",
@@ -95,7 +101,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v90-default-context-search.mjs",
+    "_tools/test-v91-mobile-structure-search-filter.mjs",
     "node --check for all JavaScript files",
     "HTML dependency audit"
   ],
