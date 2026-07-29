@@ -126,18 +126,20 @@
       .map(function(input){ return (input.dataset.task || "").trim(); })
       .filter(Boolean);
   }
-  function usafMaterialForTask(task){
+  function usafMaterialsForTask(task){
     var name = low(task);
-    if(name.indexOf("уак") >= 0 && name.indexOf("пк") >= 0) return "usaf-law";
-    if(name.indexOf("устава") >= 0 && name.indexOf("тен-код") >= 0) return "usaf-test-regulations-ten";
-    if(name.indexOf("усложнённый устав") >= 0 || name.indexOf("усложненный устав") >= 0) return "usaf-test-advanced-regulations";
-    if(name.indexOf("протокол") >= 0) return "usaf-test-protocols";
-    if(name.indexOf("воздушн") >= 0 && name.indexOf("патрул") >= 0) return "usaf-patrols";
-    return "";
+    if(name.indexOf("уак") >= 0 && name.indexOf("пк") >= 0) return ["usaf-law", "usaf-test-mp-uak-pk"];
+    if(name.indexOf("устава") >= 0 && name.indexOf("тен-код") >= 0) return ["usaf-test-regulations-ten"];
+    if(name.indexOf("усложнённый устав") >= 0 || name.indexOf("усложненный устав") >= 0) return ["usaf-test-advanced-regulations"];
+    if(name.indexOf("протокол") >= 0) return ["usaf-test-protocols"];
+    if(name.indexOf("воздушн") >= 0 && name.indexOf("патрул") >= 0) return ["usaf-patrols"];
+    return [];
   }
   function orderedUsafMaterials(){
     var seen = new Set();
-    return currentPromotionTaskTitles().map(usafMaterialForTask).filter(function(id){
+    return currentPromotionTaskTitles().reduce(function(all, task){
+      return all.concat(usafMaterialsForTask(task));
+    }, []).filter(function(id){
       if(!id || seen.has(id) || !sourceNode(id)) return false;
       seen.add(id);
       return true;
@@ -180,7 +182,7 @@
 
   function withMandatoryMaterials(ids, manualPins){
     var out = (ids || []).filter(function(id){
-      return id && !(isUsaf() && id === "usaf-test-mp-uak-pk");
+      return !!id;
     });
     if(isAcademyRankTwoToThree() && out.indexOf("academy-rp-situation") < 0){
       out.push("academy-rp-situation");
@@ -206,7 +208,7 @@
   }
   function validPinned(){
     return getPinned().filter(function(id){
-      return !(isUsaf() && id === "usaf-test-mp-uak-pk") && !!sourceNode(id);
+      return !!sourceNode(id);
     });
   }
   function planIds(){

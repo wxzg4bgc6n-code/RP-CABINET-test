@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v97_PROOF_CLEANUP",
-  "testVersion": 97,
-  "label": "Proof cleanup and bulk delete",
+  "output": "RP_CABINET_v98_USAF_LAW_EXAM",
+  "testVersion": 98,
+  "label": "USAF UAK/PK guide and exam",
   "storage": {
     "provider": "Google Drive",
     "scope": "https://www.googleapis.com/auth/drive.file",
@@ -101,10 +101,23 @@
     "location": "after quick reports and before USAF ten-codes",
     "automaticMaterialOrder": "current progress task order",
     "missingMaterialRule": "skip task without exact source",
-    "manualPinsOverrideAutomatic": true
+    "manualPinsOverrideAutomatic": true,
+    "examSummary": true
+  },
+  "usafLawExam": {
+    "questionCount": 20,
+    "questionOrder": "same as supplied screenshots",
+    "removeDuplicates": false,
+    "answerDisplay": "correct options highlighted with active theme",
+    "dataSource": "data/usaf/law-data.js",
+    "templatePatch": "data/usaf/law-exam.js",
+    "automaticPromotionMaterials": [
+      "usaf-law",
+      "usaf-test-mp-uak-pk"
+    ]
   },
   "tests": [
-    "_tools/test-v97-proof-cleanup.mjs",
+    "_tools/test-v98-usaf-law-exam.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

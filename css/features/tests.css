@@ -97,3 +97,67 @@ body.academy-info-clean #departmentTestsContent #academy-kpp-exam .academy-test-
     gap:3px!important;
   }
 }
+
+/* v98: экзамен УАК/ПК USAF */
+#usaf-test-mp-uak-pk .usaf-law-exam-intro-v98{
+  display:grid!important;
+  gap:4px!important;
+  margin:0 0 12px!important;
+  padding:12px 14px!important;
+  border:1px solid color-mix(in srgb,var(--accent) 22%,rgba(255,255,255,.10))!important;
+  border-radius:14px!important;
+  background:color-mix(in srgb,var(--accent) 7%,rgba(0,0,0,.14))!important;
+}
+#usaf-test-mp-uak-pk .usaf-law-exam-intro-v98 strong{
+  color:var(--text)!important;
+  font-size:13px!important;
+  font-weight:950!important;
+  line-height:1.35!important;
+}
+#usaf-test-mp-uak-pk .usaf-law-exam-intro-v98 span{
+  color:var(--muted)!important;
+  font-size:12px!important;
+  font-weight:760!important;
+  line-height:1.4!important;
+}
+#usaf-test-mp-uak-pk .usaf-law-exam-list-v98{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:start!important;
+  gap:11px!important;
+}
+#usaf-test-mp-uak-pk .usaf-law-exam-question-head-v98{
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  margin:0 0 11px!important;
+  padding:0 0 11px!important;
+  border-bottom:1px solid color-mix(in srgb,var(--accent) 18%,rgba(255,255,255,.08))!important;
+}
+#usaf-test-mp-uak-pk .usaf-law-exam-question-head-v98 .question-text{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+#usaf-test-mp-uak-pk .usaf-law-exam-count-v98{
+  flex:0 0 auto!important;
+  padding:5px 8px!important;
+  border:1px solid color-mix(in srgb,var(--accent) 26%,rgba(255,255,255,.10))!important;
+  border-radius:999px!important;
+  color:color-mix(in srgb,var(--accent) 78%,var(--text) 22%)!important;
+  background:rgba(0,0,0,.14)!important;
+  font-size:10.5px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+@media(max-width:860px){
+  #usaf-test-mp-uak-pk .usaf-law-exam-list-v98{grid-template-columns:1fr!important}
+}
+@media(max-width:520px){
+  #usaf-test-mp-uak-pk .usaf-law-exam-question-head-v98{display:grid!important}
+  #usaf-test-mp-uak-pk .usaf-law-exam-count-v98{justify-self:start!important}
+}

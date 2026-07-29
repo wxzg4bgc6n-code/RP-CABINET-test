@@ -1,5 +1,5 @@
-const TEST_VERSION="97";
-const TEST_VERSION_LABEL="Proof cleanup and bulk delete";
+const TEST_VERSION="98";
+const TEST_VERSION_LABEL="USAF UAK/PK guide and exam";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
