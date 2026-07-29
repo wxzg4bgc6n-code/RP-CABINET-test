@@ -43,7 +43,7 @@
   background:rgba(5,9,17,.52);
 }
 .proof-guidance.is-ready{border-left:4px solid var(--accent);}
-.proof-service-note,
+.proof-drive-note,
 .proof-empty{
   margin:0;
   color:var(--muted);

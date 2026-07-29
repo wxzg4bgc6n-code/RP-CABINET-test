@@ -1,8 +1,11 @@
 (function(){
-  const config=window.RP_PROOF_SERVICE||{};
+  'use strict';
+
+  const config=window.RP_GOOGLE_DRIVE||{};
   const rules=window.RP_PROOF_RULES||{isRequired:()=>true};
   const uploadProgress=new Map();
   let reportGenerating=false;
+  let driveConnecting=false;
   const COLLAPSED_GALLERIES_KEY='kiri:rp-cabinet:v82:collapsed-proof-galleries';
   const collapsedGalleries=new Set((()=>{
     try{
@@ -12,6 +15,10 @@
       return [];
     }
   })());
+
+  function drive(){
+    return window.GoogleDriveStorage||null;
+  }
 
   function configuredFileLimit(){
     const value=Number(config.maxFilesPerTask);
@@ -24,38 +31,19 @@
     })[char]);
   }
 
-  function isServiceConfigured(){
-    return typeof config.apiBase==='string'
-      && /^https:\/\//i.test(config.apiBase)
-      && !config.apiBase.includes('YOUR-RP-CABINET');
-  }
-
-  async function fetchWithTimeout(url,options,timeoutMs=20000){
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),timeoutMs);
-    try{
-      return await fetch(url,{...(options||{}),signal:controller.signal});
-    }catch(error){
-      if(error?.name==='AbortError') throw new Error('Сервис не ответил за 20 секунд. Попробуй сформировать отчёт ещё раз.');
-      throw error;
-    }finally{
-      clearTimeout(timeout);
-    }
-  }
-
   function currentContextKey(){
-    return typeof progressContextKeyFor==='function' ? progressContextKeyFor(S) : '';
+    return typeof progressContextKeyFor==='function'?progressContextKeyFor(S):'';
   }
 
   function ensureProofStore(){
-    if(!S.proofsByContext || typeof S.proofsByContext!=='object' || Array.isArray(S.proofsByContext)) S.proofsByContext={};
+    if(!S.proofsByContext||typeof S.proofsByContext!=='object'||Array.isArray(S.proofsByContext)) S.proofsByContext={};
     const key=currentContextKey();
-    if(key && (!S.proofsByContext[key] || typeof S.proofsByContext[key]!=='object')) S.proofsByContext[key]={};
-    return key ? S.proofsByContext[key] : {};
+    if(key&&(!S.proofsByContext[key]||typeof S.proofsByContext[key]!=='object')) S.proofsByContext[key]={};
+    return key?S.proofsByContext[key]:{};
   }
 
   function reportStore(){
-    if(!S.reportsByContext || typeof S.reportsByContext!=='object' || Array.isArray(S.reportsByContext)) S.reportsByContext={};
+    if(!S.reportsByContext||typeof S.reportsByContext!=='object'||Array.isArray(S.reportsByContext)) S.reportsByContext={};
     return S.reportsByContext;
   }
 
@@ -85,9 +73,7 @@
     const key=galleryStateKey(task);
     if(collapsedGalleries.has(key)) collapsedGalleries.delete(key);
     else collapsedGalleries.add(key);
-    try{
-      sessionStorage.setItem(COLLAPSED_GALLERIES_KEY,JSON.stringify([...collapsedGalleries]));
-    }catch(error){}
+    try{sessionStorage.setItem(COLLAPSED_GALLERIES_KEY,JSON.stringify([...collapsedGalleries]));}catch(error){}
     render();
   }
 
@@ -106,12 +92,6 @@
 
   function authUser(){
     return window.CloudSync?.user||window.firebase?.auth?.().currentUser||null;
-  }
-
-  async function authToken(){
-    const user=authUser();
-    if(!user || typeof user.getIdToken!=='function') throw new Error('Сначала подключи Google в настройках профиля.');
-    return user.getIdToken();
   }
 
   function imageSize(file){
@@ -141,24 +121,33 @@
     return cleaned||'screenshot.png';
   }
 
-  function currentShareUrl(id){
+  function currentShareUrl(id,resourceKey){
     const url=new URL('report.html',window.location.href);
     url.search='';
     url.hash='';
     url.searchParams.set('id',id);
+    if(resourceKey) url.searchParams.set('rk',resourceKey);
     return url.href;
+  }
+
+  function fileUrl(file){
+    if(file?.fileId&&drive()?.publicMediaUrl){
+      try{return drive().publicMediaUrl(file);}catch(error){}
+    }
+    return String(file?.url||'');
   }
 
   function fileMarkup(task,file,index){
     const dimensions=file.width&&file.height?`${file.width}×${file.height}`:'оригинальный размер';
     const activeReport=reportStore()[currentContextKey()];
+    const url=fileUrl(file);
     return `<article class="proof-file">
-      <a href="${esc(file.url)}" target="_blank" rel="noopener">
-        <img src="${esc(file.url)}" alt="${esc(file.name||'Скриншот')}" loading="lazy">
+      <a href="${esc(url)}" target="_blank" rel="noopener">
+        <img src="${esc(url)}" alt="${esc(file.name||'Скриншот')}" loading="lazy">
       </a>
       <div>
         <b>${esc(file.name||'Скриншот')}</b>
-        <span>${esc(dimensions)} · без обрезки</span>
+        <span>${esc(dimensions)} · Google Диск</span>
       </div>
       ${activeReport?'':`<button class="proof-icon-btn" type="button" data-proof-delete="${esc(task)}" data-file-index="${index}" aria-label="Удалить скриншот">×</button>`}
     </article>`;
@@ -170,7 +159,7 @@
     const files=Array.isArray(proof.files)?proof.files:[];
     const progress=uploadProgress.get(task);
     const fileLimit=configuredFileLimit();
-    const canUpload=isServiceConfigured()&&!!authUser()&&(fileLimit===null||files.length<fileLimit);
+    const canUpload=!!authUser()&&!!drive()?.hasAccessToken()&&(fileLimit===null||files.length<fileLimit);
     const collapsed=files.length>0&&isGalleryCollapsed(task);
     const gallery=galleryId(task);
     const status=required
@@ -204,19 +193,28 @@
     const completed=allTasks.filter(task=>S.tasks?.[task]===true);
     const contextKey=currentContextKey();
     let report=contextKey?reportStore()[contextKey]:null;
-    if(report && Number(report.expiresAt||0)<=Date.now()){
+    if(report&&report.provider!=='google-drive'){
+      delete reportStore()[contextKey];
+      report=null;
+      queueMicrotask(()=>save());
+    }
+    if(report&&Number(report.expiresAt||0)<=Date.now()){
       delete reportStore()[contextKey];
       if(S.proofsByContext?.[contextKey]) delete S.proofsByContext[contextKey];
       report=null;
       queueMicrotask(()=>save());
     }
+    const authenticated=!!authUser();
+    const driveReady=!!drive()?.hasAccessToken();
     const requiredCompleted=completed.filter(task=>rules.isRequired(task,S));
     const missing=requiredCompleted.filter(task=>!(proofFor(task).files||[]).length);
     const fullProgress=allTasks.length>0&&allTasks.every(task=>S.tasks?.[task]===true);
-    const canGenerate=isServiceConfigured()&&!!authUser()&&fullProgress&&!missing.length&&!report&&!reportGenerating;
-    const serviceNote=!isServiceConfigured()
-      ? 'Хранилище ещё не подключено. Интерфейс готов; после адреса Vercel загрузка включится без переделки панели.'
-      : (!authUser()?'Для загрузки и удаления файлов подключи Google в настройках профиля.':'Оригиналы загружаются без сжатия и автоматически удаляются через 8 дней.');
+    const canGenerate=authenticated&&driveReady&&fullProgress&&!missing.length&&!report&&!reportGenerating;
+    const serviceNote=!authenticated
+      ? 'Войди через Google: без аккаунта загрузка скриншотов отключена.'
+      : !driveReady
+        ? 'Разреши панели сохранять созданные ею файлы на твоём Google Диске.'
+        : 'Файлы сохраняются на твоём Google Диске и удаляются панелью через 8 дней.';
 
     root.innerHTML=`<div class="proof-heading">
       <div>
@@ -225,8 +223,9 @@
       </div>
       <span class="proof-counter">${completed.length} из ${allTasks.length}</span>
     </div>
-    <div class="proof-guidance ${isServiceConfigured()?'is-ready':'is-wait'}">
-      <p class="proof-service-note">${esc(serviceNote)}</p>
+    <div class="proof-guidance ${driveReady?'is-ready':'is-wait'}">
+      <p class="proof-drive-note">${esc(serviceNote)}</p>
+      ${authenticated&&!driveReady?`<button class="btn proof-drive-connect" id="connectProofDrive" type="button" ${driveConnecting?'disabled':''}>${driveConnecting?'Подключаю…':'Подключить Google Диск'}</button>`:''}
       ${completed.length?'':'<p class="proof-empty">Сначала отметь выполненный пункт в прогрессе — он появится здесь.</p>'}
     </div>
     ${completed.length?`<div class="proof-task-list">${completed.map(taskMarkup).join('')}</div>`:''}
@@ -238,11 +237,12 @@
       <button class="btn" type="button" id="generateProofReport" ${canGenerate?'':'disabled'}>${reportGenerating?'Формирую отчёт…':'Сформировать отчёт'}</button>
     </div>
     ${report?`<div class="proof-report-ready">
-      <div><span>Последний отчёт</span><a href="${esc(report.url||currentShareUrl(report.id))}" target="_blank" rel="noopener">${esc(report.url||currentShareUrl(report.id))}</a><small>Доступен до ${new Date(report.expiresAt).toLocaleString('ru-RU')}</small></div>
+      <div><span>Последний отчёт</span><a href="${esc(report.url||currentShareUrl(report.id,report.resourceKey))}" target="_blank" rel="noopener">${esc(report.url||currentShareUrl(report.id,report.resourceKey))}</a><small>Доступен до ${new Date(report.expiresAt).toLocaleString('ru-RU')}</small></div>
       <button class="btn soft" type="button" id="copyProofReport">Копировать</button>
       <button class="proof-delete-report" type="button" id="deleteProofReport">Удалить отчёт</button>
     </div>`:''}`;
 
+    root.querySelector('#connectProofDrive')?.addEventListener('click',connectDrive);
     root.querySelectorAll('[data-proof-upload]').forEach(input=>{
       input.addEventListener('change',()=>uploadFiles(input.dataset.proofUpload,[...input.files]));
     });
@@ -257,54 +257,58 @@
     root.querySelector('#deleteProofReport')?.addEventListener('click',()=>deleteReport(report));
   }
 
+  async function connectDrive(){
+    if(driveConnecting) return;
+    driveConnecting=true;
+    render();
+    try{
+      await drive().ensureAccessToken();
+      await drive().ensureFolders();
+      const cleanup=await drive().cleanupExpired().catch(()=>({deleted:0}));
+      showToast('Google Диск подключён',cleanup.deleted?`Удалено старых файлов: ${cleanup.deleted}`:'Можно загружать скриншоты');
+    }catch(error){
+      showToast('Диск не подключён',String(error.message||error).slice(0,140));
+    }finally{
+      driveConnecting=false;
+      render();
+    }
+  }
+
   async function uploadFiles(task,files){
-    if(!files.length || uploadProgress.has(task)) return;
-    if(!isServiceConfigured()) return showToast('Хранилище не подключено','Сначала укажи адрес Vercel в настройках proof-service');
-    if(!window.RPProofUploader?.upload) return showToast('Модуль загрузки не готов','Проверь сборку Vercel Blob Client');
+    if(!files.length||uploadProgress.has(task)) return;
     const current=proofFor(task);
     const existing=Array.isArray(current.files)?current.files:[];
     const fileLimit=configuredFileLimit();
     const selected=fileLimit===null?files:files.slice(0,Math.max(0,fileLimit-existing.length));
     if(!selected.length) return showToast('Лимит достигнут',`Для одного пункта можно загрузить до ${fileLimit} файлов`);
     try{
-      const token=await authToken();
-      const user=authUser();
+      await drive().ensureAccessToken();
       const additions=[];
       for(let index=0;index<selected.length;index++){
         const file=selected[index];
         if(!/^image\/(png|jpeg|webp)$/i.test(file.type)) throw new Error('Разрешены PNG, JPG и WEBP.');
         if(file.size>Number(config.maxFileBytes||15728640)) throw new Error(`Файл ${file.name} больше 15 МБ.`);
         const dimensions=await imageSize(file);
-        const pathname=`proofs/${user.uid}/drafts/${Date.now()}-${safeFilename(file.name)}`;
-        const result=await window.RPProofUploader.upload(pathname,file,{
-          access:'public',
-          handleUploadUrl:`${config.apiBase}/api/upload`,
-          clientPayload:JSON.stringify({firebaseToken:token,contextKey:currentContextKey(),task}),
-          onUploadProgress:info=>{
-            const overall=((index+(Number(info.percentage)||0)/100)/selected.length)*100;
-            uploadProgress.set(task,overall);
-            render();
-          }
-        });
-        additions.push({
-          id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          url:result.url,
-          downloadUrl:result.downloadUrl||result.url,
-          pathname:result.pathname||pathname,
-          name:file.name,
-          type:file.type,
-          size:file.size,
+        const addition=await drive().uploadProof(file,{
+          name:`${Date.now()}-${safeFilename(file.name)}`,
+          originalName:file.name,
+          contextKey:currentContextKey(),
+          task,
           width:dimensions.width,
-          height:dimensions.height,
-          uploadedAt:Date.now()
+          height:dimensions.height
+        },percentage=>{
+          const overall=((index+percentage/100)/selected.length)*100;
+          uploadProgress.set(task,overall);
+          render();
         });
+        additions.push(addition);
       }
       const store=ensureProofStore();
       store[task]={files:[...existing,...additions],updatedAt:Date.now()};
       save();
-      showToast(additions.length===1?'Скриншот загружен':'Скриншоты загружены',additions.length===1?'Сохранён оригинал без обрезки':`Сохранено файлов: ${additions.length}`);
+      showToast(additions.length===1?'Скриншот загружен':'Скриншоты загружены',additions.length===1?'Сохранён на твоём Google Диске':`Сохранено файлов: ${additions.length}`);
     }catch(error){
-      console.warn('Proof upload failed',error);
+      console.warn('Google Drive proof upload failed',error);
       showToast('Не удалось загрузить',String(error.message||error).slice(0,140));
     }finally{
       uploadProgress.delete(task);
@@ -315,24 +319,40 @@
   async function deleteFile(task,index){
     const proof=proofFor(task);
     const file=proof.files?.[index];
-    if(!file) return;
-    if(!confirm('Удалить этот скриншот без возможности восстановления?')) return;
+    if(!file||!confirm('Удалить этот скриншот без возможности восстановления?')) return;
     try{
-      const token=await authToken();
-      const response=await fetch(`${config.apiBase}/api/proofs/delete`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body:JSON.stringify({url:file.url})
-      });
-      if(!response.ok) throw new Error((await response.json().catch(()=>null))?.error||'Сервис не удалил файл.');
+      await drive().ensureAccessToken();
+      if(file.fileId) await drive().deleteFile(file.fileId);
       proof.files.splice(index,1);
       proof.updatedAt=Date.now();
       if(!proof.files.length) delete ensureProofStore()[task];
       save();
-      showToast('Скриншот удалён','Файл удалён из хранилища');
+      showToast('Скриншот удалён',file.fileId?'Файл окончательно удалён с Google Диска':'Старая запись удалена из панели');
     }catch(error){
       showToast('Не удалось удалить',String(error.message||error).slice(0,140));
     }
+  }
+
+  function reportFile(file){
+    if(file?.fileId){
+      return {
+        provider:'google-drive',
+        fileId:file.fileId,
+        resourceKey:file.resourceKey||'',
+        name:file.name||'Скриншот',
+        type:file.type||'image/jpeg',
+        size:Number(file.size||0),
+        width:Number(file.width||0),
+        height:Number(file.height||0)
+      };
+    }
+    return {
+      provider:'legacy',
+      url:String(file?.url||''),
+      name:file?.name||'Скриншот',
+      width:Number(file?.width||0),
+      height:Number(file?.height||0)
+    };
   }
 
   async function generateReport(){
@@ -342,9 +362,13 @@
     reportGenerating=true;
     render();
     try{
-      const token=await authToken();
+      await drive().ensureAccessToken();
+      const createdAt=Date.now();
+      const expiresAt=createdAt+Number(config.reportLifetimeDays||8)*86400000;
+      const avatar=S.account?.driveAvatar||null;
       const payload={
-        contextKey,
+        createdAt,
+        expiresAt,
         profile:{
           name:S.name,
           project:S.project,
@@ -352,30 +376,32 @@
           org:S.org,
           section:S.section,
           level:S.level,
-          avatarUrl:typeof getGoogleProfilePhoto==='function'
-            ? getGoogleProfilePhoto()
-            : (S.account?.googlePhotoURL||S.cloud?.googlePhotoURL||'')
+          avatar:avatar?.fileId?{
+            provider:'google-drive',
+            fileId:avatar.fileId,
+            resourceKey:avatar.resourceKey||''
+          }:null,
+          avatarUrl:avatar?.url||(typeof getGoogleProfilePhoto==='function'?getGoogleProfilePhoto():'')
         },
         tasks:allTasks.map(title=>{
           const completed=S.tasks?.[title]===true;
           const required=!!rules.isRequired(title,S);
-          return {title,completed,required,files:completed?(proofFor(title).files||[]):[]};
+          return {
+            title,
+            completed,
+            required,
+            files:completed?(proofFor(title).files||[]).map(reportFile):[]
+          };
         })
       };
-      const response=await fetchWithTimeout(`${config.apiBase}/api/reports`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body:JSON.stringify(payload)
-      });
-      const data=await response.json().catch(()=>null);
-      if(!response.ok) throw new Error(data?.error||'Не удалось сформировать отчёт.');
-      const url=currentShareUrl(data.id);
-      reportStore()[contextKey]={id:data.id,url,createdAt:data.createdAt,expiresAt:data.expiresAt};
+      const created=await drive().createReportManifest(payload);
+      const url=currentShareUrl(created.id,created.resourceKey);
+      reportStore()[contextKey]={...created,url};
       save();
-      render();
       await navigator.clipboard?.writeText(url).catch(()=>{});
       showToast('Отчёт готов','Ссылка скопирована. Её можно отправить в Discord');
     }catch(error){
+      console.warn('Drive report creation failed',error);
       showToast('Отчёт не создан',String(error.message||error).slice(0,140));
     }finally{
       reportGenerating=false;
@@ -384,7 +410,7 @@
   }
 
   async function copyReportLink(report){
-    const url=report?.url||currentShareUrl(report?.id||'');
+    const url=report?.url||currentShareUrl(report?.id||'',report?.resourceKey||'');
     try{
       await navigator.clipboard.writeText(url);
       showToast('Ссылка скопирована','Отправь её в Discord');
@@ -394,27 +420,27 @@
   }
 
   async function deleteReport(report){
-    if(!report?.id || !confirm('Удалить весь отчёт и все его скриншоты?')) return;
+    if(!report?.id||!confirm('Удалить весь отчёт и все его скриншоты?')) return;
     try{
-      const token=await authToken();
-      const response=await fetch(`${config.apiBase}/api/reports?id=${encodeURIComponent(report.id)}`,{
-        method:'DELETE',
-        headers:{'Authorization':`Bearer ${token}`}
-      });
-      const data=await response.json().catch(()=>null);
-      if(!response.ok) throw new Error(data?.error||'Сервис не удалил отчёт.');
-      delete reportStore()[currentContextKey()];
+      await drive().ensureAccessToken();
+      if(report.provider==='google-drive') await drive().deleteFile(report.id).catch(error=>console.warn('Manifest delete failed',error));
       const store=ensureProofStore();
+      const fileIds=new Set();
+      Object.values(store).forEach(proof=>{
+        (proof?.files||[]).forEach(file=>{if(file.fileId) fileIds.add(file.fileId);});
+      });
+      for(const fileId of fileIds) await drive().deleteFile(fileId).catch(error=>console.warn('Report proof delete failed',fileId,error));
+      delete reportStore()[currentContextKey()];
       Object.keys(store).forEach(task=>delete store[task]);
       save();
-      render();
       showToast('Отчёт удалён','Ссылка и скриншоты больше недоступны');
     }catch(error){
       showToast('Не удалось удалить',String(error.message||error).slice(0,140));
+    }finally{
+      render();
     }
   }
 
-  const previousRender=render;
   const appRender=window.render||globalThis.render;
   if(typeof appRender==='function'){
     const wrapped=function(){
@@ -423,6 +449,7 @@
     };
     try{globalThis.render=wrapped;}catch(error){}
   }
+  document.addEventListener('rp:drive-status',render);
   document.addEventListener('DOMContentLoaded',render);
   render();
 })();

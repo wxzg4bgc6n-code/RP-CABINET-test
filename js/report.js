@@ -1,5 +1,7 @@
 (function(){
-  const config=window.RP_PROOF_SERVICE||{};
+  'use strict';
+
+  const config=window.RP_GOOGLE_DRIVE||{};
   const state=document.getElementById('reportState');
   const content=document.getElementById('reportContent');
   let loadSequence=0;
@@ -24,7 +26,7 @@
   function showLoading(attempt){
     setReportView(true);
     state.classList.remove('is-error');
-    state.innerHTML=`<div class="report-loader"></div><h2>${attempt>1?'Повторно загружаю отчёт':'Загружаю отчёт'}</h2><p>${attempt>1?'Сервис не ответил сразу — выполняю ещё одну попытку.':'Проверяю данные и оригиналы скриншотов.'}</p>`;
+    state.innerHTML=`<div class="report-loader"></div><h2>${attempt>1?'Повторно загружаю отчёт':'Загружаю отчёт'}</h2><p>${attempt>1?'Google Диск не ответил сразу — выполняю ещё одну попытку.':'Проверяю данные и открываю скриншоты.'}</p>`;
   }
 
   function showError(title,message){
@@ -39,7 +41,7 @@
     return new Promise(resolve=>setTimeout(resolve,ms));
   }
 
-  async function fetchWithTimeout(url,timeoutMs=10000){
+  async function fetchWithTimeout(url,timeoutMs=12000){
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),timeoutMs);
     try{
@@ -49,13 +51,26 @@
     }
   }
 
+  function driveMediaUrl(file){
+    if(file?.provider!=='google-drive'||!file.fileId) return String(file?.url||'');
+    const key=String(config.apiKey||'').trim();
+    if(!key) return '';
+    const resourceKey=file.resourceKey?`&resourceKey=${encodeURIComponent(file.resourceKey)}`:'';
+    return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.fileId)}?alt=media&key=${encodeURIComponent(key)}${resourceKey}`;
+  }
+
+  function manifestUrl(id,resourceKey){
+    return driveMediaUrl({provider:'google-drive',fileId:id,resourceKey});
+  }
+
   function fileCard(file){
     const size=file.width&&file.height?`${file.width}×${file.height}`:'исходный размер';
+    const url=driveMediaUrl(file);
     return `<figure class="report-proof">
-      <a href="${esc(file.url)}" target="_blank" rel="noopener" title="Открыть оригинал">
-        <img src="${esc(file.url)}" alt="${esc(file.name||'Скриншот подтверждения')}" loading="lazy">
-      </a>
-      <figcaption><b>${esc(file.name||'Скриншот')}</b><span>${esc(size)} · открыть оригинал</span></figcaption>
+      <button class="report-image-open" type="button" data-report-image="${esc(url)}" data-report-image-name="${esc(file.name||'Скриншот подтверждения')}" title="Открыть изображение">
+        <img src="${esc(url)}" alt="${esc(file.name||'Скриншот подтверждения')}" loading="lazy">
+      </button>
+      <figcaption><b>${esc(file.name||'Скриншот')}</b><span>${esc(size)} · нажми для увеличения</span></figcaption>
     </figure>`;
   }
 
@@ -81,7 +96,9 @@
     const fallback=document.createElement('span');
     fallback.textContent=profileInitials(profile?.name);
     avatar.replaceChildren(fallback);
-    const rawUrl=String(profile?.avatarUrl||'').trim();
+    const rawUrl=profile?.avatar?.fileId
+      ? driveMediaUrl(profile.avatar)
+      : String(profile?.avatarUrl||'').trim();
     if(!/^https:\/\//i.test(rawUrl)) return;
     const image=document.createElement('img');
     image.alt=`Аватар ${profile?.name||'профиля'}`;
@@ -91,13 +108,47 @@
     avatar.replaceChildren(image);
   }
 
+  function ensureLightbox(){
+    let box=document.getElementById('reportLightbox');
+    if(box) return box;
+    box=document.createElement('div');
+    box.id='reportLightbox';
+    box.className='report-lightbox';
+    box.hidden=true;
+    box.innerHTML='<button class="report-lightbox-close" type="button" aria-label="Закрыть">×</button><img alt=""><span></span>';
+    box.addEventListener('click',event=>{
+      if(event.target===box||event.target.closest('.report-lightbox-close')) closeLightbox();
+    });
+    document.addEventListener('keydown',event=>{if(event.key==='Escape') closeLightbox();});
+    document.body.appendChild(box);
+    return box;
+  }
+
+  function openLightbox(url,name){
+    const box=ensureLightbox();
+    const image=box.querySelector('img');
+    image.src=url;
+    image.alt=name||'Скриншот';
+    box.querySelector('span').textContent=name||'Скриншот';
+    box.hidden=false;
+    document.body.classList.add('report-lightbox-open');
+  }
+
+  function closeLightbox(){
+    const box=document.getElementById('reportLightbox');
+    if(!box||box.hidden) return;
+    box.hidden=true;
+    box.querySelector('img').removeAttribute('src');
+    document.body.classList.remove('report-lightbox-open');
+  }
+
   function render(report){
     const profile=report.profile||{};
     finishLoading();
     setReportView(false);
     state.classList.remove('is-error');
     renderProfileAvatar(profile);
-    document.title=`${profile.name||'Игрок'} · отчёт RP Cabinet`;
+    document.title=`${profile.name||'Игрок'} · отчёт о прогрессе`;
     content.innerHTML=`<section class="report-hero">
       <div>
         <span>Отчёт подтверждён</span>
@@ -112,31 +163,32 @@
       <div><span>Выполнено</span><b>${report.tasks?.length||0} пунктов</b></div>
     </section>
     <section class="report-task-list">${(report.tasks||[]).map((task,index)=>`${index?`<div class="report-task-separator" aria-hidden="true"><span>Пункт ${index+1}</span></div>`:''}${taskCard(task,index)}`).join('')}</section>`;
+    content.querySelectorAll('[data-report-image]').forEach(button=>{
+      button.addEventListener('click',()=>openLightbox(button.dataset.reportImage,button.dataset.reportImageName));
+    });
   }
 
   async function load(){
     const sequence=++loadSequence;
-    const id=new URLSearchParams(location.search).get('id')||'';
-    if(!/^[a-f0-9]{36}$/i.test(id)) return showError('Неверная ссылка','В адресе нет корректного номера отчёта.');
-    if(!/^https:\/\//i.test(config.apiBase||'') || String(config.apiBase).includes('YOUR-RP-CABINET')){
-      return showError('Хранилище ещё не подключено','Адрес сервиса Vercel будет добавлен после первого развёртывания.');
-    }
+    const params=new URLSearchParams(location.search);
+    const id=params.get('id')||'';
+    const resourceKey=params.get('rk')||'';
+    if(!/^[a-zA-Z0-9_-]{10,200}$/.test(id)) return showError('Неверная ссылка','В адресе нет корректного номера отчёта.');
+    if(!String(config.apiKey||'').trim()) return showError('Google Drive не настроен','В сборке отсутствует ключ публичного чтения отчёта.');
     let lastError=null;
     for(let attempt=1;attempt<=2;attempt++){
       if(sequence!==loadSequence) return;
       showLoading(attempt);
       try{
-        const response=await fetchWithTimeout(`${config.apiBase}/api/reports?id=${encodeURIComponent(id)}`);
-        const data=await response.json().catch(()=>null);
+        const response=await fetchWithTimeout(manifestUrl(id,resourceKey));
         if(sequence!==loadSequence) return;
-        if(response.status===410) return showError('Срок отчёта закончился','Прошло 8 дней, поэтому ссылка и скриншоты удалены.');
-        if(response.ok) return render(data);
-        lastError=new Error(data?.error||'Отчёт пока не найден.');
-        if(attempt===1&&(response.status===404||response.status>=500)){
-          await delay(1200);
-          continue;
-        }
-        return showError('Отчёт не найден',lastError.message);
+        if(response.status===404) return showError('Отчёт не найден','Файл удалён владельцем или ссылка уже недоступна.');
+        if(response.status===403) return showError('Нет доступа к отчёту','Владелец удалил публичный доступ или Google Drive API ещё не включён.');
+        if(!response.ok) throw new Error(`Google Drive ответил ${response.status}.`);
+        const data=await response.json();
+        if(Number(data?.expiresAt||0)<=Date.now()) return showError('Срок отчёта закончился','Прошло 8 дней, поэтому ссылка и скриншоты больше не доступны.');
+        if(!Array.isArray(data?.tasks)||!data?.profile) throw new Error('Файл отчёта повреждён.');
+        return render(data);
       }catch(error){
         lastError=error;
         if(attempt===1){
@@ -147,20 +199,20 @@
     }
     const timedOut=lastError?.name==='AbortError';
     showError(
-      timedOut?'Сервис не ответил вовремя':'Не удалось открыть отчёт',
-      timedOut?'Сервис дважды не ответил за отведённое время. Попробуй ещё раз.':'Проверь интернет и доступность сервиса без VPN.'
+      timedOut?'Google Диск не ответил вовремя':'Не удалось открыть отчёт',
+      timedOut?'Google Диск дважды не ответил за отведённое время. Попробуй ещё раз.':'Проверь интернет и повтори открытие ссылки.'
     );
   }
 
-  document.getElementById('copyReportUrl').addEventListener('click',async()=>{
+  document.getElementById('copyReportUrl')?.addEventListener('click',async()=>{
     try{
       await navigator.clipboard.writeText(location.href);
       const button=document.getElementById('copyReportUrl');
       button.textContent='Ссылка скопирована';
-      setTimeout(()=>button.textContent='Копировать ссылку',1800);
-    }catch(error){
-      prompt('Скопируй ссылку:',location.href);
-    }
+      setTimeout(()=>button.textContent='Копировать ссылку',1400);
+    }catch(error){}
   });
+
+  window.loadRPReport=load;
   load();
 })();

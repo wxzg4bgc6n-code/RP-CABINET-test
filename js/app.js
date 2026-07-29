@@ -351,6 +351,9 @@ function normalizeProfileData(d){
     merged.reportsByContext[contextKey]={
       id:report.id,
       url:typeof report.url==='string'?report.url:'',
+      provider:typeof report.provider==='string'?report.provider:'',
+      resourceKey:typeof report.resourceKey==='string'?report.resourceKey:'',
+      permissionId:typeof report.permissionId==='string'?report.permissionId:'',
       createdAt:Number(report.createdAt||0),
       expiresAt:Number(report.expiresAt||0)
     };
@@ -841,11 +844,15 @@ function claimPromotion(){
 }
 
 
-function getGoogleProfilePhoto(){
+function getFallbackGooglePhoto(){
   const fromUser=window.CloudSync && window.CloudSync.user && window.CloudSync.user.photoURL;
   const fromState=S.cloud && S.cloud.googlePhotoURL;
   const fromAccount=S.account && S.account.googlePhotoURL;
   return fromUser || fromState || fromAccount || '';
+}
+function getGoogleProfilePhoto(){
+  const custom=S.account&&S.account.driveAvatar&&S.account.driveAvatar.url;
+  return custom||getFallbackGooglePhoto();
 }
 function rememberGoogleProfileInfo(user){
   if(!user) return;
@@ -883,12 +890,25 @@ function renderProfileIcon(){
     if(tag) tag.textContent='';
     const img=document.createElement('img');
     img.className='google-profile-avatar';
-    img.alt='Аватар Google';
+    img.alt=S.account?.driveAvatar?.url?'Аватар профиля':'Аватар Google';
     img.referrerPolicy='no-referrer';
+    img.addEventListener('error',()=>{
+      const fallback=getFallbackGooglePhoto();
+      if(fallback&&img.src!==fallback){
+        img.src=fallback;
+        return;
+      }
+      img.remove();
+      box.classList.remove('has-google-avatar','google-avatar-active');
+      const name=(S&&S.name?S.name:'RP').trim();
+      const letters=(name.split(/\s+/).map(x=>x[0]).join('').slice(0,2)||'RP').toUpperCase();
+      if(icon) icon.textContent=letters;
+      if(tag) tag.textContent='';
+    },{once:true});
     img.src=photo;
     box.prepend(img);
     box.classList.add('has-google-avatar','google-avatar-active');
-    box.title='Аватар Google';
+    box.title=S.account?.driveAvatar?.url?'Пользовательский аватар':'Аватар Google';
   }else{
     box.classList.remove('has-google-avatar','google-avatar-active');
     const name=(S&&S.name?S.name:'RP').trim();
@@ -1231,13 +1251,38 @@ window.CloudSync={
     if(!this.auth) return showToast('Firebase не готов','Подожди несколько секунд');
     try{
       const provider=new firebase.auth.GoogleAuthProvider();
+      if(window.GoogleDriveStorage?.scope) provider.addScope(window.GoogleDriveStorage.scope);
       provider.setCustomParameters({prompt:'select_account'});
-      await this.auth.signInWithPopup(provider);
+      const result=await this.auth.signInWithPopup(provider);
+      const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+      if(credential?.accessToken&&window.GoogleDriveStorage){
+        window.GoogleDriveStorage.setAccessToken(credential.accessToken,result.user?.uid||'',3600);
+      }
     }catch(error){
       console.warn('Google login failed',error);
       showToast('Вход не выполнен','Авторизация отменена или заблокирована браузером');
       renderCloudSyncStatus();
     }
+  },
+  async authorizeDrive(){
+    if(!this.auth||!this.user) throw new Error('Сначала войди через Google.');
+    const provider=new firebase.auth.GoogleAuthProvider();
+    provider.addScope(window.GoogleDriveStorage?.scope||'https://www.googleapis.com/auth/drive.file');
+    provider.setCustomParameters({include_granted_scopes:'true'});
+    let result;
+    try{
+      result=await this.user.reauthenticateWithPopup(provider);
+    }catch(error){
+      if(error?.code==='auth/user-mismatch') throw new Error('Выбери тот же Google-аккаунт, который подключён к панели.');
+      if(error?.code==='auth/popup-blocked') throw new Error('Браузер заблокировал окно Google. Разреши всплывающие окна.');
+      if(error?.code==='auth/popup-closed-by-user'||error?.code==='auth/cancelled-popup-request') throw new Error('Подключение Google Диска отменено.');
+      throw error;
+    }
+    const credential=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+    const token=credential?.accessToken||result?.credential?.accessToken||'';
+    if(!token) throw new Error('Google не вернул доступ к Диску.');
+    window.GoogleDriveStorage?.setAccessToken(token,this.user.uid,3600);
+    return token;
   },
   async logout(){
     try{
@@ -1248,6 +1293,7 @@ window.CloudSync={
       this.documentReady=false;
       this.serverSnapshotSeen=false;
       this.pendingWrites=0;
+      window.GoogleDriveStorage?.disconnect();
       await this.auth?.signOut();
       S.cloud={enabled:false,provider:'local',uid:'',lastSync:S.cloud?.lastSync||0};
       window.__profileHydrating=true;

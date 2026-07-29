@@ -1,99 +1,20 @@
 {
-  "output": "RP_CABINET_v92_MOBILE_FILTER_PANEL",
-  "testVersion": 92,
-  "label": "mobile full-height search filters",
-  "usafLawGuide": {
-    "location": "after quick reports and before USAF ten-codes",
-    "source": "data/usaf/law-guide.js",
-    "scope": [
-      "USAF and MP authority boundary",
-      "detention and transfer workflow",
-      "ready-to-use phrases",
-      "MP call codes",
-      "checkpoint inspection",
-      "army-related UAK study themes",
-      "exam preparation questions"
+  "output": "RP_CABINET_v93_GOOGLE_DRIVE_STORAGE",
+  "testVersion": 93,
+  "label": "Google Drive proofs and avatars",
+  "storage": {
+    "provider": "Google Drive",
+    "scope": "https://www.googleapis.com/auth/drive.file",
+    "folders": [
+      "RP CABINET/Скриншоты",
+      "RP CABINET/Отчёты",
+      "RP CABINET/Аватар"
     ],
-    "articleNumbersEmbedded": false,
-    "automaticPromotionStage": "all USAF stages",
-    "automaticMaterialOrder": "current progress task order",
-    "matchingRule": "exact task meaning only; similar general exams are not used",
-    "missingMaterialRule": "skip task without a separate exact source",
-    "manualPinsOverrideAutomatic": true
+    "oldVercelBlobClientRemoved": true,
+    "oldProofServiceRemoved": true,
+    "binaryDataInFirebase": false,
+    "tokenStorage": "memory + sessionStorage"
   },
-  "surfaceState": {
-    "storage": "sessionStorage",
-    "key": "rpCabinetOpenDetails_v92",
-    "restoredAfterVisibilityChange": true,
-    "scopes": [
-      "department information",
-      "department tests",
-      "promotion materials"
-    ]
-  },
-  "proofGalleries": {
-    "collapsible": true,
-    "uploadButtonAlwaysVisible": true,
-    "stateStorage": "sessionStorage"
-  },
-  "profileLoader": {
-    "label": "Синхронизация профиля…",
-    "fadeOutMs": 280,
-    "reducedMotion": true
-  },
-  "reportPage": {
-    "requestTimeoutMs": 10000,
-    "maxAttempts": 2,
-    "bootWatchdogMs": 26000,
-    "retryButton": true,
-    "taskSeparators": true,
-    "hiddenStateOverride": true,
-    "profileAvatar": true,
-    "avatarFallback": "profile initials",
-    "existingReportCompatibility": true
-  },
-  "reportCreation": {
-    "timeoutMs": 20000,
-    "busyButton": true
-  },
-  "smartSearch": {
-    "source": "existing Academy and USAF templates",
-    "defaultScope": "current profile organization and section",
-    "recomputedOnOpen": true,
-    "firebaseHydrationSafe": true,
-    "manualScopeOverride": true,
-    "mobilePlacement": "sixth item inside bottom dashboard-tabs",
-    "floatingMobileButton": false,
-    "filterAlwaysVisible": true,
-    "filterScroll": "independent",
-    "resultsScroll": "remaining dialog height",
-    "mobileFilterMode": "full remaining dialog height",
-    "mobileKeyboardDismissOnFilterOpen": true,
-    "mobileResultsHiddenWhileFiltering": true,
-    "commonStyles": "css/features/smart-context-search.css",
-    "mobileStyles": "css/responsive/mobile.css",
-    "mobileStylesLoadedLast": true
-  },
-  "architecture": "Firebase canonical document + native onSnapshot + field-level update paths + Firestore IndexedDB persistence",
-  "syncEngine": "js/core/realtime-state.js",
-  "cloudProfile": "users/{uid}/profiles/default_realtime",
-  "legacyCloudProfiles": [
-    "default_v79_realtime",
-    "default_v77",
-    "default"
-  ],
-  "localCacheKeys": [
-    "rp_panel_account_profile_V80_REALTIME",
-    "rp_panel_v80_realtime_cache",
-    "rp_panel_account_profile_V80_BACKUP"
-  ],
-  "removedActiveSystems": [
-    "js/core/sync-merge.js",
-    "custom mutation queue",
-    "whole-state cloud replacement",
-    "local updatedAt winner selection"
-  ],
-  "realtimeRule": "page load is read-only; each user action updates only its Firestore field path; every server snapshot is applied to all open devices",
   "screenshots": {
     "countLimit": null,
     "maxFileBytes": 15728640,
@@ -101,29 +22,71 @@
       "png",
       "jpeg",
       "webp"
+    ],
+    "publicPermission": "anyone reader, allowFileDiscovery=false",
+    "cleanupDays": 8,
+    "permanentDelete": true
+  },
+  "reports": {
+    "manifestVersion": 3,
+    "manifestProvider": "Google Drive",
+    "viewer": "report.html",
+    "anonymousView": true,
+    "panelNavigation": false,
+    "inlineImages": true,
+    "lightbox": true,
+    "requestTimeoutMs": 12000,
+    "maxAttempts": 2,
+    "bootWatchdogMs": 26000
+  },
+  "avatar": {
+    "provider": "Google Drive",
+    "activeFilesPerProfile": 1,
+    "format": "webp",
+    "size": "512x512",
+    "replaceThenDeleteOld": true,
+    "cleanupExcluded": true,
+    "fallbacks": [
+      "Google photoURL",
+      "profile initials"
     ]
   },
+  "sync": {
+    "architecture": "Firebase canonical document + onSnapshot + field-level updates + Firestore IndexedDB",
+    "engine": "js/core/realtime-state.js",
+    "cloudProfile": "users/{uid}/profiles/default_realtime",
+    "driveMetadataSynced": true,
+    "driveTokenSynced": false,
+    "pageLoadWritesState": false
+  },
+  "smartSearch": {
+    "defaultScope": "current profile organization and section",
+    "mobilePlacement": "inside bottom navigation",
+    "mobileFilterMode": "full remaining 100dvh height",
+    "changedInV93": false
+  },
+  "usafLawGuide": {
+    "location": "after quick reports and before USAF ten-codes",
+    "automaticMaterialOrder": "current progress task order",
+    "missingMaterialRule": "skip task without exact source",
+    "manualPinsOverrideAutomatic": true
+  },
   "tests": [
-    "_tools/test-v92-mobile-filter-panel.mjs",
-    "node --check for all JavaScript files",
-    "HTML dependency audit"
+    "_tools/test-v93-google-drive-storage.mjs",
+    "node --check for all JavaScript",
+    "HTML dependency audit",
+    "ZIP integrity audit"
   ],
-  "syncedState": [
-    "profile",
-    "career context",
-    "progress tasks",
-    "selected levels",
-    "pinned materials",
-    "premium activities",
-    "proof metadata",
-    "report links"
-  ],
-  "migrationRule": "create default_realtime once from the freshest complete legacy-cloud or local candidate; afterward Firebase is authoritative",
-  "verifiedScenarios": [
-    "phone task -> PC",
-    "PC task -> phone without losing previous task",
-    "stale closed device opens read-only",
-    "unrelated concurrent fields merge",
-    "pinned materials and premium items use cloud state"
+  "githubRoot": [
+    "index.html",
+    "report.html",
+    "assets",
+    "css",
+    "data",
+    "js",
+    "documentation",
+    "_tools",
+    "README.md",
+    "build-summary.json"
   ]
 }
