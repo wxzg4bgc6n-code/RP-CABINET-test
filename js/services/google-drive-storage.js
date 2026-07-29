@@ -178,12 +178,37 @@
   }
 
   function parseXhrError(xhr){
-    try{
-      const payload=JSON.parse(xhr.responseText||'{}');
-      return payload?.error?.message||payload?.error||`Google Drive ответил ${xhr.status}.`;
-    }catch(error){
-      return `Google Drive ответил ${xhr.status||'без номера'}.`;
+    let payload=xhr?.response||null;
+    if(typeof payload==='string'){
+      try{payload=JSON.parse(payload);}catch(error){}
     }
+    if(!payload){
+      try{payload=JSON.parse(xhr.responseText||'{}');}catch(error){}
+    }
+    return payload?.error?.message
+      ||payload?.error?.errors?.[0]?.message
+      ||(typeof payload?.error==='string'?payload.error:'')
+      ||`Google Drive ответил ${xhr?.status||'без номера'}.`;
+  }
+
+  function propertyFingerprint(value){
+    const source=String(value??'');
+    let hash=2166136261;
+    for(let index=0;index<source.length;index++){
+      hash^=source.charCodeAt(index);
+      hash=Math.imul(hash,16777619);
+    }
+    return `hash_${(hash>>>0).toString(36)}`;
+  }
+
+  function normalizedAppProperties(properties){
+    const encoder=new TextEncoder();
+    return Object.fromEntries(Object.entries(properties||{}).map(([rawKey,rawValue])=>{
+      const key=String(rawKey).slice(0,80);
+      const value=String(rawValue??'');
+      const fitted=encoder.encode(key+value).length<=124?value:propertyFingerprint(value);
+      return [key,fitted];
+    }));
   }
 
   async function uploadBlob({blob,name,folderId,appProperties={},onProgress}){
@@ -192,7 +217,7 @@
     const metadata={
       name:String(name||'file.bin').slice(0,180),
       parents:[folderId],
-      appProperties:Object.fromEntries(Object.entries(appProperties).map(([key,value])=>[key,String(value)]))
+      appProperties:normalizedAppProperties(appProperties)
     };
     const body=new Blob([
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
