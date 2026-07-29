@@ -42,22 +42,22 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v95 · Avatar crop and fast proof viewer')) failures.push('index badge is not v95');
-if(!version.includes('const TEST_VERSION="95"')) failures.push('TEST_VERSION is not 95');
-if(!version.includes('Avatar crop and fast proof viewer')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v95 · Avatar crop and fast proof viewer')) failures.push('CSS badge mismatch');
-if(!index.includes('modular-v95-avatar-crop-fast-proofs')) failures.push('Architecture meta marker mismatch');
+if(!index.includes('TEST v96 · Fast public report and profile avatar')) failures.push('index badge is not v96');
+if(!version.includes('const TEST_VERSION="96"')) failures.push('TEST_VERSION is not 95');
+if(!version.includes('Fast public report and profile avatar')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v96 · Fast public report and profile avatar')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v96-fast-public-report')) failures.push('Architecture meta marker mismatch');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=95')) failures.push('realtime-state.js is not connected with v95 cache-busting');
+if(!index.includes('realtime-state.js?v=96')) failures.push('realtime-state.js is not connected with v96 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
-if(!index.includes('data/usaf/law-guide.js?v=95')) failures.push('USAF law guide is not connected');
-if(!mainCss.includes('features/usaf-law.css?v=95')) failures.push('USAF law guide styles are not connected');
-if(!index.includes('features/smart-context-search.js?v=95')) failures.push('Smart search script is not connected');
-if(!mainCss.includes('features/smart-context-search.css?v=95')) failures.push('Smart search styles are not connected');
-if(!mainCss.includes('responsive/mobile.css?v=95')) failures.push('Mobile styles are not connected');
-if(mainCss.indexOf('features/smart-context-search.css?v=95')>mainCss.indexOf('responsive/mobile.css?v=95')) failures.push('Mobile styles must load after common smart-search styles');
+if(!index.includes('data/usaf/law-guide.js?v=96')) failures.push('USAF law guide is not connected');
+if(!mainCss.includes('features/usaf-law.css?v=96')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('features/smart-context-search.js?v=96')) failures.push('Smart search script is not connected');
+if(!mainCss.includes('features/smart-context-search.css?v=96')) failures.push('Smart search styles are not connected');
+if(!mainCss.includes('responsive/mobile.css?v=96')) failures.push('Mobile styles are not connected');
+if(mainCss.indexOf('features/smart-context-search.css?v=96')>mainCss.indexOf('responsive/mobile.css?v=96')) failures.push('Mobile styles must load after common smart-search styles');
 const smartSearchCss=fs.readFileSync(path.join(root,'css/features/smart-context-search.css'),'utf8');
 const mobileCss=fs.readFileSync(path.join(root,'css/responsive/mobile.css'),'utf8');
 if(/@media\s*\(\s*max-width/.test(smartSearchCss)) failures.push('Mobile search CSS remains in the common feature stylesheet');
@@ -69,12 +69,12 @@ if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sy
 if(fs.existsSync(path.join(root,'proof-service'))) failures.push('Old proof-service directory still exists');
 if(fs.existsSync(path.join(root,'js/config/proof-service.js'))) failures.push('Old proof-service config still exists');
 if(fs.existsSync(path.join(root,'js/vendor/vercel-blob-client.js'))) failures.push('Old Vercel Blob client still exists');
-if(!index.includes('js/config/google-drive.js?v=95')) failures.push('Google Drive config is not connected');
-if(!index.includes('js/services/google-drive-storage.js?v=95')) failures.push('Google Drive storage service is not connected');
-if(!index.includes('js/features/google-drive-avatar.js?v=95')) failures.push('Google Drive avatar feature is not connected');
-if(!mainCss.includes('features/google-drive-avatar.css?v=95')) failures.push('Google Drive avatar styles are not connected');
-if(index.indexOf('js/config/google-drive.js?v=95')>index.indexOf('js/services/google-drive-storage.js?v=95')) failures.push('Drive config must load before Drive service');
-if(index.indexOf('js/services/google-drive-storage.js?v=95')>index.indexOf('js/app.js?v=95')) failures.push('Drive service must load before app.js');
+if(!index.includes('js/config/google-drive.js?v=96')) failures.push('Google Drive config is not connected');
+if(!index.includes('js/services/google-drive-storage.js?v=96')) failures.push('Google Drive storage service is not connected');
+if(!index.includes('js/features/google-drive-avatar.js?v=96')) failures.push('Google Drive avatar feature is not connected');
+if(!mainCss.includes('features/google-drive-avatar.css?v=96')) failures.push('Google Drive avatar styles are not connected');
+if(index.indexOf('js/config/google-drive.js?v=96')>index.indexOf('js/services/google-drive-storage.js?v=96')) failures.push('Drive config must load before Drive service');
+if(index.indexOf('js/services/google-drive-storage.js?v=96')>index.indexOf('js/app.js?v=96')) failures.push('Drive service must load before app.js');
 const avatarFeature=fs.readFileSync(path.join(root,'js/features/google-drive-avatar.js'),'utf8');
 const avatarCss=fs.readFileSync(path.join(root,'css/features/google-drive-avatar.css'),'utf8');
 const proofFeature=fs.readFileSync(path.join(root,'js/features/progress-proofs.js'),'utf8');
@@ -92,6 +92,13 @@ if(!driveService.includes('const previewObjects=new Map()')||!driveService.inclu
 if(!proofFeature.includes("canvas.toBlob(resolve,'image/webp',.84)")||!proofFeature.includes('previewMaxDimension||2560')) failures.push('Proof image optimization is missing');
 if(!proofFeature.includes('class="proof-viewer"')||!proofCss.includes('.proof-viewer.open{display:flex}')) failures.push('Fullscreen proof viewer is missing');
 if(/<a href="\$\{esc\(url\)\}" target="_blank"/.test(proofFeature)) failures.push('Proof click still opens a direct Drive download');
+const publicReport=fs.readFileSync(path.join(root,'js/report.js'),'utf8');
+const reportHtml=fs.readFileSync(path.join(root,'report.html'),'utf8');
+const reportCss=fs.readFileSync(path.join(root,'css/report.css'),'utf8');
+if(!publicReport.includes('function driveThumbnailUrl')||!publicReport.includes('driveThumbnailUrl(file,1100)')||!publicReport.includes('driveThumbnailUrl(file,2400)')) failures.push('Fast public report thumbnails are missing');
+if(!publicReport.includes('fallbackAvatarUrl')||!proofFeature.includes('fallbackAvatarUrl:typeof getFallbackGooglePhoto')) failures.push('Public report avatar fallback chain is missing');
+if(!reportHtml.includes('rel="preconnect" href="https://drive.google.com"')) failures.push('Google Drive preconnect is missing');
+if(!reportCss.includes('.report-image-loader')) failures.push('Public report image loading placeholder is missing');
 const projectText=files
   .filter(file=>/\.(?:js|html)$/.test(file)&&!file.includes(`${path.sep}_tools${path.sep}`))
   .map(file=>fs.readFileSync(file,'utf8'))
@@ -113,4 +120,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v95 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v96 build audit: OK\n${notes.join('\n')}`);

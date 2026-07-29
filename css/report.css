@@ -144,8 +144,13 @@ button{font:inherit}
 .report-task-title p{margin:4px 0 0;color:var(--muted);font-size:11px;font-weight:750}
 .report-proofs{display:grid;gap:12px;padding:0 15px 15px}
 .report-proof{margin:0;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:var(--surface-deep)}
-.report-image-open{display:block;width:100%;padding:10px;border:0;background:#02040a;cursor:zoom-in}
-.report-proof img{display:block;width:100%;height:auto;max-height:none;object-fit:contain}
+.report-image-open{position:relative;display:grid;width:100%;min-height:190px;padding:10px;place-items:center;border:0;background:#02040a;cursor:zoom-in}
+.report-image-loader{position:absolute;width:31px;height:31px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.report-proof img{position:relative;z-index:1;display:block;width:100%;height:auto;max-height:none;object-fit:contain;opacity:0;transition:opacity .18s ease}
+.report-image-open.is-loaded{min-height:0}
+.report-image-open.is-loaded img{opacity:1}
+.report-image-open.is-loaded .report-image-loader{display:none}
+.report-image-open.is-error .report-image-loader{animation:none;border-color:#fb7185}
 .report-proof figcaption{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px}
 .report-proof figcaption b{overflow:hidden;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
 .report-proof figcaption span{flex:none;color:var(--muted);font-size:11px}
@@ -181,6 +186,7 @@ body.report-lightbox-open{overflow:hidden}
   .report-task-separator{gap:8px;margin:18px 0}
   .report-task-title>span,.report-task-title>i{width:30px;height:30px}
   .report-proofs{padding:0 10px 10px}
-  .report-image-open{padding:5px}
+  .report-image-open{min-height:150px;padding:5px}
+  .report-image-open.is-loaded{min-height:0}
   .report-proof figcaption{align-items:flex-start;flex-direction:column;gap:3px}
 }

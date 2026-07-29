@@ -59,16 +59,32 @@
     return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.fileId)}?alt=media&key=${encodeURIComponent(key)}${resourceKey}`;
   }
 
+  function driveThumbnailUrl(file,size=1200){
+    if(file?.provider!=='google-drive'||!file.fileId) return String(file?.url||'');
+    const width=Math.max(128,Math.min(2400,Math.round(Number(size)||1200)));
+    const url=new URL('https://drive.google.com/thumbnail');
+    url.searchParams.set('id',String(file.fileId));
+    url.searchParams.set('sz',`w${width}`);
+    if(file.resourceKey) url.searchParams.set('resourcekey',String(file.resourceKey));
+    return url.href;
+  }
+
   function manifestUrl(id,resourceKey){
     return driveMediaUrl({provider:'google-drive',fileId:id,resourceKey});
   }
 
   function fileCard(file){
     const size=file.width&&file.height?`${file.width}×${file.height}`:'исходный размер';
-    const url=driveMediaUrl(file);
+    const thumbnail=driveThumbnailUrl(file,1100);
+    const fullscreen=driveThumbnailUrl(file,2400);
+    const fallback=driveMediaUrl(file);
     return `<figure class="report-proof">
-      <button class="report-image-open" type="button" data-report-image="${esc(url)}" data-report-image-name="${esc(file.name||'Скриншот подтверждения')}" title="Открыть изображение">
-        <img src="${esc(url)}" alt="${esc(file.name||'Скриншот подтверждения')}" loading="lazy">
+      <button class="report-image-open" type="button" data-report-image="${esc(fullscreen)}"
+        data-report-image-fallback="${esc(fallback)}"
+        data-report-image-name="${esc(file.name||'Скриншот подтверждения')}" title="Открыть изображение">
+        <span class="report-image-loader" aria-hidden="true"></span>
+        <img src="${esc(thumbnail)}" data-report-fallback="${esc(fallback)}"
+          alt="${esc(file.name||'Скриншот подтверждения')}" loading="lazy" decoding="async">
       </button>
       <figcaption><b>${esc(file.name||'Скриншот')}</b><span>${esc(size)} · нажми для увеличения</span></figcaption>
     </figure>`;
@@ -96,15 +112,27 @@
     const fallback=document.createElement('span');
     fallback.textContent=profileInitials(profile?.name);
     avatar.replaceChildren(fallback);
-    const rawUrl=profile?.avatar?.fileId
-      ? driveMediaUrl(profile.avatar)
-      : String(profile?.avatarUrl||'').trim();
-    if(!/^https:\/\//i.test(rawUrl)) return;
+    const candidates=[
+      profile?.avatar?.fileId?driveThumbnailUrl(profile.avatar,512):'',
+      profile?.avatar?.fileId?driveMediaUrl(profile.avatar):'',
+      String(profile?.fallbackAvatarUrl||'').trim(),
+      String(profile?.avatarUrl||'').trim()
+    ].filter((url,index,list)=>/^https:\/\//i.test(url)&&list.indexOf(url)===index);
+    if(!candidates.length) return;
     const image=document.createElement('img');
     image.alt=`Аватар ${profile?.name||'профиля'}`;
     image.referrerPolicy='no-referrer';
-    image.addEventListener('error',()=>avatar.replaceChildren(fallback),{once:true});
-    image.src=rawUrl;
+    image.decoding='async';
+    let candidateIndex=0;
+    image.addEventListener('error',()=>{
+      candidateIndex+=1;
+      if(candidates[candidateIndex]){
+        image.src=candidates[candidateIndex];
+        return;
+      }
+      avatar.replaceChildren(fallback);
+    });
+    image.src=candidates[0];
     avatar.replaceChildren(image);
   }
 
@@ -124,9 +152,12 @@
     return box;
   }
 
-  function openLightbox(url,name){
+  function openLightbox(url,name,fallbackUrl){
     const box=ensureLightbox();
     const image=box.querySelector('img');
+    image.onerror=()=>{
+      if(fallbackUrl&&image.src!==fallbackUrl) image.src=fallbackUrl;
+    };
     image.src=url;
     image.alt=name||'Скриншот';
     box.querySelector('span').textContent=name||'Скриншот';
@@ -163,8 +194,24 @@
       <div><span>Выполнено</span><b>${report.tasks?.length||0} пунктов</b></div>
     </section>
     <section class="report-task-list">${(report.tasks||[]).map((task,index)=>`${index?`<div class="report-task-separator" aria-hidden="true"><span>Пункт ${index+1}</span></div>`:''}${taskCard(task,index)}`).join('')}</section>`;
+    content.querySelectorAll('.report-proof img').forEach(image=>{
+      image.addEventListener('load',()=>image.closest('.report-image-open')?.classList.add('is-loaded'),{once:true});
+      image.addEventListener('error',()=>{
+        const fallback=image.dataset.reportFallback;
+        if(fallback&&image.src!==fallback){
+          image.src=fallback;
+          return;
+        }
+        image.closest('.report-image-open')?.classList.add('is-error');
+      });
+      if(image.complete&&image.naturalWidth) image.closest('.report-image-open')?.classList.add('is-loaded');
+    });
     content.querySelectorAll('[data-report-image]').forEach(button=>{
-      button.addEventListener('click',()=>openLightbox(button.dataset.reportImage,button.dataset.reportImageName));
+      button.addEventListener('click',()=>openLightbox(
+        button.dataset.reportImage,
+        button.dataset.reportImageName,
+        button.dataset.reportImageFallback
+      ));
     });
   }
 

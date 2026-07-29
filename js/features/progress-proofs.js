@@ -495,7 +495,8 @@
             fileId:avatar.fileId,
             resourceKey:avatar.resourceKey||''
           }:null,
-          avatarUrl:avatar?.url||(typeof getGoogleProfilePhoto==='function'?getGoogleProfilePhoto():'')
+          avatarUrl:avatar?.url||(typeof getGoogleProfilePhoto==='function'?getGoogleProfilePhoto():''),
+          fallbackAvatarUrl:typeof getFallbackGooglePhoto==='function'?getFallbackGooglePhoto():''
         },
         tasks:allTasks.map(title=>{
           const completed=S.tasks?.[title]===true;

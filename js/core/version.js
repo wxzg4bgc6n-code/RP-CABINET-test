@@ -1,5 +1,5 @@
-const TEST_VERSION="95";
-const TEST_VERSION_LABEL="Avatar crop and fast proof viewer";
+const TEST_VERSION="96";
+const TEST_VERSION_LABEL="Fast public report and profile avatar";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
