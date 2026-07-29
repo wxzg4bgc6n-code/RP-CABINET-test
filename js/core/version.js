@@ -1,5 +1,5 @@
-const TEST_VERSION="93";
-const TEST_VERSION_LABEL="Google Drive proofs and avatars";
+const TEST_VERSION="94";
+const TEST_VERSION_LABEL="Avatar editor and search cleanup";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

@@ -262,16 +262,6 @@
         open();
       });
     }
-    const settings=document.getElementById('openSettings');
-    if(settings && !document.getElementById('smartSearchProfileButton')){
-      const button=document.createElement('button');
-      button.id='smartSearchProfileButton';
-      button.type='button';
-      button.className='btn soft smart-search-profile-button';
-      button.innerHTML='<span aria-hidden="true">⌕</span> Найти в материалах';
-      settings.insertAdjacentElement('beforebegin',button);
-      button.addEventListener('click',open);
-    }
     document.getElementById('smartSearchClose')?.addEventListener('click',close);
     document.getElementById('smartSearchModal')?.addEventListener('click',event=>{
       if(event.target.id==='smartSearchModal') close();

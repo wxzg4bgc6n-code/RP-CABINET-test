@@ -3,75 +3,63 @@
 
   let busy=false;
 
-  function esc(value){
-    return String(value??'').replace(/[&<>"']/g,char=>({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    })[char]);
-  }
-
   function currentAvatar(){
     return S?.account?.driveAvatar&&typeof S.account.driveAvatar==='object'
       ? S.account.driveAvatar
       : null;
   }
 
-  function initials(){
-    return (String(S?.name||'RP').trim().split(/\s+/).map(part=>part[0]).join('').slice(0,2)||'RP').toUpperCase();
+  function editorMarkup(){
+    return `<input class="profile-avatar-input" id="driveAvatarInput" type="file"
+      accept="image/png,image/jpeg,image/webp" aria-hidden="true">
+      <button class="profile-avatar-edit" id="editDriveAvatar" type="button"
+        aria-label="Загрузить свой аватар" title="Загрузить свой аватар">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="m4 20 4.2-1 10.9-10.9a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z"></path>
+          <path d="m14.8 6.4 2.8 2.8"></path>
+        </svg>
+      </button>`;
   }
 
-  function ensureCard(){
-    const syncCard=document.getElementById('cloudSyncCard');
-    if(!syncCard?.parentNode) return null;
-    let card=document.getElementById('driveAvatarCard');
-    if(card) return card;
-    card=document.createElement('section');
-    card.id='driveAvatarCard';
-    card.className='drive-avatar-card';
-    syncCard.parentNode.insertBefore(card,syncCard);
-    return card;
-  }
-
-  function render(){
-    const card=ensureCard();
-    if(!card) return;
-    const avatar=currentAvatar();
-    const authenticated=!!window.CloudSync?.user;
-    const driveReady=!!window.GoogleDriveStorage?.hasAccessToken();
-    card.innerHTML=`<div class="drive-avatar-head">
-      <div class="drive-avatar-preview">${avatar?.url
-        ? `<img src="${esc(avatar.url)}" alt="Пользовательская аватарка" referrerpolicy="no-referrer">`
-        : `<span>${esc(initials())}</span>`}</div>
-      <div>
-        <h3>Аватар профиля</h3>
-        <p>${avatar?'Используется пользовательская фотография с Google Диска.':'Загрузи одну фотографию. При замене предыдущая удалится.'}</p>
-      </div>
-    </div>
-    <div class="drive-avatar-actions">
-      ${!authenticated
-        ? '<button class="btn soft" type="button" disabled>Сначала войди через Google</button>'
-        : !driveReady
-          ? '<button class="btn" type="button" id="connectAvatarDrive">Подключить Google Диск</button>'
-          : `<label class="btn drive-avatar-upload ${busy?'is-disabled':''}">
-              <input type="file" id="driveAvatarInput" accept="image/png,image/jpeg,image/webp" ${busy?'disabled':''}>
-              <span>${busy?'Сохраняю…':avatar?'Заменить фотографию':'Загрузить фотографию'}</span>
-            </label>`}
-      ${avatar?`<button class="btn soft" type="button" id="deleteDriveAvatar" ${busy||!driveReady?'disabled':''}>Удалить аватар</button>`:''}
-    </div>
-    <small>Изображение автоматически обрезается квадратом и сохраняется в WebP 512×512.</small>`;
-
-    card.querySelector('#connectAvatarDrive')?.addEventListener('click',connect);
-    card.querySelector('#driveAvatarInput')?.addEventListener('change',event=>upload(event.target.files?.[0]));
-    card.querySelector('#deleteDriveAvatar')?.addEventListener('click',remove);
-  }
-
-  async function connect(){
-    try{
-      await window.GoogleDriveStorage.ensureAccessToken();
-      render();
-      showToast('Google Диск подключён','Можно загружать аватар и скриншоты');
-    }catch(error){
-      showToast('Диск не подключён',String(error.message||error).slice(0,140));
+  function ensureEditor(){
+    const wrap=document.querySelector('.avatar-wrap');
+    if(!wrap) return null;
+    if(!document.getElementById('editDriveAvatar')){
+      wrap.insertAdjacentHTML('beforeend',editorMarkup());
+      document.getElementById('editDriveAvatar')?.addEventListener('click',chooseAvatar);
+      document.getElementById('driveAvatarInput')?.addEventListener('change',event=>{
+        const input=event.currentTarget;
+        const file=input.files?.[0];
+        input.value='';
+        upload(file);
+      });
     }
+    return wrap;
+  }
+
+  function renderEditor(){
+    const wrap=ensureEditor();
+    if(!wrap) return;
+    const button=document.getElementById('editDriveAvatar');
+    const input=document.getElementById('driveAvatarInput');
+    const replacing=!!currentAvatar();
+    if(button){
+      const label=replacing?'Заменить свой аватар':'Загрузить свой аватар';
+      button.title=label;
+      button.setAttribute('aria-label',label);
+      button.disabled=busy;
+      button.classList.toggle('is-busy',busy);
+    }
+    if(input) input.disabled=busy;
+  }
+
+  function chooseAvatar(){
+    if(busy) return;
+    if(!window.CloudSync?.user){
+      showToast('Сначала войди через Google','Это нужно для сохранения аватара на твоём Google Диске');
+      return;
+    }
+    document.getElementById('driveAvatarInput')?.click();
   }
 
   function loadImage(file){
@@ -107,7 +95,7 @@
   async function upload(file){
     if(!file||busy) return;
     busy=true;
-    render();
+    renderEditor();
     const previous=currentAvatar();
     try{
       await window.GoogleDriveStorage.ensureAccessToken();
@@ -117,37 +105,17 @@
       S.account.driveAvatar=avatar;
       save();
       renderProfileIcon();
-      render();
+      renderEditor();
       if(previous?.fileId&&previous.fileId!==avatar.fileId){
-        await window.GoogleDriveStorage.deleteFile(previous.fileId).catch(error=>console.warn('Old avatar delete failed',error));
+        await window.GoogleDriveStorage.deleteFile(previous.fileId)
+          .catch(error=>console.warn('Old avatar delete failed',error));
       }
-      showToast('Аватар обновлён','Новая фотография синхронизируется между устройствами');
+      showToast('Аватар обновлён','Предыдущая фотография удалена с Google Диска');
     }catch(error){
       showToast('Аватар не сохранён',String(error.message||error).slice(0,140));
     }finally{
       busy=false;
-      render();
-    }
-  }
-
-  async function remove(){
-    const avatar=currentAvatar();
-    if(!avatar||busy||!confirm('Удалить пользовательский аватар? Будет показано фото Google.')) return;
-    busy=true;
-    render();
-    try{
-      await window.GoogleDriveStorage.ensureAccessToken();
-      if(avatar.fileId) await window.GoogleDriveStorage.deleteFile(avatar.fileId);
-      delete S.account.driveAvatar;
-      save();
-      renderProfileIcon();
-      render();
-      showToast('Аватар удалён','Возвращено фото Google или инициалы');
-    }catch(error){
-      showToast('Не удалось удалить',String(error.message||error).slice(0,140));
-    }finally{
-      busy=false;
-      render();
+      renderEditor();
     }
   }
 
@@ -155,11 +123,11 @@
   if(typeof appRender==='function'){
     const wrapped=function(){
       appRender();
-      render();
+      renderEditor();
     };
     try{globalThis.render=wrapped;}catch(error){}
   }
-  document.addEventListener('rp:drive-status',render);
-  document.addEventListener('DOMContentLoaded',render);
-  render();
+  document.addEventListener('rp:drive-status',renderEditor);
+  document.addEventListener('DOMContentLoaded',renderEditor);
+  renderEditor();
 })();

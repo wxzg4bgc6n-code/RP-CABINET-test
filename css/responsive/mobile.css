@@ -57,7 +57,6 @@
   .toast{left:10px!important;right:10px!important;bottom:calc(82px + env(safe-area-inset-bottom,0px))!important;width:auto!important;}
 
   /* Умный поиск: только телефонная компоновка, без копии общей логики. */
-  .smart-search-profile-button{display:none!important;}
   .profile-card > .dashboard-tabs .smart-search-nav-button{display:flex!important;}
   .profile-card > .dashboard-tabs{grid-template-columns:repeat(6,minmax(0,1fr))!important;}
   .smart-search-modal{align-items:flex-end;padding:0;}

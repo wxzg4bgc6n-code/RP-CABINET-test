@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v93_GOOGLE_DRIVE_STORAGE",
-  "testVersion": 93,
-  "label": "Google Drive proofs and avatars",
+  "output": "RP_CABINET_v94_AVATAR_OVERLAY_SEARCH_CLEANUP",
+  "testVersion": 94,
+  "label": "Avatar editor and search cleanup",
   "storage": {
     "provider": "Google Drive",
     "scope": "https://www.googleapis.com/auth/drive.file",
@@ -25,7 +25,8 @@
     ],
     "publicPermission": "anyone reader, allowFileDiscovery=false",
     "cleanupDays": 8,
-    "permanentDelete": true
+    "permanentDelete": true,
+    "manualDeleteRemovesDriveFileImmediately": true
   },
   "reports": {
     "manifestVersion": 3,
@@ -46,6 +47,8 @@
     "size": "512x512",
     "replaceThenDeleteOld": true,
     "cleanupExcluded": true,
+    "editorPlacement": "pencil overlay on profile avatar",
+    "settingsCardRemoved": true,
     "fallbacks": [
       "Google photoURL",
       "profile initials"
@@ -63,7 +66,8 @@
     "defaultScope": "current profile organization and section",
     "mobilePlacement": "inside bottom navigation",
     "mobileFilterMode": "full remaining 100dvh height",
-    "changedInV93": false
+    "singleLauncher": true,
+    "duplicateMaterialsButtonRemoved": true
   },
   "usafLawGuide": {
     "location": "after quick reports and before USAF ten-codes",
@@ -72,7 +76,7 @@
     "manualPinsOverrideAutomatic": true
   },
   "tests": [
-    "_tools/test-v93-google-drive-storage.mjs",
+    "_tools/test-v94-avatar-overlay.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

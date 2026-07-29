@@ -1,36 +1,61 @@
-.drive-avatar-card{
+.avatar-wrap{position:relative}
+.profile-avatar-input{display:none!important}
+.profile-avatar-edit{
+  position:absolute;
+  z-index:7;
+  right:-7px;
+  bottom:2px;
   display:grid;
-  gap:14px;
-  padding:16px;
-  border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));
-  border-radius:16px;
-  background:color-mix(in srgb,var(--accent) 5%,rgba(5,9,17,.62));
-}
-.drive-avatar-head{display:flex;align-items:center;gap:13px}
-.drive-avatar-preview{
-  display:grid;
-  overflow:hidden;
-  width:64px;
-  height:64px;
-  flex:none;
+  width:38px;
+  height:38px;
+  min-width:38px;
+  min-height:38px;
+  padding:0;
   place-items:center;
-  border:1px solid color-mix(in srgb,var(--accent) 52%,var(--line));
-  border-radius:18px;
-  background:color-mix(in srgb,var(--accent) 12%,rgba(2,5,10,.92));
-  color:var(--accent);
-  font-size:18px;
-  font-weight:1000;
+  border:1px solid color-mix(in srgb,var(--accent) 58%,rgba(255,255,255,.2));
+  border-radius:13px;
+  outline:0;
+  background:color-mix(in srgb,var(--accent) 24%,#0a101c);
+  color:var(--text);
+  box-shadow:0 10px 25px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.16);
+  cursor:pointer;
+  opacity:0;
+  transform:translateY(5px) scale(.92);
+  transition:opacity .18s ease,transform .18s ease,border-color .18s ease,background .18s ease;
 }
-.drive-avatar-preview img{display:block;width:100%;height:100%;object-fit:cover}
-.drive-avatar-head h3{margin:0 0 4px;font-size:15px}
-.drive-avatar-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
-.drive-avatar-actions{display:flex;flex-wrap:wrap;gap:8px}
-.drive-avatar-upload{position:relative;overflow:hidden;cursor:pointer}
-.drive-avatar-upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.drive-avatar-upload.is-disabled{opacity:.48;pointer-events:none}
-.drive-avatar-card>small{color:var(--muted);font-size:10px;line-height:1.4}
-@media(max-width:680px){
-  .drive-avatar-head{align-items:flex-start}
-  .drive-avatar-actions{display:grid}
-  .drive-avatar-actions .btn,.drive-avatar-upload{width:100%;text-align:center}
+.profile-avatar-edit svg{
+  width:19px;
+  height:19px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.avatar-wrap:hover .profile-avatar-edit,
+.avatar-wrap:focus-within .profile-avatar-edit,
+.profile-avatar-edit:focus-visible{
+  opacity:1;
+  transform:translateY(0) scale(1);
+}
+.profile-avatar-edit:hover,
+.profile-avatar-edit:focus-visible{
+  border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 38%,#0a101c);
+  box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent);
+}
+.profile-avatar-edit:disabled{cursor:wait;opacity:.75}
+.profile-avatar-edit.is-busy svg{animation:driveAvatarBusy .9s linear infinite}
+@keyframes driveAvatarBusy{to{transform:rotate(360deg)}}
+@media(hover:none),(max-width:900px){
+  .profile-avatar-edit{
+    right:-5px;
+    bottom:0;
+    width:36px;
+    height:36px;
+    min-width:36px;
+    min-height:36px;
+    opacity:1;
+    transform:none;
+  }
 }

@@ -1,7 +1,7 @@
-RP CABINET v93 — КРАТКАЯ ПАМЯТКА
+RP CABINET v94 — КРАТКАЯ ПАМЯТКА
 
 1. На GitHub загружать index.html, report.html, assets, css, data, js, documentation, _tools, README.md и build-summary.json.
-2. Папки proof-service в v93 нет.
+2. Папки proof-service в v94 нет.
 3. Не загружать node_modules, .env, client secret, access token или refresh token.
 4. В Google Cloud проекта rp-cabinet включить Google Drive API.
 5. В OAuth Data Access добавить https://www.googleapis.com/auth/drive.file.
@@ -12,9 +12,9 @@ RP CABINET v93 — КРАТКАЯ ПАМЯТКА
 10. Канонический документ синхронизации: users/{uid}/profiles/default_realtime.
 11. Обновление страницы выполняет чтение и не пишет локальный кэш в облако.
 12. Скриншоты: PNG/JPG/WEBP, до 15 МБ, без лимита количества на пункт.
-13. Отчёт и скриншоты удаляются через 8 дней при следующем подключении Диска.
+13. Ручное удаление скриншота удаляет файл с Google Диска сразу; автоматическая очистка оставшихся файлов выполняется через 8 дней.
 14. Публичный report.html открывается без Google-входа и не ведёт обратно в панель.
-15. Аватар: один файл WebP 512×512; новая загрузка удаляет старую.
+15. Аватар: карандаш поверх фотографии, один файл WebP 512×512; новая загрузка удаляет старую.
 16. Аватар не удаляется восьмидневной очисткой.
-17. README должен содержать только три версии: v93, v92 и v91.
+17. README должен содержать только три версии: v94, v93 и v92.
 18. При новой версии одновременно менять version.js, CSS-бейдж, meta architecture, cache-busting, README, QUICK_GUIDE и build-summary.
