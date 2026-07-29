@@ -1,7 +1,7 @@
-RP CABINET v96 — КРАТКАЯ ПАМЯТКА
+RP CABINET v97 — КРАТКАЯ ПАМЯТКА
 
 1. На GitHub загружать index.html, report.html, assets, css, data, js, documentation, _tools, README.md и build-summary.json.
-2. Папки proof-service в v96 нет.
+2. Папки proof-service в v97 нет.
 3. Не загружать node_modules, .env, client secret, access token или refresh token.
 4. В Google Cloud проекта rp-cabinet включить Google Drive API.
 5. В OAuth Data Access добавить https://www.googleapis.com/auth/drive.file.
@@ -12,9 +12,10 @@ RP CABINET v96 — КРАТКАЯ ПАМЯТКА
 10. Канонический документ синхронизации: users/{uid}/profiles/default_realtime.
 11. Обновление страницы выполняет чтение и не пишет локальный кэш в облако.
 12. Скриншоты: PNG/JPG/WEBP, до 15 МБ, без лимита количества на пункт.
-13. Ручное удаление скриншота удаляет файл с Google Диска сразу; автоматическая очистка оставшихся файлов выполняется через 8 дней.
+13. Крестик удаляет один скриншот, а кнопка «Удалить все скриншоты» очищает все файлы текущего контекста; автоматическая очистка оставшихся файлов выполняется через 8 дней.
 14. Публичный report.html открывается без Google-входа и не ведёт обратно в панель.
 15. Аватар: карандаш, кадрирование, масштаб 1×–3× и один итоговый WebP 512×512.
 16. Аватар не удаляется восьмидневной очисткой.
-17. README должен содержать только три версии: v96, v95 и v94.
+17. README должен содержать только три версии: v97, v96 и v95.
 18. При новой версии одновременно менять version.js, CSS-бейдж, meta architecture, cache-busting, README, QUICK_GUIDE и build-summary.
+19. Access token Drive временный: новый отчёт не вызывает запрос сам по себе, но после истечения токена или новой сессии Google может попросить доступ снова.

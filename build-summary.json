@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v96_FAST_PUBLIC_REPORT",
-  "testVersion": 96,
-  "label": "Fast public report and profile avatar",
+  "output": "RP_CABINET_v97_PROOF_CLEANUP",
+  "testVersion": 97,
+  "label": "Proof cleanup and bulk delete",
   "storage": {
     "provider": "Google Drive",
     "scope": "https://www.googleapis.com/auth/drive.file",
@@ -30,7 +30,13 @@
     "clientOptimization": "WebP quality 0.84, maximum dimension 2560px",
     "immediateLocalPreview": true,
     "viewer": "in-panel fullscreen lightbox",
-    "directDownloadOnClick": false
+    "directDownloadOnClick": false,
+    "bulkDelete": true,
+    "bulkDeleteConcurrency": 4,
+    "bulkDeleteKeepsFailedFiles": true,
+    "bulkDeleteInvalidatesActiveReport": true,
+    "missingDriveFileRemovesLocalRecord": true,
+    "perFileDeleteAlwaysVisible": true
   },
   "reports": {
     "manifestVersion": 3,
@@ -98,7 +104,7 @@
     "manualPinsOverrideAutomatic": true
   },
   "tests": [
-    "_tools/test-v96-fast-public-report.mjs",
+    "_tools/test-v97-proof-cleanup.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

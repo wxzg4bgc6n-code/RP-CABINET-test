@@ -158,7 +158,9 @@
     if(!response.ok){
       const payload=await response.json().catch(()=>null);
       const message=payload?.error?.message||payload?.error||`Google Drive ответил ${response.status}.`;
-      throw new Error(String(message));
+      const error=new Error(String(message));
+      error.status=response.status;
+      throw error;
     }
     if(response.status===204) return null;
     return response.json();
@@ -404,7 +406,11 @@
   async function deleteFile(fileId){
     const id=String(fileId||'').trim();
     if(!id) return;
-    await request(`${API}/files/${encodeURIComponent(id)}`,{method:'DELETE'});
+    try{
+      await request(`${API}/files/${encodeURIComponent(id)}`,{method:'DELETE'});
+    }catch(error){
+      if(Number(error?.status)!==404) throw error;
+    }
     forgetPreview(id);
   }
 

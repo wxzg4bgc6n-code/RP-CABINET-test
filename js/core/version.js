@@ -1,5 +1,5 @@
-const TEST_VERSION="96";
-const TEST_VERSION_LABEL="Fast public report and profile avatar";
+const TEST_VERSION="97";
+const TEST_VERSION_LABEL="Proof cleanup and bulk delete";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

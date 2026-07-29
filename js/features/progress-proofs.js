@@ -6,6 +6,7 @@
   const uploadProgress=new Map();
   let reportGenerating=false;
   let driveConnecting=false;
+  let bulkDeleting=false;
   let viewerInstalled=false;
   const COLLAPSED_GALLERIES_KEY='kiri:rp-cabinet:v82:collapsed-proof-galleries';
   const collapsedGalleries=new Set((()=>{
@@ -50,6 +51,12 @@
 
   function proofFor(task){
     return ensureProofStore()[task]||{files:[]};
+  }
+
+  function allProofEntries(){
+    return Object.entries(ensureProofStore()).flatMap(([task,proof])=>
+      (Array.isArray(proof?.files)?proof.files:[]).map((file,index)=>({task,index,file}))
+    );
   }
 
   function galleryStateKey(task){
@@ -191,7 +198,6 @@
 
   function fileMarkup(task,file,index){
     const dimensions=file.width&&file.height?`${file.width}×${file.height}`:'оригинальный размер';
-    const activeReport=reportStore()[currentContextKey()];
     const url=fileUrl(file,720);
     return `<article class="proof-file">
       <button class="proof-preview" type="button" data-proof-view="${esc(task)}"
@@ -202,7 +208,8 @@
         <b>${esc(file.name||'Скриншот')}</b>
         <span>${esc(dimensions)} · Google Диск</span>
       </div>
-      ${activeReport?'':`<button class="proof-icon-btn" type="button" data-proof-delete="${esc(task)}" data-file-index="${index}" aria-label="Удалить скриншот">×</button>`}
+      <button class="proof-icon-btn" type="button" data-proof-delete="${esc(task)}"
+        data-file-index="${index}" aria-label="Удалить скриншот" ${bulkDeleting?'disabled':''}>×</button>
     </article>`;
   }
 
@@ -264,7 +271,7 @@
     const files=Array.isArray(proof.files)?proof.files:[];
     const progress=uploadProgress.get(task);
     const fileLimit=configuredFileLimit();
-    const canUpload=!!authUser()&&!!drive()?.hasAccessToken()&&(fileLimit===null||files.length<fileLimit);
+    const canUpload=!bulkDeleting&&!!authUser()&&!!drive()?.hasAccessToken()&&(fileLimit===null||files.length<fileLimit);
     const collapsed=files.length>0&&isGalleryCollapsed(task);
     const gallery=galleryId(task);
     const status=required
@@ -311,6 +318,7 @@
     }
     const authenticated=!!authUser();
     const driveReady=!!drive()?.hasAccessToken();
+    const proofEntries=allProofEntries();
     const requiredCompleted=completed.filter(task=>rules.isRequired(task,S));
     const missing=requiredCompleted.filter(task=>!(proofFor(task).files||[]).length);
     const fullProgress=allTasks.length>0&&allTasks.every(task=>S.tasks?.[task]===true);
@@ -326,7 +334,12 @@
         <span class="proof-eyebrow">Подтверждения прогресса</span>
         <h3>Скриншоты выполненных пунктов</h3>
       </div>
-      <span class="proof-counter">${completed.length} из ${allTasks.length}</span>
+      <div class="proof-heading-actions">
+        <span class="proof-counter">${completed.length} из ${allTasks.length}</span>
+        ${proofEntries.length?`<button class="proof-delete-all" id="deleteAllProofs" type="button" ${bulkDeleting?'disabled':''}>
+          ${bulkDeleting?'Удаляю…':`Удалить все скриншоты · ${proofEntries.length}`}
+        </button>`:''}
+      </div>
     </div>
     <div class="proof-guidance ${driveReady?'is-ready':'is-wait'}">
       <p class="proof-drive-note">${esc(serviceNote)}</p>
@@ -363,6 +376,7 @@
     root.querySelector('#generateProofReport')?.addEventListener('click',generateReport);
     root.querySelector('#copyProofReport')?.addEventListener('click',()=>copyReportLink(report));
     root.querySelector('#deleteProofReport')?.addEventListener('click',()=>deleteReport(report));
+    root.querySelector('#deleteAllProofs')?.addEventListener('click',deleteAllProofs);
   }
 
   async function connectDrive(){
@@ -433,17 +447,119 @@
   async function deleteFile(task,index){
     const proof=proofFor(task);
     const file=proof.files?.[index];
-    if(!file||!confirm('Удалить этот скриншот без возможности восстановления?')) return;
+    const contextKey=currentContextKey();
+    const report=contextKey?reportStore()[contextKey]:null;
+    const warning=report
+      ? 'Удалить этот скриншот и активный отчёт? Публичная ссылка перестанет работать.'
+      : 'Удалить этот скриншот без возможности восстановления?';
+    if(!file||!confirm(warning)) return;
     try{
       await drive().ensureAccessToken();
+      if(report?.provider==='google-drive'&&report.id){
+        await drive().deleteFile(report.id);
+        delete reportStore()[contextKey];
+        save();
+      }
       if(file.fileId) await drive().deleteFile(file.fileId);
+      if(report) delete reportStore()[contextKey];
       proof.files.splice(index,1);
       proof.updatedAt=Date.now();
       if(!proof.files.length) delete ensureProofStore()[task];
       save();
-      showToast('Скриншот удалён',file.fileId?'Файл окончательно удалён с Google Диска':'Старая запись удалена из панели');
+      showToast('Скриншот удалён',report?'Файл удалён, публичный отчёт отключён':file.fileId?'Файл окончательно удалён с Google Диска':'Старая запись удалена из панели');
     }catch(error){
-      showToast('Не удалось удалить',String(error.message||error).slice(0,140));
+      const removeLocal=confirm(
+        'Google Диск не подтвердил удаление. Убрать эту запись только из панели?\n\n'+
+        'Если файл ещё есть на Диске, он останется там.'
+      );
+      if(removeLocal){
+        proof.files.splice(index,1);
+        proof.updatedAt=Date.now();
+        if(!proof.files.length) delete ensureProofStore()[task];
+        save();
+        showToast('Запись убрана из панели','Удаление файла на Google Диске не подтверждено');
+      }else{
+        showToast('Не удалось удалить',String(error.message||error).slice(0,140));
+      }
+    }finally{
+      render();
+    }
+  }
+
+  async function deleteAllProofs(){
+    if(bulkDeleting) return;
+    const contextKey=currentContextKey();
+    const entries=allProofEntries();
+    const report=contextKey?reportStore()[contextKey]:null;
+    if(!entries.length) return showToast('Скриншотов нет','Удалять нечего');
+    const warning=report
+      ? `Удалить все скриншоты (${entries.length}) и активный отчёт? Публичная ссылка перестанет работать.`
+      : `Удалить все скриншоты (${entries.length}) без возможности восстановления?`;
+    if(!confirm(warning)) return;
+    bulkDeleting=true;
+    render();
+    try{
+      await drive().ensureAccessToken();
+      if(report?.provider==='google-drive'&&report.id){
+        await drive().deleteFile(report.id);
+        delete reportStore()[contextKey];
+        save();
+      }
+      const results=new Map();
+      let cursor=0;
+      const workers=Array.from({length:Math.min(4,entries.length)},async()=>{
+        while(cursor<entries.length){
+          const entry=entries[cursor++];
+          if(!entry.file?.fileId){
+            results.set(entry,true);
+            continue;
+          }
+          try{
+            await drive().deleteFile(entry.file.fileId);
+            results.set(entry,true);
+          }catch(error){
+            console.warn('Bulk proof delete failed',entry.file.fileId,error);
+            results.set(entry,false);
+          }
+        }
+      });
+      await Promise.all(workers);
+      const store=ensureProofStore();
+      Object.entries(store).forEach(([task,proof])=>{
+        const taskEntries=entries.filter(entry=>entry.task===task);
+        const failedIds=new Set(taskEntries
+          .filter(entry=>results.get(entry)===false)
+          .map(entry=>String(entry.file?.fileId||entry.index)));
+        const remaining=(proof?.files||[]).filter((file,index)=>
+          failedIds.has(String(file?.fileId||index))
+        );
+        if(remaining.length) store[task]={files:remaining,updatedAt:Date.now()};
+        else delete store[task];
+      });
+      save();
+      const deleted=[...results.values()].filter(Boolean).length;
+      const failed=entries.length-deleted;
+      showToast(
+        failed?'Удалено не всё':'Все скриншоты удалены',
+        failed?`Удалено: ${deleted}. Не удалось удалить: ${failed}.`:`Удалено файлов с Google Диска: ${deleted}`
+      );
+    }catch(error){
+      const removeLocal=confirm(
+        'Google Диск не подтвердил удаление. Убрать все записи только из панели?\n\n'+
+        'Файлы и публичный отчёт, если они ещё есть на Диске, могут продолжить работать.'
+      );
+      if(removeLocal){
+        const store=ensureProofStore();
+        Object.keys(store).forEach(task=>delete store[task]);
+        if(report) delete reportStore()[contextKey];
+        save();
+        showToast('Записи очищены','Удаление файлов на Google Диске не подтверждено');
+      }else{
+        showToast('Удаление не выполнено',String(error.message||error).slice(0,140));
+      }
+    }finally{
+      bulkDeleting=false;
+      render();
     }
   }
 
