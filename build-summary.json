@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v94_AVATAR_OVERLAY_SEARCH_CLEANUP",
-  "testVersion": 94,
-  "label": "Avatar editor and search cleanup",
+  "output": "RP_CABINET_v95_AVATAR_CROP_FAST_PROOFS",
+  "testVersion": 95,
+  "label": "Avatar crop and fast proof viewer",
   "storage": {
     "provider": "Google Drive",
     "scope": "https://www.googleapis.com/auth/drive.file",
@@ -26,7 +26,11 @@
     "publicPermission": "anyone reader, allowFileDiscovery=false",
     "cleanupDays": 8,
     "permanentDelete": true,
-    "manualDeleteRemovesDriveFileImmediately": true
+    "manualDeleteRemovesDriveFileImmediately": true,
+    "clientOptimization": "WebP quality 0.84, maximum dimension 2560px",
+    "immediateLocalPreview": true,
+    "viewer": "in-panel fullscreen lightbox",
+    "directDownloadOnClick": false
   },
   "reports": {
     "manifestVersion": 3,
@@ -49,6 +53,14 @@
     "cleanupExcluded": true,
     "editorPlacement": "pencil overlay on profile avatar",
     "settingsCardRemoved": true,
+    "cropEditor": {
+      "zoomRange": "1x-3x",
+      "dragPosition": true,
+      "output": "512x512 WebP",
+      "frameClipping": true
+    },
+    "stableDomImage": true,
+    "immediateLocalPreview": true,
     "fallbacks": [
       "Google photoURL",
       "profile initials"
@@ -76,7 +88,7 @@
     "manualPinsOverrideAutomatic": true
   },
   "tests": [
-    "_tools/test-v94-avatar-overlay.mjs",
+    "_tools/test-v95-avatar-crop-fast-proofs.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

@@ -42,22 +42,22 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v94 · Avatar editor and search cleanup')) failures.push('index badge is not v94');
-if(!version.includes('const TEST_VERSION="94"')) failures.push('TEST_VERSION is not 93');
-if(!version.includes('Avatar editor and search cleanup')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v94 · Avatar editor and search cleanup')) failures.push('CSS badge mismatch');
-if(!index.includes('modular-v94-avatar-overlay-search-cleanup')) failures.push('Architecture meta marker mismatch');
+if(!index.includes('TEST v95 · Avatar crop and fast proof viewer')) failures.push('index badge is not v95');
+if(!version.includes('const TEST_VERSION="95"')) failures.push('TEST_VERSION is not 95');
+if(!version.includes('Avatar crop and fast proof viewer')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v95 · Avatar crop and fast proof viewer')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v95-avatar-crop-fast-proofs')) failures.push('Architecture meta marker mismatch');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=94')) failures.push('realtime-state.js is not connected with v94 cache-busting');
+if(!index.includes('realtime-state.js?v=95')) failures.push('realtime-state.js is not connected with v95 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
-if(!index.includes('data/usaf/law-guide.js?v=94')) failures.push('USAF law guide is not connected');
-if(!mainCss.includes('features/usaf-law.css?v=94')) failures.push('USAF law guide styles are not connected');
-if(!index.includes('features/smart-context-search.js?v=94')) failures.push('Smart search script is not connected');
-if(!mainCss.includes('features/smart-context-search.css?v=94')) failures.push('Smart search styles are not connected');
-if(!mainCss.includes('responsive/mobile.css?v=94')) failures.push('Mobile styles are not connected');
-if(mainCss.indexOf('features/smart-context-search.css?v=94')>mainCss.indexOf('responsive/mobile.css?v=94')) failures.push('Mobile styles must load after common smart-search styles');
+if(!index.includes('data/usaf/law-guide.js?v=95')) failures.push('USAF law guide is not connected');
+if(!mainCss.includes('features/usaf-law.css?v=95')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('features/smart-context-search.js?v=95')) failures.push('Smart search script is not connected');
+if(!mainCss.includes('features/smart-context-search.css?v=95')) failures.push('Smart search styles are not connected');
+if(!mainCss.includes('responsive/mobile.css?v=95')) failures.push('Mobile styles are not connected');
+if(mainCss.indexOf('features/smart-context-search.css?v=95')>mainCss.indexOf('responsive/mobile.css?v=95')) failures.push('Mobile styles must load after common smart-search styles');
 const smartSearchCss=fs.readFileSync(path.join(root,'css/features/smart-context-search.css'),'utf8');
 const mobileCss=fs.readFileSync(path.join(root,'css/responsive/mobile.css'),'utf8');
 if(/@media\s*\(\s*max-width/.test(smartSearchCss)) failures.push('Mobile search CSS remains in the common feature stylesheet');
@@ -69,18 +69,29 @@ if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sy
 if(fs.existsSync(path.join(root,'proof-service'))) failures.push('Old proof-service directory still exists');
 if(fs.existsSync(path.join(root,'js/config/proof-service.js'))) failures.push('Old proof-service config still exists');
 if(fs.existsSync(path.join(root,'js/vendor/vercel-blob-client.js'))) failures.push('Old Vercel Blob client still exists');
-if(!index.includes('js/config/google-drive.js?v=94')) failures.push('Google Drive config is not connected');
-if(!index.includes('js/services/google-drive-storage.js?v=94')) failures.push('Google Drive storage service is not connected');
-if(!index.includes('js/features/google-drive-avatar.js?v=94')) failures.push('Google Drive avatar feature is not connected');
-if(!mainCss.includes('features/google-drive-avatar.css?v=94')) failures.push('Google Drive avatar styles are not connected');
-if(index.indexOf('js/config/google-drive.js?v=94')>index.indexOf('js/services/google-drive-storage.js?v=94')) failures.push('Drive config must load before Drive service');
-if(index.indexOf('js/services/google-drive-storage.js?v=94')>index.indexOf('js/app.js?v=94')) failures.push('Drive service must load before app.js');
+if(!index.includes('js/config/google-drive.js?v=95')) failures.push('Google Drive config is not connected');
+if(!index.includes('js/services/google-drive-storage.js?v=95')) failures.push('Google Drive storage service is not connected');
+if(!index.includes('js/features/google-drive-avatar.js?v=95')) failures.push('Google Drive avatar feature is not connected');
+if(!mainCss.includes('features/google-drive-avatar.css?v=95')) failures.push('Google Drive avatar styles are not connected');
+if(index.indexOf('js/config/google-drive.js?v=95')>index.indexOf('js/services/google-drive-storage.js?v=95')) failures.push('Drive config must load before Drive service');
+if(index.indexOf('js/services/google-drive-storage.js?v=95')>index.indexOf('js/app.js?v=95')) failures.push('Drive service must load before app.js');
 const avatarFeature=fs.readFileSync(path.join(root,'js/features/google-drive-avatar.js'),'utf8');
 const avatarCss=fs.readFileSync(path.join(root,'css/features/google-drive-avatar.css'),'utf8');
+const proofFeature=fs.readFileSync(path.join(root,'js/features/progress-proofs.js'),'utf8');
+const proofCss=fs.readFileSync(path.join(root,'css/features/progress-proofs.css'),'utf8');
+const driveService=fs.readFileSync(path.join(root,'js/services/google-drive-storage.js'),'utf8');
+const appSource=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
 if(!avatarFeature.includes('id="editDriveAvatar"')) failures.push('Avatar pencil editor is missing');
 if(/driveAvatarCard|ensureCard|deleteDriveAvatar|connectAvatarDrive/.test(avatarFeature)) failures.push('Old settings avatar card is still active');
 if(!avatarCss.includes('.avatar-wrap:hover .profile-avatar-edit')) failures.push('Desktop avatar hover editor is missing');
 if(!avatarCss.includes('@media(hover:none),(max-width:900px)')) failures.push('Always-visible mobile avatar editor is missing');
+if(!avatarFeature.includes('id="avatarZoomRange"')||!avatarFeature.includes("addEventListener('pointerdown'")) failures.push('Avatar crop zoom or drag is missing');
+if(!avatarCss.includes('.avatar-crop-frame')||!avatarCss.includes('overflow:hidden')) failures.push('Avatar crop frame clipping is missing');
+if(!appSource.includes('existing?.dataset.avatarKey===descriptor.key')) failures.push('Stable avatar DOM guard is missing');
+if(!driveService.includes('const previewObjects=new Map()')||!driveService.includes('function publicThumbnailUrl')) failures.push('Immediate Drive preview cache is missing');
+if(!proofFeature.includes("canvas.toBlob(resolve,'image/webp',.84)")||!proofFeature.includes('previewMaxDimension||2560')) failures.push('Proof image optimization is missing');
+if(!proofFeature.includes('class="proof-viewer"')||!proofCss.includes('.proof-viewer.open{display:flex}')) failures.push('Fullscreen proof viewer is missing');
+if(/<a href="\$\{esc\(url\)\}" target="_blank"/.test(proofFeature)) failures.push('Proof click still opens a direct Drive download');
 const projectText=files
   .filter(file=>/\.(?:js|html)$/.test(file)&&!file.includes(`${path.sep}_tools${path.sep}`))
   .map(file=>fs.readFileSync(file,'utf8'))
@@ -102,4 +113,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v94 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v95 build audit: OK\n${notes.join('\n')}`);

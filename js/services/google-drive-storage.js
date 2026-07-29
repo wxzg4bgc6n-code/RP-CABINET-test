@@ -12,6 +12,8 @@
   let folders=null;
   let authorizing=null;
   let cleanupRunning=null;
+  const previewObjects=new Map();
+  const PREVIEW_CACHE_LIMIT=30;
 
   function authUser(){
     return window.CloudSync?.user||window.firebase?.auth?.().currentUser||null;
@@ -98,6 +100,46 @@
     const id=String(file.fileId||file.id||'').trim();
     if(!id) return '';
     return `${API}/files/${encodeURIComponent(id)}?alt=media&key=${encodeURIComponent(apiKey())}${resourceKeyQuery(file.resourceKey)}`;
+  }
+
+  function publicThumbnailUrl(fileOrId,size=1200){
+    const file=typeof fileOrId==='object'&&fileOrId?fileOrId:{fileId:fileOrId};
+    const id=String(file.fileId||file.id||'').trim();
+    if(!id) return '';
+    const width=Math.max(128,Math.min(2400,Math.round(Number(size)||1200)));
+    const url=new URL('https://drive.google.com/thumbnail');
+    url.searchParams.set('id',id);
+    url.searchParams.set('sz',`w${width}`);
+    if(file.resourceKey) url.searchParams.set('resourcekey',String(file.resourceKey));
+    return url.href;
+  }
+
+  function rememberPreview(fileId,blob){
+    const id=String(fileId||'').trim();
+    if(!id||!(blob instanceof Blob)) return '';
+    forgetPreview(id);
+    const url=URL.createObjectURL(blob);
+    previewObjects.set(id,url);
+    while(previewObjects.size>PREVIEW_CACHE_LIMIT){
+      const oldest=previewObjects.keys().next().value;
+      forgetPreview(oldest);
+    }
+    return url;
+  }
+
+  function forgetPreview(fileId){
+    const id=String(fileId||'').trim();
+    const url=previewObjects.get(id);
+    if(url){
+      URL.revokeObjectURL(url);
+      previewObjects.delete(id);
+    }
+  }
+
+  function previewUrl(fileOrId,size=1200){
+    const file=typeof fileOrId==='object'&&fileOrId?fileOrId:{fileId:fileOrId};
+    const id=String(file.fileId||file.id||'').trim();
+    return previewObjects.get(id)||publicThumbnailUrl(file,size)||String(file.url||'');
   }
 
   function reportManifestUrl(id,resourceKey){
@@ -289,6 +331,7 @@
       },
       onProgress
     });
+    rememberPreview(uploaded.id,file);
     return {
       provider:'google-drive',
       fileId:uploaded.id,
@@ -318,6 +361,7 @@
       },
       onProgress:metadata.onProgress
     });
+    rememberPreview(uploaded.id,blob);
     return {
       provider:'google-drive',
       fileId:uploaded.id,
@@ -361,6 +405,7 @@
     const id=String(fileId||'').trim();
     if(!id) return;
     await request(`${API}/files/${encodeURIComponent(id)}`,{method:'DELETE'});
+    forgetPreview(id);
   }
 
   async function listFolderFiles(folderId){
@@ -423,6 +468,10 @@
     ensureAccessToken,
     ensureFolders,
     publicMediaUrl,
+    publicThumbnailUrl,
+    previewUrl,
+    rememberPreview,
+    forgetPreview,
     reportManifestUrl,
     uploadProof,
     uploadAvatar,

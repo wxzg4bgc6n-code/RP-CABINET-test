@@ -6,6 +6,7 @@
   const uploadProgress=new Map();
   let reportGenerating=false;
   let driveConnecting=false;
+  let viewerInstalled=false;
   const COLLAPSED_GALLERIES_KEY='kiri:rp-cabinet:v82:collapsed-proof-galleries';
   const collapsedGalleries=new Set((()=>{
     try{
@@ -94,14 +95,29 @@
     return window.CloudSync?.user||window.firebase?.auth?.().currentUser||null;
   }
 
-  function imageSize(file){
+  function loadProofImage(file){
+    if(typeof createImageBitmap==='function'){
+      return createImageBitmap(file).then(image=>({
+        image,
+        width:image.width||0,
+        height:image.height||0,
+        close:()=>image.close?.()
+      })).catch(()=>loadProofImageElement(file));
+    }
+    return loadProofImageElement(file);
+  }
+
+  function loadProofImageElement(file){
     return new Promise((resolve,reject)=>{
       const url=URL.createObjectURL(file);
       const image=new Image();
       image.onload=()=>{
-        const result={width:image.naturalWidth||0,height:image.naturalHeight||0};
-        URL.revokeObjectURL(url);
-        resolve(result);
+        resolve({
+          image,
+          width:image.naturalWidth||image.width||0,
+          height:image.naturalHeight||image.height||0,
+          close:()=>URL.revokeObjectURL(url)
+        });
       };
       image.onerror=()=>{
         URL.revokeObjectURL(url);
@@ -109,6 +125,39 @@
       };
       image.src=url;
     });
+  }
+
+  async function prepareProofImage(file){
+    if(!/^image\/(png|jpeg|webp)$/i.test(file?.type||'')) throw new Error('Разрешены PNG, JPG и WEBP.');
+    if(file.size>Number(config.maxFileBytes||15728640)) throw new Error(`Файл ${file.name} больше 15 МБ.`);
+    const loaded=await loadProofImage(file);
+    try{
+      const sourceWidth=Math.max(1,loaded.width);
+      const sourceHeight=Math.max(1,loaded.height);
+      const maxDimension=Math.max(1280,Number(config.previewMaxDimension||2560));
+      const ratio=Math.min(1,maxDimension/Math.max(sourceWidth,sourceHeight));
+      const width=Math.max(1,Math.round(sourceWidth*ratio));
+      const height=Math.max(1,Math.round(sourceHeight*ratio));
+      const shouldOptimize=ratio<1||file.size>900*1024||file.type!=='image/webp';
+      if(!shouldOptimize) return {blob:file,width,height,optimized:false};
+      const canvas=document.createElement('canvas');
+      canvas.width=width;
+      canvas.height=height;
+      const context=canvas.getContext('2d',{alpha:false});
+      context.imageSmoothingEnabled=true;
+      context.imageSmoothingQuality='high';
+      context.drawImage(loaded.image,0,0,width,height);
+      const optimized=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.84));
+      const useOptimized=!!optimized&&(ratio<1||optimized.size<file.size*.96);
+      return {
+        blob:useOptimized?optimized:file,
+        width:useOptimized?width:sourceWidth,
+        height:useOptimized?height:sourceHeight,
+        optimized:useOptimized
+      };
+    }finally{
+      loaded.close?.();
+    }
   }
 
   function safeFilename(name){
@@ -130,7 +179,10 @@
     return url.href;
   }
 
-  function fileUrl(file){
+  function fileUrl(file,size=1200){
+    if(file?.fileId&&drive()?.previewUrl){
+      try{return drive().previewUrl(file,size);}catch(error){}
+    }
     if(file?.fileId&&drive()?.publicMediaUrl){
       try{return drive().publicMediaUrl(file);}catch(error){}
     }
@@ -140,17 +192,70 @@
   function fileMarkup(task,file,index){
     const dimensions=file.width&&file.height?`${file.width}×${file.height}`:'оригинальный размер';
     const activeReport=reportStore()[currentContextKey()];
-    const url=fileUrl(file);
+    const url=fileUrl(file,720);
     return `<article class="proof-file">
-      <a href="${esc(url)}" target="_blank" rel="noopener">
+      <button class="proof-preview" type="button" data-proof-view="${esc(task)}"
+        data-file-index="${index}" aria-label="Открыть скриншот на весь экран">
         <img src="${esc(url)}" alt="${esc(file.name||'Скриншот')}" loading="lazy">
-      </a>
+      </button>
       <div>
         <b>${esc(file.name||'Скриншот')}</b>
         <span>${esc(dimensions)} · Google Диск</span>
       </div>
       ${activeReport?'':`<button class="proof-icon-btn" type="button" data-proof-delete="${esc(task)}" data-file-index="${index}" aria-label="Удалить скриншот">×</button>`}
     </article>`;
+  }
+
+  function ensureViewer(){
+    if(viewerInstalled&&document.getElementById('proofViewer')) return;
+    viewerInstalled=true;
+    document.body.insertAdjacentHTML('beforeend',`<div class="proof-viewer" id="proofViewer" role="dialog"
+      aria-modal="true" aria-label="Полноэкранный просмотр скриншота">
+      <button class="proof-viewer-close" id="proofViewerClose" type="button" aria-label="Закрыть">×</button>
+      <div class="proof-viewer-stage">
+        <img id="proofViewerImage" alt="Скриншот">
+        <span id="proofViewerName"></span>
+      </div>
+    </div>`);
+    const viewer=document.getElementById('proofViewer');
+    document.getElementById('proofViewerClose')?.addEventListener('click',closeViewer);
+    viewer?.addEventListener('click',event=>{if(event.target===viewer) closeViewer();});
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&viewer?.classList.contains('open')) closeViewer();
+    });
+  }
+
+  function openViewer(task,index){
+    const file=proofFor(task).files?.[index];
+    if(!file) return;
+    ensureViewer();
+    const viewer=document.getElementById('proofViewer');
+    const image=document.getElementById('proofViewerImage');
+    const name=document.getElementById('proofViewerName');
+    const source=fileUrl(file,2400);
+    if(image){
+      image.alt=file.name||'Скриншот';
+      image.onerror=()=>{
+        const fallback=file.fileId?drive()?.publicMediaUrl?.(file):file.url;
+        if(fallback&&image.src!==fallback) image.src=fallback;
+      };
+      image.src=source;
+    }
+    if(name) name.textContent=file.name||'Скриншот';
+    viewer?.classList.add('open');
+    document.body.classList.add('proof-viewer-open');
+  }
+
+  function closeViewer(){
+    document.getElementById('proofViewer')?.classList.remove('open');
+    document.body.classList.remove('proof-viewer-open');
+  }
+
+  function updateUploadProgressLabel(task,percentage,text){
+    const input=[...document.querySelectorAll('[data-proof-upload]')]
+      .find(node=>node.dataset.proofUpload===task);
+    const label=input?.closest('.proof-upload')?.querySelector('span');
+    if(label) label.textContent=text||`Загрузка ${Math.round(percentage)}%`;
   }
 
   function taskMarkup(task){
@@ -249,6 +354,9 @@
     root.querySelectorAll('[data-proof-delete]').forEach(button=>{
       button.addEventListener('click',()=>deleteFile(button.dataset.proofDelete,Number(button.dataset.fileIndex)));
     });
+    root.querySelectorAll('[data-proof-view]').forEach(button=>{
+      button.addEventListener('click',()=>openViewer(button.dataset.proofView,Number(button.dataset.fileIndex)));
+    });
     root.querySelectorAll('[data-proof-toggle]').forEach(button=>{
       button.addEventListener('click',()=>toggleGallery(button.dataset.proofToggle));
     });
@@ -281,31 +389,37 @@
     const fileLimit=configuredFileLimit();
     const selected=fileLimit===null?files:files.slice(0,Math.max(0,fileLimit-existing.length));
     if(!selected.length) return showToast('Лимит достигнут',`Для одного пункта можно загрузить до ${fileLimit} файлов`);
+    uploadProgress.set(task,0);
+    render();
     try{
       await drive().ensureAccessToken();
       const additions=[];
+      const savedFiles=[...existing];
       for(let index=0;index<selected.length;index++){
         const file=selected[index];
-        if(!/^image\/(png|jpeg|webp)$/i.test(file.type)) throw new Error('Разрешены PNG, JPG и WEBP.');
-        if(file.size>Number(config.maxFileBytes||15728640)) throw new Error(`Файл ${file.name} больше 15 МБ.`);
-        const dimensions=await imageSize(file);
-        const addition=await drive().uploadProof(file,{
-          name:`${Date.now()}-${safeFilename(file.name)}`,
+        updateUploadProgressLabel(task,0,`Подготовка ${index+1} из ${selected.length}`);
+        const prepared=await prepareProofImage(file);
+        const uploadName=prepared.optimized
+          ? `${Date.now()}-${safeFilename(file.name).replace(/\.[^.]+$/, '')}.webp`
+          : `${Date.now()}-${safeFilename(file.name)}`;
+        const addition=await drive().uploadProof(prepared.blob,{
+          name:uploadName,
           originalName:file.name,
           contextKey:currentContextKey(),
           task,
-          width:dimensions.width,
-          height:dimensions.height
+          width:prepared.width,
+          height:prepared.height
         },percentage=>{
           const overall=((index+percentage/100)/selected.length)*100;
           uploadProgress.set(task,overall);
-          render();
+          updateUploadProgressLabel(task,overall);
         });
         additions.push(addition);
+        savedFiles.push(addition);
+        ensureProofStore()[task]={files:[...savedFiles],updatedAt:Date.now()};
+        save();
+        render();
       }
-      const store=ensureProofStore();
-      store[task]={files:[...existing,...additions],updatedAt:Date.now()};
-      save();
       showToast(additions.length===1?'Скриншот загружен':'Скриншоты загружены',additions.length===1?'Сохранён на твоём Google Диске':`Сохранено файлов: ${additions.length}`);
     }catch(error){
       console.warn('Google Drive proof upload failed',error);

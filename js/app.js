@@ -854,6 +854,21 @@ function getGoogleProfilePhoto(){
   const custom=S.account&&S.account.driveAvatar&&S.account.driveAvatar.url;
   return custom||getFallbackGooglePhoto();
 }
+function getProfilePhotoDescriptor(){
+  const custom=S.account&&S.account.driveAvatar&&typeof S.account.driveAvatar==='object'
+    ? S.account.driveAvatar
+    : null;
+  if(custom?.fileId||custom?.url){
+    const preview=window.GoogleDriveStorage?.previewUrl?.(custom,512);
+    return {
+      source:preview||custom.url||'',
+      key:`drive:${custom.fileId||custom.url}:${Number(custom.updatedAt||0)}`,
+      custom
+    };
+  }
+  const fallback=getFallbackGooglePhoto();
+  return {source:fallback,key:fallback?`google:${fallback}`:'',custom:null};
+}
 function rememberGoogleProfileInfo(user){
   if(!user) return;
   if(!S.cloud || typeof S.cloud!=='object') S.cloud={enabled:false,provider:'local',uid:'',lastSync:0};
@@ -883,33 +898,61 @@ function renderProfileIcon(){
   if(!box) return;
   const icon=document.getElementById('rankIcon');
   const tag=document.getElementById('rankTier');
-  box.querySelectorAll('.google-profile-avatar').forEach(el=>el.remove());
-  const photo=getGoogleProfilePhoto();
+  const descriptor=getProfilePhotoDescriptor();
+  const photo=descriptor.source;
+  const existing=box.querySelector('.google-profile-avatar');
   if(photo){
     if(icon) icon.textContent='';
     if(tag) tag.textContent='';
+    if(existing?.dataset.avatarKey===descriptor.key){
+      box.classList.add('has-google-avatar','google-avatar-active');
+      box.title=descriptor.custom?'Пользовательский аватар':'Аватар Google';
+      return;
+    }
+    box.querySelectorAll('.google-profile-avatar').forEach(el=>el.remove());
     const img=document.createElement('img');
     img.className='google-profile-avatar';
-    img.alt=S.account?.driveAvatar?.url?'Аватар профиля':'Аватар Google';
+    img.alt=descriptor.custom?'Аватар профиля':'Аватар Google';
     img.referrerPolicy='no-referrer';
-    img.addEventListener('error',()=>{
-      const fallback=getFallbackGooglePhoto();
-      if(fallback&&img.src!==fallback){
-        img.src=fallback;
-        return;
-      }
+    img.dataset.avatarKey=descriptor.key;
+    let customRetry=0;
+    const showInitials=()=>{
       img.remove();
       box.classList.remove('has-google-avatar','google-avatar-active');
       const name=(S&&S.name?S.name:'RP').trim();
       const letters=(name.split(/\s+/).map(x=>x[0]).join('').slice(0,2)||'RP').toUpperCase();
       if(icon) icon.textContent=letters;
       if(tag) tag.textContent='';
-    },{once:true});
+    };
+    img.addEventListener('error',()=>{
+      const fallback=getFallbackGooglePhoto();
+      if(descriptor.custom&&customRetry===0){
+        customRetry=1;
+        if(fallback&&img.src!==fallback) img.src=fallback;
+        setTimeout(()=>{
+          const active=S.account?.driveAvatar;
+          if(!img.isConnected||!active||String(active.fileId||active.url)!==String(descriptor.custom.fileId||descriptor.custom.url)) return;
+          const retry=window.GoogleDriveStorage?.publicMediaUrl?.(descriptor.custom)||descriptor.custom.url||'';
+          if(retry) img.src=`${retry}${retry.includes('?')?'&':'?'}rpRetry=${Date.now()}`;
+        },2200);
+        return;
+      }
+      if(!descriptor.custom&&fallback&&img.src!==fallback){
+        img.src=fallback;
+        return;
+      }
+      if(descriptor.custom&&fallback&&img.src!==fallback){
+        img.src=fallback;
+        return;
+      }
+      showInitials();
+    });
     img.src=photo;
     box.prepend(img);
     box.classList.add('has-google-avatar','google-avatar-active');
-    box.title=S.account?.driveAvatar?.url?'Пользовательский аватар':'Аватар Google';
+    box.title=descriptor.custom?'Пользовательский аватар':'Аватар Google';
   }else{
+    existing?.remove();
     box.classList.remove('has-google-avatar','google-avatar-active');
     const name=(S&&S.name?S.name:'RP').trim();
     const letters=(name.split(/\s+/).map(x=>x[0]).join('').slice(0,2)||'RP').toUpperCase();
