@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v98_USAF_LAW_EXAM",
-  "testVersion": 98,
-  "label": "USAF UAK/PK guide and exam",
+  "output": "RP_CABINET_v99_USAF_LAW_EXAM_VISUAL",
+  "testVersion": 99,
+  "label": "USAF UAK/PK unified test visual",
   "storage": {
     "provider": "Google Drive",
     "scope": "https://www.googleapis.com/auth/drive.file",
@@ -105,10 +105,28 @@
     "examSummary": true
   },
   "usafLawExam": {
-    "questionCount": 20,
+    "questionCount": 17,
     "questionOrder": "same as supplied screenshots",
     "removeDuplicates": false,
-    "answerDisplay": "correct options highlighted with active theme",
+    "matchingQuestion": {
+      "questionNumber": 7,
+      "sourceScreens": [
+        7,
+        8,
+        9,
+        10
+      ],
+      "rowCount": 4
+    },
+    "layout": "same single-column qa-list and qa-card visual as other USAF tests",
+    "introBlockRemoved": true,
+    "answerDisplay": "same answer-options visual as other USAF tests",
+    "correctedAnswers": [
+      "Miranda: twice or until acknowledgement",
+      "phone and lawyer: within one minute after arrival",
+      "UAK 18.2: 4 months in the supplied form revision",
+      "UAK 18.3: 6 months in the supplied form revision"
+    ],
     "dataSource": "data/usaf/law-data.js",
     "templatePatch": "data/usaf/law-exam.js",
     "automaticPromotionMaterials": [
@@ -117,7 +135,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v98-usaf-law-exam.mjs",
+    "_tools/test-v99-usaf-law-exam-visual.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

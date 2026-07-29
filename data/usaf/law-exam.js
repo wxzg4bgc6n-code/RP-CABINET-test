@@ -1,4 +1,4 @@
-/* v98: встраивает экзамен УАК/ПК в существующий шаблон тестов USAF. */
+/* v99: встраивает экзамен УАК/ПК в общем визуальном формате тестов USAF. */
 (function attachUsafLawExam(){
   const data = window.RP_USAF_LAW_EXAM;
   const registry = window.RPCabinetTemplates || [];
@@ -13,28 +13,32 @@
     .replaceAll("'", "&#039;");
 
   const questionCards = data.questions.map((item, index) => {
+    if (item.type === "matching") {
+      const rows = (item.rows || []).map((row) => `<li>
+        <span class="usaf-law-match-prompt">${escapeHtml(row.prompt)}</span>
+        <strong>${escapeHtml(row.answer)}</strong>
+      </li>`).join("");
+      return `<div class="qa-card">
+        <div class="question-text">${index + 1}. ${escapeHtml(item.question)}</div>
+        <ul class="usaf-law-match-list">${rows}</ul>
+      </div>`;
+    }
     const correct = new Set(item.correct || []);
     const label = item.answerLabel
-      ? `<span class="usaf-law-exam-count-v98">${escapeHtml(item.answerLabel)}</span>`
+      ? ` <span class="muted-title">${escapeHtml(item.answerLabel)}</span>`
       : "";
     const options = item.options.map((option, optionIndex) =>
       `<li${correct.has(optionIndex) ? ' class="correct"' : ""}>${escapeHtml(option)}</li>`
     ).join("");
-    return `<div class="qa-card usaf-law-exam-question-v98">
-      <div class="usaf-law-exam-question-head-v98">
-        <div class="question-text">${index + 1}. ${escapeHtml(item.question)}</div>${label}
-      </div>
+    return `<div class="qa-card">
+      <div class="question-text">${index + 1}. ${escapeHtml(item.question)}${label}</div>
       <ul class="answer-options">${options}</ul>
     </div>`;
   }).join("");
 
-  const exam = `<details class="section-toggle usaf-law-exam-v98" id="usaf-test-mp-uak-pk" data-test-owner="USAF">
+  const exam = `<details class="section-toggle" id="usaf-test-mp-uak-pk" data-test-owner="USAF">
     <summary>${escapeHtml(data.title)}</summary>
-    <div class="usaf-law-exam-intro-v98">
-      <strong>${escapeHtml(data.subtitle)}</strong>
-      <span>${escapeHtml(data.sourceNote)}</span>
-    </div>
-    <div class="qa-list usaf-law-exam-list-v98">${questionCards}</div>
+    <div class="qa-list">${questionCards}</div>
   </details>`;
 
   const disabledPattern = /<div id="usaf-test-mp-uak-pk" class="usaf-test-disabled" aria-disabled="true">[\s\S]*?<\/div>/;
