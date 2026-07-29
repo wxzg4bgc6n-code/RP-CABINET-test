@@ -1,4 +1,4 @@
-/* v99: встраивает экзамен УАК/ПК в общем визуальном формате тестов USAF. */
+/* v100: встраивает экзамен УАК/ПК в группу экзаменов других отделов. */
 (function attachUsafLawExam(){
   const data = window.RP_USAF_LAW_EXAM;
   const registry = window.RPCabinetTemplates || [];
@@ -14,13 +14,12 @@
 
   const questionCards = data.questions.map((item, index) => {
     if (item.type === "matching") {
-      const rows = (item.rows || []).map((row) => `<li>
-        <span class="usaf-law-match-prompt">${escapeHtml(row.prompt)}</span>
-        <strong>${escapeHtml(row.answer)}</strong>
-      </li>`).join("");
+      const rows = (item.rows || []).map((row) =>
+        `<li class="correct">${escapeHtml(row.prompt)} — ${escapeHtml(row.answer)}</li>`
+      ).join("");
       return `<div class="qa-card">
         <div class="question-text">${index + 1}. ${escapeHtml(item.question)}</div>
-        <ul class="usaf-law-match-list">${rows}</ul>
+        <ul class="answer-options">${rows}</ul>
       </div>`;
     }
     const correct = new Set(item.correct || []);
@@ -41,8 +40,12 @@
     <div class="qa-list">${questionCards}</div>
   </details>`;
 
-  const disabledPattern = /<div id="usaf-test-mp-uak-pk" class="usaf-test-disabled" aria-disabled="true">[\s\S]*?<\/div>/;
-  template.markup = template.markup
-    .replace(disabledPattern, "")
-    .replace('<div class="usaf-locked-tests">', `${exam}<div class="usaf-locked-tests">`);
+  const lockedTestsPattern = /<div class="usaf-locked-tests">[\s\S]*?<\/div>\s*<\/section>/;
+  template.markup = template.markup.replace(
+    lockedTestsPattern,
+    `<div class="usaf-locked-tests">
+      <h3>Экзамены других отделов</h3>
+      ${exam}
+    </div></section>`
+  );
 })();

@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v99_USAF_LAW_EXAM_VISUAL",
-  "testVersion": 99,
-  "label": "USAF UAK/PK unified test visual",
+  "output": "RP_CABINET_v101_DRIVE_AUTH_CONTINUITY",
+  "testVersion": 101,
+  "label": "Drive authorization continuity",
   "storage": {
     "provider": "Google Drive",
     "scope": "https://www.googleapis.com/auth/drive.file",
@@ -13,7 +13,15 @@
     "oldVercelBlobClientRemoved": true,
     "oldProofServiceRemoved": true,
     "binaryDataInFirebase": false,
-    "tokenStorage": "memory + sessionStorage"
+    "tokenStorage": "memory + expiring localStorage cache bound to Firebase UID",
+    "tokenContinuity": {
+      "sameOriginTabs": true,
+      "browserRestartUntilExpiry": true,
+      "uidIsolation": true,
+      "logoutRemoval": true,
+      "accountSelectionSkippedOnRenewal": true,
+      "grantMarkerKeepsDriveActionsEnabled": true
+    }
   },
   "screenshots": {
     "countLimit": null,
@@ -118,7 +126,13 @@
       ],
       "rowCount": 4
     },
-    "layout": "same single-column qa-list and qa-card visual as other USAF tests",
+    "location": "inside the other-department exams group",
+    "layout": "same single-column qa-list, qa-card and answer-options visual as other USAF tests",
+    "matchingQuestionCustomVisual": false,
+    "removedDepartmentPlaceholders": [
+      "intro note",
+      "Supply Division driving exam"
+    ],
     "introBlockRemoved": true,
     "answerDisplay": "same answer-options visual as other USAF tests",
     "correctedAnswers": [
@@ -135,7 +149,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v99-usaf-law-exam-visual.mjs",
+    "_tools/test-v101-drive-auth-continuity.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

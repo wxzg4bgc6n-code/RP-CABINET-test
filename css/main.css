@@ -1,13 +1,13 @@
 /* Единая точка подключения оформления RP Cabinet. */
-@import url("./core.css?v=99");
-@import url("./animations.css?v=99");
-@import url("./features/tests.css?v=99");
-@import url("./features/surfaces.css?v=99");
-@import url("./features/usaf-speech.css?v=99");
-@import url("./features/usaf-law.css?v=99");
-@import url("./features/pinned-materials.css?v=99");
-@import url("./features/sidebar-promo.css?v=99");
-@import url("./features/progress-proofs.css?v=99");
-@import url("./features/google-drive-avatar.css?v=99");
-@import url("./features/smart-context-search.css?v=99");
-@import url("./responsive/mobile.css?v=99");
+@import url("./core.css?v=101");
+@import url("./animations.css?v=101");
+@import url("./features/tests.css?v=101");
+@import url("./features/surfaces.css?v=101");
+@import url("./features/usaf-speech.css?v=101");
+@import url("./features/usaf-law.css?v=101");
+@import url("./features/pinned-materials.css?v=101");
+@import url("./features/sidebar-promo.css?v=101");
+@import url("./features/progress-proofs.css?v=101");
+@import url("./features/google-drive-avatar.css?v=101");
+@import url("./features/smart-context-search.css?v=101");
+@import url("./responsive/mobile.css?v=101");

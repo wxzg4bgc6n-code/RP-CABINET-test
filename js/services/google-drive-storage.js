@@ -5,6 +5,7 @@
   const API='https://www.googleapis.com/drive/v3';
   const UPLOAD='https://www.googleapis.com/upload/drive/v3';
   const TOKEN_KEY='kiri:rp-cabinet:v93:drive-token';
+  const GRANT_KEY='kiri:rp-cabinet:v101:drive-grant';
   const FOLDER_KEY='kiri:rp-cabinet:v93:drive-folders';
   let accessToken='';
   let accessTokenUid='';
@@ -23,13 +24,28 @@
     try{document.dispatchEvent(new CustomEvent('rp:drive-status'));}catch(error){}
   }
 
-  function readSession(){
+  function readTokenCache(){
     try{
-      const saved=JSON.parse(sessionStorage.getItem(TOKEN_KEY)||'null');
+      const saved=JSON.parse(
+        localStorage.getItem(TOKEN_KEY)
+        ||sessionStorage.getItem(TOKEN_KEY)
+        ||'null'
+      );
       if(saved&&typeof saved.token==='string'&&Number(saved.expiresAt)>Date.now()+30000){
         accessToken=saved.token;
         accessTokenUid=String(saved.uid||'');
         accessTokenExpiresAt=Number(saved.expiresAt);
+        localStorage.setItem(TOKEN_KEY,JSON.stringify(saved));
+        if(accessTokenUid&&!localStorage.getItem(GRANT_KEY)){
+          localStorage.setItem(GRANT_KEY,JSON.stringify({
+            uid:accessTokenUid,
+            grantedAt:Number(saved.savedAt||Date.now())
+          }));
+        }
+        sessionStorage.removeItem(TOKEN_KEY);
+      }else{
+        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
       }
       const cached=JSON.parse(sessionStorage.getItem(FOLDER_KEY)||'null');
       if(cached&&typeof cached==='object') folders=cached;
@@ -38,11 +54,12 @@
 
   function writeToken(){
     try{
-      sessionStorage.setItem(TOKEN_KEY,JSON.stringify({
+      localStorage.setItem(TOKEN_KEY,JSON.stringify({
         token:accessToken,
         uid:accessTokenUid,
         expiresAt:accessTokenExpiresAt
       }));
+      sessionStorage.removeItem(TOKEN_KEY);
     }catch(error){}
   }
 
@@ -50,15 +67,27 @@
     accessToken='';
     accessTokenUid='';
     accessTokenExpiresAt=0;
+    try{localStorage.removeItem(TOKEN_KEY);}catch(error){}
     try{sessionStorage.removeItem(TOKEN_KEY);}catch(error){}
     emitStatus();
   }
 
   function setAccessToken(token,uid,expiresInSeconds=3600){
+    const nextUid=String(uid||authUser()?.uid||'');
+    if(accessTokenUid&&nextUid&&accessTokenUid!==nextUid){
+      folders=null;
+      try{sessionStorage.removeItem(FOLDER_KEY);}catch(error){}
+    }
     accessToken=String(token||'');
-    accessTokenUid=String(uid||authUser()?.uid||'');
+    accessTokenUid=nextUid;
     accessTokenExpiresAt=Date.now()+Math.max(60,Number(expiresInSeconds)||3600)*1000-30000;
     writeToken();
+    try{
+      localStorage.setItem(GRANT_KEY,JSON.stringify({
+        uid:accessTokenUid,
+        grantedAt:Date.now()
+      }));
+    }catch(error){}
     emitStatus();
     if(accessToken) queueMicrotask(()=>cleanupExpired().catch(()=>{}));
     return accessToken;
@@ -68,6 +97,17 @@
     const user=authUser();
     if(!user||!accessToken||accessTokenExpiresAt<=Date.now()+5000) return false;
     return !accessTokenUid||accessTokenUid===user.uid;
+  }
+
+  function hasRememberedGrant(){
+    const user=authUser();
+    if(!user) return false;
+    try{
+      const grant=JSON.parse(localStorage.getItem(GRANT_KEY)||'null');
+      return !!grant&&String(grant.uid||'')===String(user.uid||'');
+    }catch(error){
+      return false;
+    }
   }
 
   async function ensureAccessToken(){
@@ -459,10 +499,25 @@
   function disconnect(){
     clearToken();
     folders=null;
+    try{localStorage.removeItem(GRANT_KEY);}catch(error){}
     try{sessionStorage.removeItem(FOLDER_KEY);}catch(error){}
   }
 
-  readSession();
+  window.addEventListener('storage',event=>{
+    if(event.key===GRANT_KEY){
+      emitStatus();
+      return;
+    }
+    if(event.key!==TOKEN_KEY) return;
+    const previousToken=accessToken;
+    accessToken='';
+    accessTokenUid='';
+    accessTokenExpiresAt=0;
+    readTokenCache();
+    if(previousToken!==accessToken) emitStatus();
+  });
+
+  readTokenCache();
 
   window.GoogleDriveStorage=Object.freeze({
     config,
@@ -471,6 +526,7 @@
     clearAccessToken:clearToken,
     disconnect,
     hasAccessToken,
+    hasRememberedGrant,
     ensureAccessToken,
     ensureFolders,
     publicMediaUrl,

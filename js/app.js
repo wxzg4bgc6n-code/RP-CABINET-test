@@ -1311,7 +1311,12 @@ window.CloudSync={
     if(!this.auth||!this.user) throw new Error('Сначала войди через Google.');
     const provider=new firebase.auth.GoogleAuthProvider();
     provider.addScope(window.GoogleDriveStorage?.scope||'https://www.googleapis.com/auth/drive.file');
-    provider.setCustomParameters({include_granted_scopes:'true'});
+    const authParameters={
+      include_granted_scopes:'true',
+      prompt:''
+    };
+    if(this.user.email) authParameters.login_hint=this.user.email;
+    provider.setCustomParameters(authParameters);
     let result;
     try{
       result=await this.user.reauthenticateWithPopup(provider);

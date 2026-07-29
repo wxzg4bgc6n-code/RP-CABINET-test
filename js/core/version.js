@@ -1,5 +1,5 @@
-const TEST_VERSION="99";
-const TEST_VERSION_LABEL="USAF UAK/PK unified test visual";
+const TEST_VERSION="101";
+const TEST_VERSION_LABEL="Drive authorization continuity";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

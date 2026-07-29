@@ -271,7 +271,8 @@
     const files=Array.isArray(proof.files)?proof.files:[];
     const progress=uploadProgress.get(task);
     const fileLimit=configuredFileLimit();
-    const canUpload=!bulkDeleting&&!!authUser()&&!!drive()?.hasAccessToken()&&(fileLimit===null||files.length<fileLimit);
+    const driveAvailable=!!drive()?.hasAccessToken()||!!drive()?.hasRememberedGrant?.();
+    const canUpload=!bulkDeleting&&!!authUser()&&driveAvailable&&(fileLimit===null||files.length<fileLimit);
     const collapsed=files.length>0&&isGalleryCollapsed(task);
     const gallery=galleryId(task);
     const status=required
@@ -318,15 +319,19 @@
     }
     const authenticated=!!authUser();
     const driveReady=!!drive()?.hasAccessToken();
+    const driveRemembered=!!drive()?.hasRememberedGrant?.();
+    const driveAvailable=driveReady||driveRemembered;
     const proofEntries=allProofEntries();
     const requiredCompleted=completed.filter(task=>rules.isRequired(task,S));
     const missing=requiredCompleted.filter(task=>!(proofFor(task).files||[]).length);
     const fullProgress=allTasks.length>0&&allTasks.every(task=>S.tasks?.[task]===true);
-    const canGenerate=authenticated&&driveReady&&fullProgress&&!missing.length&&!report&&!reportGenerating;
+    const canGenerate=authenticated&&driveAvailable&&fullProgress&&!missing.length&&!report&&!reportGenerating;
     const serviceNote=!authenticated
       ? 'Войди через Google: без аккаунта загрузка скриншотов отключена.'
-      : !driveReady
+      : !driveAvailable
         ? 'Разреши панели сохранять созданные ею файлы на твоём Google Диске.'
+        : !driveReady
+          ? 'Google Диск подключён. Короткий доступ обновится при следующей операции с файлами.'
         : 'Файлы сохраняются на твоём Google Диске и удаляются панелью через 8 дней.';
 
     root.innerHTML=`<div class="proof-heading">
@@ -341,9 +346,9 @@
         </button>`:''}
       </div>
     </div>
-    <div class="proof-guidance ${driveReady?'is-ready':'is-wait'}">
+    <div class="proof-guidance ${driveAvailable?'is-ready':'is-wait'}">
       <p class="proof-drive-note">${esc(serviceNote)}</p>
-      ${authenticated&&!driveReady?`<button class="btn proof-drive-connect" id="connectProofDrive" type="button" ${driveConnecting?'disabled':''}>${driveConnecting?'Подключаю…':'Подключить Google Диск'}</button>`:''}
+      ${authenticated&&!driveAvailable?`<button class="btn proof-drive-connect" id="connectProofDrive" type="button" ${driveConnecting?'disabled':''}>${driveConnecting?'Подключаю…':'Подключить Google Диск'}</button>`:''}
       ${completed.length?'':'<p class="proof-empty">Сначала отметь выполненный пункт в прогрессе — он появится здесь.</p>'}
     </div>
     ${completed.length?`<div class="proof-task-list">${completed.map(taskMarkup).join('')}</div>`:''}
