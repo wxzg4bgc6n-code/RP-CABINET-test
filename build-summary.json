@@ -1,7 +1,15 @@
 {
-  "output": "RP_CABINET_v101_DRIVE_AUTH_CONTINUITY",
-  "testVersion": 101,
-  "label": "Drive authorization continuity",
+  "output": "RP_CABINET_v102_RP_HELPER_DOWNLOAD",
+  "testVersion": 102,
+  "label": "RP-Helper download",
+  "programDownload": {
+    "name": "RP-Helper",
+    "releaseTag": "program-v1.0.0",
+    "asset": "RP-Helper.zip",
+    "url": "https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/download/program-v1.0.0/RP-Helper.zip",
+    "placement": "profile sidebar promo carousel",
+    "directDownload": true
+  },
   "storage": {
     "provider": "Google Drive",
     "scope": "https://www.googleapis.com/auth/drive.file",
@@ -149,7 +157,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v101-drive-auth-continuity.mjs",
+    "_tools/test-v102-rp-helper-download.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

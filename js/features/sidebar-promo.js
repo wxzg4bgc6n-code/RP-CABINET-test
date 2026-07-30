@@ -28,12 +28,12 @@
           </a>
         </article>
         <article class="profile-promo-slide profile-promo-slide-bot" data-promo-slide role="group" aria-roledescription="слайд" aria-label="2 из 2" aria-hidden="true">
-          <div class="profile-promo-content is-disabled" aria-disabled="true">
+          <a class="profile-promo-content" href="https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/download/program-v1.0.0/RP-Helper.zip" download="RP-Helper.zip" rel="noopener noreferrer" aria-label="Скачать программу RP-Helper версии 1.0.0">
             <span class="profile-promo-kicker"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"></rect><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8"></path></svg>Инструмент для работы</span>
-            <strong>Рабочая программа для GTA 5 RP</strong>
-            <span class="profile-promo-copy">Для Majestic RP, GTA5RP и других RP-проектов.</span>
-            <span class="profile-promo-status">В разработке</span>
-          </div>
+            <strong>RP-Helper</strong>
+            <span class="profile-promo-copy">Рабочая программа для Majestic RP, GTA5RP и других RP-проектов.</span>
+            <span class="profile-promo-action">Скачать программу <span aria-hidden="true">↓</span></span>
+          </a>
         </article>
       </div>
       <div class="profile-promo-controls">

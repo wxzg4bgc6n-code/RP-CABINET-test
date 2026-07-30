@@ -1,5 +1,5 @@
-const TEST_VERSION="101";
-const TEST_VERSION_LABEL="Drive authorization continuity";
+const TEST_VERSION="102";
+const TEST_VERSION_LABEL="RP-Helper download";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
