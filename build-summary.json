@@ -1,7 +1,23 @@
 {
-  "output": "RP_CABINET_v102_RP_HELPER_DOWNLOAD",
-  "testVersion": 102,
-  "label": "RP-Helper download",
+  "output": "RP_CABINET_v103_BROWSER_ICON",
+  "testVersion": 103,
+  "label": "Browser icon",
+  "browserIcon": {
+    "design": "dark rounded RP mark with violet accent",
+    "faviconIco": "favicon.ico",
+    "svg": "assets/icons/favicon.svg",
+    "png32": "assets/icons/favicon-32.png",
+    "appleTouchIcon": "assets/icons/apple-touch-icon.png",
+    "manifest": "site.webmanifest",
+    "manifestSizes": [
+      "192x192",
+      "512x512"
+    ],
+    "surfaces": [
+      "index.html",
+      "report.html"
+    ]
+  },
   "programDownload": {
     "name": "RP-Helper",
     "releaseTag": "program-v1.0.0",
@@ -157,7 +173,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v102-rp-helper-download.mjs",
+    "_tools/test-v103-browser-icon.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"
@@ -165,6 +181,8 @@
   "githubRoot": [
     "index.html",
     "report.html",
+    "favicon.ico",
+    "site.webmanifest",
     "assets",
     "css",
     "data",

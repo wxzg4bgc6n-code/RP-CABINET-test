@@ -1,0 +1,21 @@
+{
+  "name": "RP Cabinet",
+  "short_name": "RP Cabinet",
+  "description": "RP-профиль, прогресс, материалы и отчёты",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#080c16",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
