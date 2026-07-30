@@ -1,5 +1,5 @@
-const TEST_VERSION="103";
-const TEST_VERSION_LABEL="Browser icon";
+const TEST_VERSION="104";
+const TEST_VERSION_LABEL="RP-Helper latest release";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

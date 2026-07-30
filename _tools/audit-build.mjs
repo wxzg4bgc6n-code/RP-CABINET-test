@@ -44,18 +44,18 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v103 · Browser icon')) failures.push('index badge is not v103');
-if(!version.includes('const TEST_VERSION="103"')) failures.push('TEST_VERSION is not 103');
-if(!version.includes('Browser icon')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v103 · Browser icon')) failures.push('CSS badge mismatch');
-if(!index.includes('modular-v103-browser-icon')) failures.push('Architecture meta marker mismatch');
+if(!index.includes('TEST v104 · RP-Helper latest release')) failures.push('index badge is not v104');
+if(!version.includes('const TEST_VERSION="104"')) failures.push('TEST_VERSION is not 104');
+if(!version.includes('RP-Helper latest release')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v104 · RP-Helper latest release')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v104-rp-helper-latest')) failures.push('Architecture meta marker mismatch');
 for(const htmlName of ['index.html','report.html']){
   const html=fs.readFileSync(path.join(root,htmlName),'utf8');
   if(!html.includes('rel="icon" href="favicon.ico" sizes="any"')) failures.push(`${htmlName} root favicon is missing`);
-  if(!html.includes('assets/icons/favicon.svg?v=103')) failures.push(`${htmlName} SVG favicon is missing`);
-  if(!html.includes('assets/icons/favicon-32.png?v=103')) failures.push(`${htmlName} PNG favicon is missing`);
-  if(!html.includes('assets/icons/apple-touch-icon.png?v=103')) failures.push(`${htmlName} Apple Touch Icon is missing`);
-  if(!html.includes('site.webmanifest?v=103')) failures.push(`${htmlName} web manifest is missing`);
+  if(!html.includes('assets/icons/favicon.svg?v=104')) failures.push(`${htmlName} SVG favicon is missing`);
+  if(!html.includes('assets/icons/favicon-32.png?v=104')) failures.push(`${htmlName} PNG favicon is missing`);
+  if(!html.includes('assets/icons/apple-touch-icon.png?v=104')) failures.push(`${htmlName} Apple Touch Icon is missing`);
+  if(!html.includes('site.webmanifest?v=104')) failures.push(`${htmlName} web manifest is missing`);
 }
 for(const icon of ['favicon.ico','assets/icons/favicon.svg','assets/icons/favicon-32.png','assets/icons/apple-touch-icon.png','assets/icons/icon-192.png','assets/icons/icon-512.png']){
   const iconPath=path.join(root,icon);
@@ -63,20 +63,20 @@ for(const icon of ['favicon.ico','assets/icons/favicon.svg','assets/icons/favico
 }
 if(JSON.stringify((webManifest.icons||[]).map(icon=>icon.sizes))!==JSON.stringify(['192x192','512x512'])) failures.push('Web manifest icon sizes are incorrect');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=103')) failures.push('realtime-state.js is not connected with v103 cache-busting');
+if(!index.includes('realtime-state.js?v=104')) failures.push('realtime-state.js is not connected with v104 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
-if(!index.includes('data/usaf/law-guide.js?v=103')) failures.push('USAF law guide is not connected');
-if(!index.includes('data/usaf/law-data.js?v=103')) failures.push('USAF law exam data is not connected');
-if(!index.includes('data/usaf/law-exam.js?v=103')) failures.push('USAF law exam template patch is not connected');
-if(index.indexOf('data/usaf/law-data.js?v=103')>index.indexOf('data/usaf/law-guide.js?v=103')) failures.push('USAF law data must load before the guide');
-if(index.indexOf('data/usaf/tests.js?v=103')>index.indexOf('data/usaf/law-exam.js?v=103')) failures.push('USAF tests must load before the law exam patch');
-if(!mainCss.includes('features/usaf-law.css?v=103')) failures.push('USAF law guide styles are not connected');
-if(!index.includes('features/smart-context-search.js?v=103')) failures.push('Smart search script is not connected');
-if(!mainCss.includes('features/smart-context-search.css?v=103')) failures.push('Smart search styles are not connected');
-if(!mainCss.includes('responsive/mobile.css?v=103')) failures.push('Mobile styles are not connected');
-if(mainCss.indexOf('features/smart-context-search.css?v=103')>mainCss.indexOf('responsive/mobile.css?v=103')) failures.push('Mobile styles must load after common smart-search styles');
+if(!index.includes('data/usaf/law-guide.js?v=104')) failures.push('USAF law guide is not connected');
+if(!index.includes('data/usaf/law-data.js?v=104')) failures.push('USAF law exam data is not connected');
+if(!index.includes('data/usaf/law-exam.js?v=104')) failures.push('USAF law exam template patch is not connected');
+if(index.indexOf('data/usaf/law-data.js?v=104')>index.indexOf('data/usaf/law-guide.js?v=104')) failures.push('USAF law data must load before the guide');
+if(index.indexOf('data/usaf/tests.js?v=104')>index.indexOf('data/usaf/law-exam.js?v=104')) failures.push('USAF tests must load before the law exam patch');
+if(!mainCss.includes('features/usaf-law.css?v=104')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('features/smart-context-search.js?v=104')) failures.push('Smart search script is not connected');
+if(!mainCss.includes('features/smart-context-search.css?v=104')) failures.push('Smart search styles are not connected');
+if(!mainCss.includes('responsive/mobile.css?v=104')) failures.push('Mobile styles are not connected');
+if(mainCss.indexOf('features/smart-context-search.css?v=104')>mainCss.indexOf('responsive/mobile.css?v=104')) failures.push('Mobile styles must load after common smart-search styles');
 const smartSearchCss=fs.readFileSync(path.join(root,'css/features/smart-context-search.css'),'utf8');
 const mobileCss=fs.readFileSync(path.join(root,'css/responsive/mobile.css'),'utf8');
 if(/@media\s*\(\s*max-width/.test(smartSearchCss)) failures.push('Mobile search CSS remains in the common feature stylesheet');
@@ -88,12 +88,12 @@ if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sy
 if(fs.existsSync(path.join(root,'proof-service'))) failures.push('Old proof-service directory still exists');
 if(fs.existsSync(path.join(root,'js/config/proof-service.js'))) failures.push('Old proof-service config still exists');
 if(fs.existsSync(path.join(root,'js/vendor/vercel-blob-client.js'))) failures.push('Old Vercel Blob client still exists');
-if(!index.includes('js/config/google-drive.js?v=103')) failures.push('Google Drive config is not connected');
-if(!index.includes('js/services/google-drive-storage.js?v=103')) failures.push('Google Drive storage service is not connected');
-if(!index.includes('js/features/google-drive-avatar.js?v=103')) failures.push('Google Drive avatar feature is not connected');
-if(!mainCss.includes('features/google-drive-avatar.css?v=103')) failures.push('Google Drive avatar styles are not connected');
-if(index.indexOf('js/config/google-drive.js?v=103')>index.indexOf('js/services/google-drive-storage.js?v=103')) failures.push('Drive config must load before Drive service');
-if(index.indexOf('js/services/google-drive-storage.js?v=103')>index.indexOf('js/app.js?v=103')) failures.push('Drive service must load before app.js');
+if(!index.includes('js/config/google-drive.js?v=104')) failures.push('Google Drive config is not connected');
+if(!index.includes('js/services/google-drive-storage.js?v=104')) failures.push('Google Drive storage service is not connected');
+if(!index.includes('js/features/google-drive-avatar.js?v=104')) failures.push('Google Drive avatar feature is not connected');
+if(!mainCss.includes('features/google-drive-avatar.css?v=104')) failures.push('Google Drive avatar styles are not connected');
+if(index.indexOf('js/config/google-drive.js?v=104')>index.indexOf('js/services/google-drive-storage.js?v=104')) failures.push('Drive config must load before Drive service');
+if(index.indexOf('js/services/google-drive-storage.js?v=104')>index.indexOf('js/app.js?v=104')) failures.push('Drive service must load before app.js');
 const avatarFeature=fs.readFileSync(path.join(root,'js/features/google-drive-avatar.js'),'utf8');
 const avatarCss=fs.readFileSync(path.join(root,'css/features/google-drive-avatar.css'),'utf8');
 const proofFeature=fs.readFileSync(path.join(root,'js/features/progress-proofs.js'),'utf8');
@@ -101,10 +101,17 @@ const proofCss=fs.readFileSync(path.join(root,'css/features/progress-proofs.css'
 const driveService=fs.readFileSync(path.join(root,'js/services/google-drive-storage.js'),'utf8');
 const appSource=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
 const sidebarPromo=fs.readFileSync(path.join(root,'js/features/sidebar-promo.js'),'utf8');
-const helperDownloadUrl='https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/download/program-v1.0.0/RP-Helper.zip';
+const helperDownloadUrl='https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/latest/download/RP-Helper.zip';
 if(!sidebarPromo.includes(helperDownloadUrl)) failures.push('RP-Helper release asset URL is missing');
+if(!sidebarPromo.includes('https://api.github.com/repos/wxzg4bgc6n-code/RP-CABINET-test/releases/latest')) failures.push('RP-Helper latest release API is missing');
 if(!sidebarPromo.includes('download="RP-Helper.zip"')) failures.push('RP-Helper direct download filename is missing');
-if(!sidebarPromo.includes('<strong>RP-Helper</strong>')) failures.push('RP-Helper promo title is missing');
+if(!sidebarPromo.includes('id="rpHelperVersion">1.0')) failures.push('RP-Helper fallback version is missing');
+if(!sidebarPromo.includes('id="rpHelperActionVersion">1.0')) failures.push('RP-Helper action version is missing');
+if(!sidebarPromo.includes('Помощник для GTA5RP, Majestic RP и других RP-проектов')) failures.push('RP-Helper description is missing');
+if(!sidebarPromo.includes('Bongo Cat кликер')) failures.push('RP-Helper current module is missing');
+if(!sidebarPromo.includes('release.assets.find(item=>item&&item.name==="RP-Helper.zip")')) failures.push('RP-Helper asset lookup is missing');
+if(!sidebarPromo.includes('RP_HELPER_CACHE_MS=5*60*1000')) failures.push('RP-Helper release cache is missing');
+if(sidebarPromo.includes('/releases/download/program-v1.0.0/')) failures.push('RP-Helper remains pinned to the old release');
 if(/В разработке|profile-promo-content is-disabled/.test(sidebarPromo)) failures.push('Old disabled program placeholder is still active');
 if(!driveService.includes('localStorage.getItem(TOKEN_KEY)')||!driveService.includes('localStorage.setItem(TOKEN_KEY')) failures.push('Persistent expiring Drive token cache is missing');
 if(!driveService.includes("window.addEventListener('storage'")) failures.push('Cross-tab Drive token update is missing');
@@ -164,4 +171,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v103 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v104 build audit: OK\n${notes.join('\n')}`);
