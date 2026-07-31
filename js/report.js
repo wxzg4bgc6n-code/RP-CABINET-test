@@ -51,9 +51,13 @@
     }
   }
 
+  function publicApiKey(){
+    return String(window.RPDrivePublicKey?.get?.()||config.apiKey||'').trim();
+  }
+
   function driveMediaUrl(file){
     if(file?.provider!=='google-drive'||!file.fileId) return String(file?.url||'');
-    const key=String(config.apiKey||'').trim();
+    const key=publicApiKey();
     if(!key) return '';
     const resourceKey=file.resourceKey?`&resourceKey=${encodeURIComponent(file.resourceKey)}`:'';
     return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.fileId)}?alt=media&key=${encodeURIComponent(key)}${resourceKey}`;
@@ -221,7 +225,7 @@
     const id=params.get('id')||'';
     const resourceKey=params.get('rk')||'';
     if(!/^[a-zA-Z0-9_-]{10,200}$/.test(id)) return showError('Неверная ссылка','В адресе нет корректного номера отчёта.');
-    if(!String(config.apiKey||'').trim()) return showError('Google Drive не настроен','В сборке отсутствует ключ публичного чтения отчёта.');
+    if(!publicApiKey()) return showError('Ключ отчёта отсутствует','Ссылка создана старой версией без параметра публичного ключа. Сформируй отчёт заново в панели.');
     let lastError=null;
     for(let attempt=1;attempt<=2;attempt++){
       if(sequence!==loadSequence) return;
@@ -230,7 +234,7 @@
         const response=await fetchWithTimeout(manifestUrl(id,resourceKey));
         if(sequence!==loadSequence) return;
         if(response.status===404) return showError('Отчёт не найден','Файл удалён владельцем или ссылка уже недоступна.');
-        if(response.status===403) return showError('Нет доступа к отчёту','Владелец удалил публичный доступ или Google Drive API ещё не включён.');
+        if(response.status===403) return showError('Нет доступа к отчёту','Google отклонил публичный ключ этой ссылки либо владелец удалил доступ к файлу. Сформируй ссылку заново в актуальной версии панели.');
         if(!response.ok) throw new Error(`Google Drive ответил ${response.status}.`);
         const data=await response.json();
         if(Number(data?.expiresAt||0)<=Date.now()) return showError('Срок отчёта закончился','Прошло 8 дней, поэтому ссылка и скриншоты больше не доступны.');

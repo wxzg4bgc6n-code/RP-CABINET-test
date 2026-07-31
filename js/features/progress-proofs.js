@@ -177,13 +177,55 @@
     return cleaned||'screenshot.png';
   }
 
-  function currentShareUrl(id,resourceKey){
+  function currentShareUrl(id,resourceKey,publicKey){
     const url=new URL('report.html',window.location.href);
     url.search='';
     url.hash='';
     url.searchParams.set('id',id);
     if(resourceKey) url.searchParams.set('rk',resourceKey);
+    const key=window.RPDrivePublicKey?.normalize?.(publicKey||window.RPDrivePublicKey?.get?.()||'')||'';
+    if(key) url.searchParams.set(window.RPDrivePublicKey?.queryKey||'pk',key);
     return url.href;
+  }
+
+  function publicManifestUrl(id,resourceKey,publicKey){
+    const key=window.RPDrivePublicKey?.normalize?.(publicKey)||'';
+    if(!key) return '';
+    const resourceKeyQuery=resourceKey?`&resourceKey=${encodeURIComponent(resourceKey)}`:'';
+    return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media&key=${encodeURIComponent(key)}${resourceKeyQuery}`;
+  }
+
+  async function verifyPublicManifest(id,resourceKey,publicKey){
+    const url=publicManifestUrl(id,resourceKey,publicKey);
+    if(!url) return {ok:false,status:0};
+    const waits=[0,500,1400,2600];
+    let status=0;
+    for(const wait of waits){
+      if(wait) await new Promise(resolve=>setTimeout(resolve,wait));
+      try{
+        const response=await fetch(url,{cache:'no-store'});
+        status=response.status;
+        if(response.ok){
+          const data=await response.json().catch(()=>null);
+          if(data?.profile&&Array.isArray(data?.tasks)) return {ok:true,status};
+          return {ok:false,status:422};
+        }
+        if(![403,404,429].includes(status)) break;
+      }catch(error){
+        status=0;
+      }
+    }
+    return {ok:false,status};
+  }
+
+  function ensurePublicReportKey(forcePrompt=false){
+    const helper=window.RPDrivePublicKey;
+    if(!helper) throw new Error('Модуль публичного ключа отчётов не загрузился.');
+    const current=helper.get();
+    if(current&&!forcePrompt) return current;
+    return helper.request(forcePrompt
+      ?'Google отклонил текущий ключ. Вставь заново ключ «RP CABINET Drive Browser» из Google Cloud.'
+      :'Для первой публичной ссылки вставь ключ «RP CABINET Drive Browser» из Google Cloud. Он сохранится только в этом браузере.');
   }
 
   function fileUrl(file,size=1200){
@@ -630,8 +672,20 @@
           };
         })
       };
+      let publicKey=ensurePublicReportKey(false);
       const created=await drive().createReportManifest(payload);
-      const url=currentShareUrl(created.id,created.resourceKey);
+      let check=await verifyPublicManifest(created.id,created.resourceKey,publicKey);
+      if(!check.ok&&check.status===403){
+        publicKey=ensurePublicReportKey(true);
+        check=await verifyPublicManifest(created.id,created.resourceKey,publicKey);
+      }
+      if(!check.ok){
+        await drive().deleteFile(created.id).catch(()=>{});
+        if(check.status===403) throw new Error('Google отклонил публичный API key. Проверь ограничения ключа и домен GitHub Pages.');
+        if(check.status===404) throw new Error('Google ещё не опубликовал файл отчёта. Повтори формирование через несколько секунд.');
+        throw new Error('Публичная ссылка не прошла проверку. Отчёт не сохранён.');
+      }
+      const url=currentShareUrl(created.id,created.resourceKey,publicKey);
       reportStore()[contextKey]={...created,url};
       save();
       await navigator.clipboard?.writeText(url).catch(()=>{});
@@ -646,12 +700,26 @@
   }
 
   async function copyReportLink(report){
-    const url=report?.url||currentShareUrl(report?.id||'',report?.resourceKey||'');
+    if(!report?.id) return;
     try{
-      await navigator.clipboard.writeText(url);
-      showToast('Ссылка скопирована','Отправь её в Discord');
+      let publicKey=ensurePublicReportKey(false);
+      let check=await verifyPublicManifest(report.id,report.resourceKey||'',publicKey);
+      if(!check.ok&&check.status===403){
+        publicKey=ensurePublicReportKey(true);
+        check=await verifyPublicManifest(report.id,report.resourceKey||'',publicKey);
+      }
+      if(!check.ok) throw new Error('Публичная ссылка не прошла проверку. Сформируй отчёт заново.');
+      const url=currentShareUrl(report.id,report.resourceKey||'',publicKey);
+      report.url=url;
+      save();
+      try{
+        await navigator.clipboard.writeText(url);
+        showToast('Ссылка скопирована','Отправь её в Discord');
+      }catch(error){
+        prompt('Скопируй ссылку:',url);
+      }
     }catch(error){
-      prompt('Скопируй ссылку:',url);
+      showToast('Ссылка не скопирована',String(error.message||error).slice(0,140));
     }
   }
 

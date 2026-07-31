@@ -125,8 +125,8 @@
   }
 
   function apiKey(){
-    const value=String(config.apiKey||'').trim();
-    if(!value) throw new Error('В конфигурации не указан Google API key.');
+    const value=String(window.RPDrivePublicKey?.get?.()||config.apiKey||'').trim();
+    if(!value) throw new Error('Не указан публичный Google Drive API key для отчётов.');
     return value;
   }
 

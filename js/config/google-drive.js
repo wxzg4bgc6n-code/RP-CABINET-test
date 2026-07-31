@@ -1,12 +1,13 @@
 /*
- * RP CABINET v94 — Google Drive хранит пользовательские изображения.
+ * RP CABINET v104 — настройки Google Drive.
  *
- * apiKey используется только для чтения файлов, которым владелец отчёта
- * назначил доступ "всем, у кого есть ссылка". OAuth-доступ к личному Диску
- * выдаётся отдельно через Firebase Google Auth и scope drive.file.
+ * Публичный API key больше не зашит в обновления панели. Он вводится один
+ * раз при создании отчёта, хранится в localStorage владельца и включается в
+ * сформированную ссылку. OAuth-доступ к личному Диску по-прежнему выдаётся
+ * отдельно через Firebase Google Auth и scope drive.file.
  */
 window.RP_GOOGLE_DRIVE=Object.freeze({
-  apiKey:'AIzaSyAIOHZIBi2l5aOiivO1q6LlVRXFjicQrhI',
+  apiKey:'',
   scope:'https://www.googleapis.com/auth/drive.file',
   rootFolderName:'RP CABINET',
   screenshotsFolderName:'Скриншоты',

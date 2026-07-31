@@ -1,7 +1,15 @@
 {
-  "output": "RP_CABINET_v104_RP_HELPER_LATEST",
+  "output": "RP_CABINET_v104_PUBLIC_REPORT_KEY",
   "testVersion": 104,
-  "label": "RP-Helper latest release",
+  "label": "Public report key",
+  "publicReportKey": {
+    "bundledInBuild": false,
+    "ownerStorage": "localStorage",
+    "linkParameter": "pk",
+    "verifiedBeforeCopy": true,
+    "legacyLinksNeedRegeneration": true,
+    "preventsUpdateOverwrite": true
+  },
   "browserIcon": {
     "design": "dark rounded RP mark with violet accent",
     "faviconIco": "favicon.ico",
@@ -20,13 +28,9 @@
   },
   "programDownload": {
     "name": "RP-Helper",
-    "fallbackVersion": "1.0",
+    "releaseTag": "program-v1.0.0",
     "asset": "RP-Helper.zip",
-    "releaseApi": "https://api.github.com/repos/wxzg4bgc6n-code/RP-CABINET-test/releases/latest",
-    "url": "https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/latest/download/RP-Helper.zip",
-    "versionSource": "latest release name or tag_name",
-    "cacheMs": 300000,
-    "fallbackUrl": "https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/latest/download/RP-Helper.zip",
+    "url": "https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/download/program-v1.0.0/RP-Helper.zip",
     "placement": "profile sidebar promo carousel",
     "directDownload": true
   },
@@ -177,7 +181,7 @@
     ]
   },
   "tests": [
-    "_tools/test-v104-rp-helper-latest.mjs",
+    "_tools/test-v104-public-report-key.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

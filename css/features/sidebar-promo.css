@@ -192,22 +192,6 @@ a.profile-promo-content:focus-visible{
   line-height:1.18;
   letter-spacing:-.025em;
 }
-.profile-promo-version{
-  display:inline-flex;
-  align-items:center;
-  min-height:19px;
-  margin-left:4px;
-  padding:1px 6px;
-  border:1px solid color-mix(in srgb,var(--accent) 38%,rgba(255,255,255,.10));
-  border-radius:999px;
-  background:color-mix(in srgb,var(--accent) 10%,rgba(0,0,0,.18));
-  color:color-mix(in srgb,var(--accent) 86%,white 10%);
-  font-size:10px;
-  font-weight:950;
-  line-height:1;
-  letter-spacing:.01em;
-  vertical-align:3px;
-}
 .profile-promo-copy{
   display:block;
   margin:0;

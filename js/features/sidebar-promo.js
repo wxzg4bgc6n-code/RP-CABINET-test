@@ -28,11 +28,11 @@
           </a>
         </article>
         <article class="profile-promo-slide profile-promo-slide-bot" data-promo-slide role="group" aria-roledescription="слайд" aria-label="2 из 2" aria-hidden="true">
-          <a class="profile-promo-content" id="rpHelperDownload" href="https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/latest/download/RP-Helper.zip" download="RP-Helper.zip" rel="noopener noreferrer" aria-label="Скачать RP-Helper 1.0">
+          <a class="profile-promo-content" href="https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/download/program-v1.0.0/RP-Helper.zip" download="RP-Helper.zip" rel="noopener noreferrer" aria-label="Скачать программу RP-Helper версии 1.0.0">
             <span class="profile-promo-kicker"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"></rect><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8"></path></svg>Инструмент для работы</span>
-            <strong>RP-Helper <span class="profile-promo-version" id="rpHelperVersion">1.0</span></strong>
-            <span class="profile-promo-copy">Помощник для GTA5RP, Majestic RP и других RP-проектов. Сейчас внутри — Bongo Cat кликер.</span>
-            <span class="profile-promo-action">Скачать RP-Helper <span id="rpHelperActionVersion">1.0</span> <span aria-hidden="true">↓</span></span>
+            <strong>RP-Helper</strong>
+            <span class="profile-promo-copy">Рабочая программа для Majestic RP, GTA5RP и других RP-проектов.</span>
+            <span class="profile-promo-action">Скачать программу <span aria-hidden="true">↓</span></span>
           </a>
         </article>
       </div>
@@ -52,69 +52,12 @@
     const streamBanner=root.querySelector("#profileStreamBanner");
     const streamText=root.querySelector("#profileStreamText");
     const twitchProbe=root.querySelector("#profileTwitchProbe");
-    const rpHelperDownload=root.querySelector("#rpHelperDownload");
-    const rpHelperVersion=root.querySelector("#rpHelperVersion");
-    const rpHelperActionVersion=root.querySelector("#rpHelperActionVersion");
     const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
     const interval=6500;
     let current=0;
     let timer=0;
     let hoverPaused=false;
     let focusPaused=false;
-
-    const RP_HELPER_RELEASE_API="https://api.github.com/repos/wxzg4bgc6n-code/RP-CABINET-test/releases/latest";
-    const RP_HELPER_FALLBACK_URL="https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/latest/download/RP-Helper.zip";
-    const RP_HELPER_CACHE_KEY="kiri:rp-cabinet:rp-helper-release";
-    const RP_HELPER_CACHE_MS=5*60*1000;
-
-    function releaseVersion(release){
-      const title=String(release?.name||"");
-      const tag=String(release?.tag_name||"");
-      return title.match(/RP[\s-]*Helper\s+v?(\d+(?:\.\d+){1,3})/i)?.[1]
-        ||tag.match(/(?:program[-_])?v?(\d+(?:\.\d+){1,3})/i)?.[1]
-        ||"1.0";
-    }
-
-    function applyRpHelperRelease(meta){
-      if(!rpHelperDownload||!meta) return;
-      const version=String(meta.version||"1.0");
-      const url=String(meta.url||RP_HELPER_FALLBACK_URL);
-      rpHelperDownload.href=url;
-      rpHelperDownload.setAttribute("aria-label",`Скачать RP-Helper ${version}`);
-      if(rpHelperVersion) rpHelperVersion.textContent=version;
-      if(rpHelperActionVersion) rpHelperActionVersion.textContent=version;
-    }
-
-    async function refreshRpHelperRelease(){
-      if(!rpHelperDownload) return;
-      try{
-        const cached=JSON.parse(localStorage.getItem(RP_HELPER_CACHE_KEY)||"null");
-        if(cached?.version&&cached?.url) applyRpHelperRelease(cached);
-        if(cached?.checkedAt&&Date.now()-Number(cached.checkedAt)<RP_HELPER_CACHE_MS) return;
-      }catch(_error){}
-
-      const controller=new AbortController();
-      const timeout=window.setTimeout(()=>controller.abort(),6000);
-      try{
-        const response=await fetch(RP_HELPER_RELEASE_API,{cache:"no-store",signal:controller.signal});
-        if(!response.ok) throw new Error(`GitHub release ${response.status}`);
-        const release=await response.json();
-        const asset=Array.isArray(release.assets)
-          ?release.assets.find(item=>item&&item.name==="RP-Helper.zip")
-          :null;
-        const meta={
-          version:releaseVersion(release),
-          url:asset?.browser_download_url||RP_HELPER_FALLBACK_URL,
-          checkedAt:Date.now()
-        };
-        applyRpHelperRelease(meta);
-        try{localStorage.setItem(RP_HELPER_CACHE_KEY,JSON.stringify(meta));}catch(_error){}
-      }catch(_error){
-        applyRpHelperRelease({version:rpHelperVersion?.textContent||"1.0",url:RP_HELPER_FALLBACK_URL});
-      }finally{
-        window.clearTimeout(timeout);
-      }
-    }
 
     const stop=()=>{
       if(timer){
@@ -151,7 +94,6 @@
     }
 
     dots.forEach((dot,index)=>dot.addEventListener("click",()=>show(index,true)));
-    refreshRpHelperRelease();
     root.addEventListener("pointerenter",()=>{
       hoverPaused=true;
       stop();

@@ -44,11 +44,11 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v104 · RP-Helper latest release')) failures.push('index badge is not v104');
+if(!index.includes('TEST v104 · Public report key')) failures.push('index badge is not v104');
 if(!version.includes('const TEST_VERSION="104"')) failures.push('TEST_VERSION is not 104');
-if(!version.includes('RP-Helper latest release')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v104 · RP-Helper latest release')) failures.push('CSS badge mismatch');
-if(!index.includes('modular-v104-rp-helper-latest')) failures.push('Architecture meta marker mismatch');
+if(!version.includes('Public report key')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v104 · Public report key')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v104-public-report-key')) failures.push('Architecture meta marker mismatch');
 for(const htmlName of ['index.html','report.html']){
   const html=fs.readFileSync(path.join(root,htmlName),'utf8');
   if(!html.includes('rel="icon" href="favicon.ico" sizes="any"')) failures.push(`${htmlName} root favicon is missing`);
@@ -88,6 +88,9 @@ if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sy
 if(fs.existsSync(path.join(root,'proof-service'))) failures.push('Old proof-service directory still exists');
 if(fs.existsSync(path.join(root,'js/config/proof-service.js'))) failures.push('Old proof-service config still exists');
 if(fs.existsSync(path.join(root,'js/vendor/vercel-blob-client.js'))) failures.push('Old Vercel Blob client still exists');
+if(!index.includes('js/config/google-drive-public-key.js?v=104')) failures.push('Public Drive key module is not connected');
+if(index.indexOf('js/config/google-drive-public-key.js?v=104')>index.indexOf('js/config/google-drive.js?v=104')) failures.push('Public Drive key module must load before Drive config');
+if(/AIza[0-9A-Za-z_-]{30,80}/.test(fs.readFileSync(path.join(root,'js/config/google-drive.js'),'utf8'))) failures.push('A public Drive API key is still bundled in google-drive.js');
 if(!index.includes('js/config/google-drive.js?v=104')) failures.push('Google Drive config is not connected');
 if(!index.includes('js/services/google-drive-storage.js?v=104')) failures.push('Google Drive storage service is not connected');
 if(!index.includes('js/features/google-drive-avatar.js?v=104')) failures.push('Google Drive avatar feature is not connected');
@@ -101,17 +104,10 @@ const proofCss=fs.readFileSync(path.join(root,'css/features/progress-proofs.css'
 const driveService=fs.readFileSync(path.join(root,'js/services/google-drive-storage.js'),'utf8');
 const appSource=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
 const sidebarPromo=fs.readFileSync(path.join(root,'js/features/sidebar-promo.js'),'utf8');
-const helperDownloadUrl='https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/latest/download/RP-Helper.zip';
+const helperDownloadUrl='https://github.com/wxzg4bgc6n-code/RP-CABINET-test/releases/download/program-v1.0.0/RP-Helper.zip';
 if(!sidebarPromo.includes(helperDownloadUrl)) failures.push('RP-Helper release asset URL is missing');
-if(!sidebarPromo.includes('https://api.github.com/repos/wxzg4bgc6n-code/RP-CABINET-test/releases/latest')) failures.push('RP-Helper latest release API is missing');
 if(!sidebarPromo.includes('download="RP-Helper.zip"')) failures.push('RP-Helper direct download filename is missing');
-if(!sidebarPromo.includes('id="rpHelperVersion">1.0')) failures.push('RP-Helper fallback version is missing');
-if(!sidebarPromo.includes('id="rpHelperActionVersion">1.0')) failures.push('RP-Helper action version is missing');
-if(!sidebarPromo.includes('Помощник для GTA5RP, Majestic RP и других RP-проектов')) failures.push('RP-Helper description is missing');
-if(!sidebarPromo.includes('Bongo Cat кликер')) failures.push('RP-Helper current module is missing');
-if(!sidebarPromo.includes('release.assets.find(item=>item&&item.name==="RP-Helper.zip")')) failures.push('RP-Helper asset lookup is missing');
-if(!sidebarPromo.includes('RP_HELPER_CACHE_MS=5*60*1000')) failures.push('RP-Helper release cache is missing');
-if(sidebarPromo.includes('/releases/download/program-v1.0.0/')) failures.push('RP-Helper remains pinned to the old release');
+if(!sidebarPromo.includes('<strong>RP-Helper</strong>')) failures.push('RP-Helper promo title is missing');
 if(/В разработке|profile-promo-content is-disabled/.test(sidebarPromo)) failures.push('Old disabled program placeholder is still active');
 if(!driveService.includes('localStorage.getItem(TOKEN_KEY)')||!driveService.includes('localStorage.setItem(TOKEN_KEY')) failures.push('Persistent expiring Drive token cache is missing');
 if(!driveService.includes("window.addEventListener('storage'")) failures.push('Cross-tab Drive token update is missing');
@@ -133,6 +129,8 @@ if(!proofFeature.includes('Math.min(4,entries.length)')) failures.push('Bulk pro
 if(!proofFeature.includes('data-proof-delete=')||proofFeature.includes("activeReport?'':")) failures.push('Per-file proof delete buttons are not always available');
 if(!proofCss.includes('.proof-delete-all')) failures.push('Bulk proof delete styles are missing');
 if(!driveService.includes('Number(error?.status)!==404')) failures.push('Missing Drive-file cleanup guard is absent');
+if(!proofFeature.includes("searchParams.set(window.RPDrivePublicKey?.queryKey||'pk',key)")) failures.push('Public report key is not embedded into generated links');
+if(!proofFeature.includes('verifyPublicManifest')) failures.push('Public report is not verified before copy');
 const publicReport=fs.readFileSync(path.join(root,'js/report.js'),'utf8');
 const reportHtml=fs.readFileSync(path.join(root,'report.html'),'utf8');
 const reportCss=fs.readFileSync(path.join(root,'css/report.css'),'utf8');
