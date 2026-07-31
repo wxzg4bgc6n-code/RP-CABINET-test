@@ -44,18 +44,18 @@ for(const ref of localRefs){
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const version=fs.readFileSync(path.join(root,'js/core/version.js'),'utf8');
 const coreCss=fs.readFileSync(path.join(root,'css/core.css'),'utf8');
-if(!index.includes('TEST v104 · Public report key')) failures.push('index badge is not v104');
-if(!version.includes('const TEST_VERSION="104"')) failures.push('TEST_VERSION is not 104');
-if(!version.includes('Public report key')) failures.push('TEST_VERSION_LABEL mismatch');
-if(!coreCss.includes('TEST v104 · Public report key')) failures.push('CSS badge mismatch');
-if(!index.includes('modular-v104-public-report-key')) failures.push('Architecture meta marker mismatch');
+if(!index.includes('TEST v105 · Screenshot upload fix')) failures.push('index badge is not v105');
+if(!version.includes('const TEST_VERSION="105"')) failures.push('TEST_VERSION is not 105');
+if(!version.includes('Screenshot upload fix')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!coreCss.includes('TEST v105 · Screenshot upload fix')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v105-screenshot-upload-fix')) failures.push('Architecture meta marker mismatch');
 for(const htmlName of ['index.html','report.html']){
   const html=fs.readFileSync(path.join(root,htmlName),'utf8');
   if(!html.includes('rel="icon" href="favicon.ico" sizes="any"')) failures.push(`${htmlName} root favicon is missing`);
-  if(!html.includes('assets/icons/favicon.svg?v=104')) failures.push(`${htmlName} SVG favicon is missing`);
-  if(!html.includes('assets/icons/favicon-32.png?v=104')) failures.push(`${htmlName} PNG favicon is missing`);
-  if(!html.includes('assets/icons/apple-touch-icon.png?v=104')) failures.push(`${htmlName} Apple Touch Icon is missing`);
-  if(!html.includes('site.webmanifest?v=104')) failures.push(`${htmlName} web manifest is missing`);
+  if(!html.includes('assets/icons/favicon.svg?v=105')) failures.push(`${htmlName} SVG favicon is missing`);
+  if(!html.includes('assets/icons/favicon-32.png?v=105')) failures.push(`${htmlName} PNG favicon is missing`);
+  if(!html.includes('assets/icons/apple-touch-icon.png?v=105')) failures.push(`${htmlName} Apple Touch Icon is missing`);
+  if(!html.includes('site.webmanifest?v=105')) failures.push(`${htmlName} web manifest is missing`);
 }
 for(const icon of ['favicon.ico','assets/icons/favicon.svg','assets/icons/favicon-32.png','assets/icons/apple-touch-icon.png','assets/icons/icon-192.png','assets/icons/icon-512.png']){
   const iconPath=path.join(root,icon);
@@ -63,20 +63,20 @@ for(const icon of ['favicon.ico','assets/icons/favicon.svg','assets/icons/favico
 }
 if(JSON.stringify((webManifest.icons||[]).map(icon=>icon.sizes))!==JSON.stringify(['192x192','512x512'])) failures.push('Web manifest icon sizes are incorrect');
 if(index.includes('sync-merge.js')) failures.push('Old sync-merge.js is still connected');
-if(!index.includes('realtime-state.js?v=104')) failures.push('realtime-state.js is not connected with v104 cache-busting');
+if(!index.includes('realtime-state.js?v=105')) failures.push('realtime-state.js is not connected with v105 cache-busting');
 if(!index.includes('class="profile-boot-screen"')) failures.push('Profile sync loader markup is missing');
 if(!coreCss.includes('@keyframes profileBootSpin')) failures.push('Profile sync loader animation is missing');
 if(!fs.readFileSync(path.join(root,'js/app.js'),'utf8').includes("classList.add('profile-boot-leaving')")) failures.push('Profile sync loader fade-out is missing');
-if(!index.includes('data/usaf/law-guide.js?v=104')) failures.push('USAF law guide is not connected');
-if(!index.includes('data/usaf/law-data.js?v=104')) failures.push('USAF law exam data is not connected');
-if(!index.includes('data/usaf/law-exam.js?v=104')) failures.push('USAF law exam template patch is not connected');
-if(index.indexOf('data/usaf/law-data.js?v=104')>index.indexOf('data/usaf/law-guide.js?v=104')) failures.push('USAF law data must load before the guide');
-if(index.indexOf('data/usaf/tests.js?v=104')>index.indexOf('data/usaf/law-exam.js?v=104')) failures.push('USAF tests must load before the law exam patch');
-if(!mainCss.includes('features/usaf-law.css?v=104')) failures.push('USAF law guide styles are not connected');
-if(!index.includes('features/smart-context-search.js?v=104')) failures.push('Smart search script is not connected');
-if(!mainCss.includes('features/smart-context-search.css?v=104')) failures.push('Smart search styles are not connected');
-if(!mainCss.includes('responsive/mobile.css?v=104')) failures.push('Mobile styles are not connected');
-if(mainCss.indexOf('features/smart-context-search.css?v=104')>mainCss.indexOf('responsive/mobile.css?v=104')) failures.push('Mobile styles must load after common smart-search styles');
+if(!index.includes('data/usaf/law-guide.js?v=105')) failures.push('USAF law guide is not connected');
+if(!index.includes('data/usaf/law-data.js?v=105')) failures.push('USAF law exam data is not connected');
+if(!index.includes('data/usaf/law-exam.js?v=105')) failures.push('USAF law exam template patch is not connected');
+if(index.indexOf('data/usaf/law-data.js?v=105')>index.indexOf('data/usaf/law-guide.js?v=105')) failures.push('USAF law data must load before the guide');
+if(index.indexOf('data/usaf/tests.js?v=105')>index.indexOf('data/usaf/law-exam.js?v=105')) failures.push('USAF tests must load before the law exam patch');
+if(!mainCss.includes('features/usaf-law.css?v=105')) failures.push('USAF law guide styles are not connected');
+if(!index.includes('features/smart-context-search.js?v=105')) failures.push('Smart search script is not connected');
+if(!mainCss.includes('features/smart-context-search.css?v=105')) failures.push('Smart search styles are not connected');
+if(!mainCss.includes('responsive/mobile.css?v=105')) failures.push('Mobile styles are not connected');
+if(mainCss.indexOf('features/smart-context-search.css?v=105')>mainCss.indexOf('responsive/mobile.css?v=105')) failures.push('Mobile styles must load after common smart-search styles');
 const smartSearchCss=fs.readFileSync(path.join(root,'css/features/smart-context-search.css'),'utf8');
 const mobileCss=fs.readFileSync(path.join(root,'css/responsive/mobile.css'),'utf8');
 if(/@media\s*\(\s*max-width/.test(smartSearchCss)) failures.push('Mobile search CSS remains in the common feature stylesheet');
@@ -88,15 +88,15 @@ if(fs.existsSync(path.join(root,'js/core/sync-merge.js'))) failures.push('Old sy
 if(fs.existsSync(path.join(root,'proof-service'))) failures.push('Old proof-service directory still exists');
 if(fs.existsSync(path.join(root,'js/config/proof-service.js'))) failures.push('Old proof-service config still exists');
 if(fs.existsSync(path.join(root,'js/vendor/vercel-blob-client.js'))) failures.push('Old Vercel Blob client still exists');
-if(!index.includes('js/config/google-drive-public-key.js?v=104')) failures.push('Public Drive key module is not connected');
-if(index.indexOf('js/config/google-drive-public-key.js?v=104')>index.indexOf('js/config/google-drive.js?v=104')) failures.push('Public Drive key module must load before Drive config');
+if(!index.includes('js/config/google-drive-public-key.js?v=105')) failures.push('Public Drive key module is not connected');
+if(index.indexOf('js/config/google-drive-public-key.js?v=105')>index.indexOf('js/config/google-drive.js?v=105')) failures.push('Public Drive key module must load before Drive config');
 if(/AIza[0-9A-Za-z_-]{30,80}/.test(fs.readFileSync(path.join(root,'js/config/google-drive.js'),'utf8'))) failures.push('A public Drive API key is still bundled in google-drive.js');
-if(!index.includes('js/config/google-drive.js?v=104')) failures.push('Google Drive config is not connected');
-if(!index.includes('js/services/google-drive-storage.js?v=104')) failures.push('Google Drive storage service is not connected');
-if(!index.includes('js/features/google-drive-avatar.js?v=104')) failures.push('Google Drive avatar feature is not connected');
-if(!mainCss.includes('features/google-drive-avatar.css?v=104')) failures.push('Google Drive avatar styles are not connected');
-if(index.indexOf('js/config/google-drive.js?v=104')>index.indexOf('js/services/google-drive-storage.js?v=104')) failures.push('Drive config must load before Drive service');
-if(index.indexOf('js/services/google-drive-storage.js?v=104')>index.indexOf('js/app.js?v=104')) failures.push('Drive service must load before app.js');
+if(!index.includes('js/config/google-drive.js?v=105')) failures.push('Google Drive config is not connected');
+if(!index.includes('js/services/google-drive-storage.js?v=105')) failures.push('Google Drive storage service is not connected');
+if(!index.includes('js/features/google-drive-avatar.js?v=105')) failures.push('Google Drive avatar feature is not connected');
+if(!mainCss.includes('features/google-drive-avatar.css?v=105')) failures.push('Google Drive avatar styles are not connected');
+if(index.indexOf('js/config/google-drive.js?v=105')>index.indexOf('js/services/google-drive-storage.js?v=105')) failures.push('Drive config must load before Drive service');
+if(index.indexOf('js/services/google-drive-storage.js?v=105')>index.indexOf('js/app.js?v=105')) failures.push('Drive service must load before app.js');
 const avatarFeature=fs.readFileSync(path.join(root,'js/features/google-drive-avatar.js'),'utf8');
 const avatarCss=fs.readFileSync(path.join(root,'css/features/google-drive-avatar.css'),'utf8');
 const proofFeature=fs.readFileSync(path.join(root,'js/features/progress-proofs.js'),'utf8');
@@ -129,7 +129,7 @@ if(!proofFeature.includes('Math.min(4,entries.length)')) failures.push('Bulk pro
 if(!proofFeature.includes('data-proof-delete=')||proofFeature.includes("activeReport?'':")) failures.push('Per-file proof delete buttons are not always available');
 if(!proofCss.includes('.proof-delete-all')) failures.push('Bulk proof delete styles are missing');
 if(!driveService.includes('Number(error?.status)!==404')) failures.push('Missing Drive-file cleanup guard is absent');
-if(!proofFeature.includes("searchParams.set(window.RPDrivePublicKey?.queryKey||'pk',key)")) failures.push('Public report key is not embedded into generated links');
+if(!proofFeature.includes("searchParams.set(window.RPDrivePublicKey?.queryKey||'pk',key)")) failures.push('Screenshot upload fix is not embedded into generated links');
 if(!proofFeature.includes('verifyPublicManifest')) failures.push('Public report is not verified before copy');
 const publicReport=fs.readFileSync(path.join(root,'js/report.js'),'utf8');
 const reportHtml=fs.readFileSync(path.join(root,'report.html'),'utf8');
@@ -169,4 +169,4 @@ if(failures.length){
   console.error(failures.join('\n\n'));
   process.exit(1);
 }
-console.log(`RP CABINET v104 build audit: OK\n${notes.join('\n')}`);
+console.log(`RP CABINET v105 build audit: OK\n${notes.join('\n')}`);

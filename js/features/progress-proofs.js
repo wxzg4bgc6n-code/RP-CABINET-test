@@ -285,7 +285,10 @@
     if(image){
       image.alt=file.name||'Скриншот';
       image.onerror=()=>{
-        const fallback=file.fileId?drive()?.publicMediaUrl?.(file):file.url;
+        let fallback=String(file?.url||'');
+        if(file.fileId&&drive()?.publicMediaUrl){
+          try{fallback=drive().publicMediaUrl(file)||fallback;}catch(error){}
+        }
         if(fallback&&image.src!==fallback) image.src=fallback;
       };
       image.src=source;

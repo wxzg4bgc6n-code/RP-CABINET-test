@@ -337,7 +337,10 @@ function normalizeProfileData(d){
     Object.entries(taskProofs).forEach(([task,proof])=>{
       if(!proof || typeof proof!=='object' || Array.isArray(proof)) return;
       const files=Array.isArray(proof.files)
-        ? proof.files.filter(file=>file&&typeof file==='object'&&typeof file.url==='string'&&file.url)
+        ? proof.files.filter(file=>file&&typeof file==='object'&&(
+            (typeof file.fileId==='string'&&file.fileId)
+            || (typeof file.url==='string'&&file.url)
+          ))
         : [];
       if(files.length) merged.proofsByContext[contextKey][task]={files,updatedAt:Number(proof.updatedAt||0)};
     });

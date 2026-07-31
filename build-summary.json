@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v104_PUBLIC_REPORT_KEY",
-  "testVersion": 104,
-  "label": "Public report key",
+  "output": "RP_CABINET_v105_SCREENSHOT_UPLOAD_FIX",
+  "testVersion": 105,
+  "label": "Screenshot upload fix",
   "publicReportKey": {
     "bundledInBuild": false,
     "ownerStorage": "localStorage",
@@ -199,5 +199,11 @@
     "_tools",
     "README.md",
     "build-summary.json"
-  ]
+  ],
+  "screenshotUploadFix": {
+    "uploadIndependentFromPublicApiKey": true,
+    "storedPreview": "Drive thumbnail without API key",
+    "normalizationAcceptsFileId": true,
+    "viewerFallbackSafeWithoutKey": true
+  }
 }

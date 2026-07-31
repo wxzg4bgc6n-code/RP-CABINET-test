@@ -1,5 +1,5 @@
-const TEST_VERSION="104";
-const TEST_VERSION_LABEL="Public report key";
+const TEST_VERSION="105";
+const TEST_VERSION_LABEL="Screenshot upload fix";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
