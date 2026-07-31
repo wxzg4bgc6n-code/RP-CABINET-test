@@ -1,14 +1,18 @@
 {
-  "output": "RP_CABINET_v105_SCREENSHOT_UPLOAD_FIX",
-  "testVersion": 105,
-  "label": "Screenshot upload fix",
+  "output": "RP_CABINET_v106_PUBLIC_CONFIG",
+  "testVersion": 106,
+  "label": "Public report config",
   "publicReportKey": {
-    "bundledInBuild": false,
-    "ownerStorage": "localStorage",
-    "linkParameter": "pk",
+    "source": "js/config/public-config.js",
+    "bundledInUpdate": true,
+    "ownerSetupOnce": true,
+    "userPrompt": false,
+    "localStorage": false,
+    "linkParameter": null,
     "verifiedBeforeCopy": true,
-    "legacyLinksNeedRegeneration": true,
-    "preventsUpdateOverwrite": true
+    "futureUpdatesMustPreserveFile": true,
+    "apiRestriction": "Google Drive API only",
+    "referrerRestriction": "GitHub Pages domain"
   },
   "browserIcon": {
     "design": "dark rounded RP mark with violet accent",
@@ -181,7 +185,8 @@
     ]
   },
   "tests": [
-    "_tools/test-v104-public-report-key.mjs",
+    "_tools/test-v106-public-config.mjs",
+    "_tools/test-v106-screenshot-upload-regression.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
     "ZIP integrity audit"

@@ -177,14 +177,12 @@
     return cleaned||'screenshot.png';
   }
 
-  function currentShareUrl(id,resourceKey,publicKey){
+  function currentShareUrl(id,resourceKey){
     const url=new URL('report.html',window.location.href);
     url.search='';
     url.hash='';
     url.searchParams.set('id',id);
     if(resourceKey) url.searchParams.set('rk',resourceKey);
-    const key=window.RPDrivePublicKey?.normalize?.(publicKey||window.RPDrivePublicKey?.get?.()||'')||'';
-    if(key) url.searchParams.set(window.RPDrivePublicKey?.queryKey||'pk',key);
     return url.href;
   }
 
@@ -218,14 +216,10 @@
     return {ok:false,status};
   }
 
-  function ensurePublicReportKey(forcePrompt=false){
+  function ensurePublicReportKey(){
     const helper=window.RPDrivePublicKey;
-    if(!helper) throw new Error('Модуль публичного ключа отчётов не загрузился.');
-    const current=helper.get();
-    if(current&&!forcePrompt) return current;
-    return helper.request(forcePrompt
-      ?'Google отклонил текущий ключ. Вставь заново ключ «RP CABINET Drive Browser» из Google Cloud.'
-      :'Для первой публичной ссылки вставь ключ «RP CABINET Drive Browser» из Google Cloud. Он сохранится только в этом браузере.');
+    if(!helper) throw new Error('Модуль публичной конфигурации отчётов не загрузился.');
+    return typeof helper.require==='function'?helper.require():helper.get();
   }
 
   function fileUrl(file,size=1200){
@@ -405,7 +399,7 @@
       <button class="btn" type="button" id="generateProofReport" ${canGenerate?'':'disabled'}>${reportGenerating?'Формирую отчёт…':'Сформировать отчёт'}</button>
     </div>
     ${report?`<div class="proof-report-ready">
-      <div><span>Последний отчёт</span><a href="${esc(report.url||currentShareUrl(report.id,report.resourceKey))}" target="_blank" rel="noopener">${esc(report.url||currentShareUrl(report.id,report.resourceKey))}</a><small>Доступен до ${new Date(report.expiresAt).toLocaleString('ru-RU')}</small></div>
+      <div><span>Последний отчёт</span><a href="${esc(currentShareUrl(report.id,report.resourceKey))}" target="_blank" rel="noopener">${esc(currentShareUrl(report.id,report.resourceKey))}</a><small>Доступен до ${new Date(report.expiresAt).toLocaleString('ru-RU')}</small></div>
       <button class="btn soft" type="button" id="copyProofReport">Копировать</button>
       <button class="proof-delete-report" type="button" id="deleteProofReport">Удалить отчёт</button>
     </div>`:''}`;
@@ -675,20 +669,16 @@
           };
         })
       };
-      let publicKey=ensurePublicReportKey(false);
+      const publicKey=ensurePublicReportKey();
       const created=await drive().createReportManifest(payload);
-      let check=await verifyPublicManifest(created.id,created.resourceKey,publicKey);
-      if(!check.ok&&check.status===403){
-        publicKey=ensurePublicReportKey(true);
-        check=await verifyPublicManifest(created.id,created.resourceKey,publicKey);
-      }
+      const check=await verifyPublicManifest(created.id,created.resourceKey,publicKey);
       if(!check.ok){
         await drive().deleteFile(created.id).catch(()=>{});
         if(check.status===403) throw new Error('Google отклонил публичный API key. Проверь ограничения ключа и домен GitHub Pages.');
         if(check.status===404) throw new Error('Google ещё не опубликовал файл отчёта. Повтори формирование через несколько секунд.');
         throw new Error('Публичная ссылка не прошла проверку. Отчёт не сохранён.');
       }
-      const url=currentShareUrl(created.id,created.resourceKey,publicKey);
+      const url=currentShareUrl(created.id,created.resourceKey);
       reportStore()[contextKey]={...created,url};
       save();
       await navigator.clipboard?.writeText(url).catch(()=>{});
@@ -705,14 +695,10 @@
   async function copyReportLink(report){
     if(!report?.id) return;
     try{
-      let publicKey=ensurePublicReportKey(false);
-      let check=await verifyPublicManifest(report.id,report.resourceKey||'',publicKey);
-      if(!check.ok&&check.status===403){
-        publicKey=ensurePublicReportKey(true);
-        check=await verifyPublicManifest(report.id,report.resourceKey||'',publicKey);
-      }
+      const publicKey=ensurePublicReportKey();
+      const check=await verifyPublicManifest(report.id,report.resourceKey||'',publicKey);
       if(!check.ok) throw new Error('Публичная ссылка не прошла проверку. Сформируй отчёт заново.');
-      const url=currentShareUrl(report.id,report.resourceKey||'',publicKey);
+      const url=currentShareUrl(report.id,report.resourceKey||'');
       report.url=url;
       save();
       try{

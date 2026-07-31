@@ -1,13 +1,12 @@
 /*
- * RP CABINET v104 — настройки Google Drive.
+ * RP CABINET v106 — настройки Google Drive.
  *
- * Публичный API key больше не зашит в обновления панели. Он вводится один
- * раз при создании отчёта, хранится в localStorage владельца и включается в
- * сформированную ссылку. OAuth-доступ к личному Диску по-прежнему выдаётся
- * отдельно через Firebase Google Auth и scope drive.file.
+ * Публичный браузерный API key берётся из js/config/public-config.js.
+ * OAuth-доступ к личному Диску выдаётся отдельно через Firebase Google Auth
+ * и scope drive.file.
  */
 window.RP_GOOGLE_DRIVE=Object.freeze({
-  apiKey:'',
+  apiKey:String(window.RP_PUBLIC_CONFIG?.googleDriveApiKey||'').trim(),
   scope:'https://www.googleapis.com/auth/drive.file',
   rootFolderName:'RP CABINET',
   screenshotsFolderName:'Скриншоты',
