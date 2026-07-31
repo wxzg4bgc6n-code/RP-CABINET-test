@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v106_PUBLIC_CONFIG",
-  "testVersion": 106,
-  "label": "Public report config",
+  "output": "RP_CABINET_v107_ONBOARDING_FLOW",
+  "testVersion": 107,
+  "label": "Animated onboarding",
   "publicReportKey": {
     "source": "js/config/public-config.js",
     "bundledInUpdate": true,
@@ -189,7 +189,8 @@
     "_tools/test-v106-screenshot-upload-regression.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
-    "ZIP integrity audit"
+    "ZIP integrity audit",
+    "_tools/test-v107-onboarding.mjs"
   ],
   "githubRoot": [
     "index.html",
@@ -210,5 +211,26 @@
     "storedPreview": "Drive thumbnail without API key",
     "normalizationAcceptsFileId": true,
     "viewerFallbackSafeWithoutKey": true
+  },
+  "onboarding": {
+    "mode": "sequential animated first-run flow",
+    "stages": [
+      "welcome",
+      "about",
+      "nickname",
+      "project and path",
+      "organization"
+    ],
+    "opensTab": "progress",
+    "organizationSelectedBeforeDashboard": true,
+    "sectionAndLevelSelectedInsideDashboard": true,
+    "mobileResponsive": true,
+    "reducedMotionSupport": true,
+    "files": [
+      "index.html",
+      "css/features/onboarding.css",
+      "js/features/onboarding.js",
+      "js/app.js"
+    ]
   }
 }

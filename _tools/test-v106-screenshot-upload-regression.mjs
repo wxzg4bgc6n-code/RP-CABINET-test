@@ -10,7 +10,7 @@ const checks=[
   ['avatar thumbnail does not call publicMediaUrl',/url:publicThumbnailUrl\(uploaded,1200\)/.test(storage)],
   ['normalizer accepts fileId',/typeof file\.fileId==='string'&&file\.fileId/.test(app)],
   ['viewer fallback catches missing public key',/try\{fallback=drive\(\)\.publicMediaUrl\(file\)\|\|fallback;\}catch\(error\)\{\}/.test(proofs)],
-  ['version is 106',/TEST_VERSION="106"/.test(version)]
+  ['version is 107',/TEST_VERSION="107"/.test(version)]
 ];
 let failed=false;
 for(const [name,ok] of checks){ console.log(`${ok?'PASS':'FAIL'} ${name}`); if(!ok) failed=true; }

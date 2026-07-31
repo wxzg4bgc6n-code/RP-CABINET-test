@@ -1,4 +1,4 @@
-RP CABINET v106 — КРАТКАЯ ПАМЯТКА
+RP CABINET v107 — КРАТКАЯ ПАМЯТКА
 
 1. Один раз вставь ключ RP CABINET Drive Browser в js/config/public-config.js.
 2. Загрузи обновление поверх v105.
@@ -6,4 +6,6 @@ RP CABINET v106 — КРАТКАЯ ПАМЯТКА
 4. Сформируй отчёт и открой ссылку в инкогнито.
 5. У пользователей больше не должно появляться окно ввода ключа.
 6. В следующих обновлениях не заменяй js/config/public-config.js.
-7. README хранит только v106, v105 и v104.
+7. README хранит только v107, v106 и v105.
+
+8. Первый экран: index.html + css/features/onboarding.css + js/features/onboarding.js.

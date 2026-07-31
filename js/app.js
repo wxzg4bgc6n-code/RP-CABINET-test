@@ -1637,9 +1637,16 @@ $('#createProfile').onclick=()=>{
   const name=$('#firstName').value.trim();
   if(!name){$('#firstError').classList.add('show');return}
   $('#firstError').classList.remove('show');
-  S={ready:true,name,project:$('#firstProject').value,path:document.querySelector('[name="path"]:checked').value,style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},account:{createdAt:Date.now(),initialName:name}};
-  save();
-  render();
+  const create=()=>{
+    const path=document.querySelector('[name="path"]:checked')?.value||'Государственная служба';
+    const selectedOrg=$('#firstOrg')?.value||window.KiriOnboarding?.getOrganization?.()||'';
+    S={ready:true,name,project:$('#firstProject').value,path,style:'style-violet',org:selectedOrg,section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},account:{createdAt:Date.now(),initialName:name}};
+    save();
+    if(typeof setActiveDashTab==='function') setActiveDashTab('progress');
+    render();
+  };
+  if(window.KiriOnboarding?.complete) window.KiriOnboarding.complete(create);
+  else create();
 };
 
 $('#saveSetup').onclick=()=>{
