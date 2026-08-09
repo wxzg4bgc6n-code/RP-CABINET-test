@@ -13,10 +13,6 @@
     </summary>
     <div class="academy-expand-content usaf-expand-content usaf-law-content-v92">
       <div class="usaf-law-board-v92">
-        <div class="usaf-law-scope-v109 usaf-law-scope-primary-v109">
-          <span>USAF</span>
-          <strong>Что нужно бойцу на службе</strong>
-        </div>
 
         <section class="usaf-law-group-v92" aria-labelledby="usaf-law-basis-v92">
           <header class="usaf-law-group-head-v92"><h3 id="usaf-law-basis-v92">Что нужно запомнить в первую очередь</h3></header>
@@ -78,18 +74,6 @@
           </div>
         </section>
 
-        <section class="usaf-law-group-v92" aria-labelledby="usaf-law-cases-v92">
-          <header class="usaf-law-group-head-v92"><h3 id="usaf-law-cases-v92">Какие темы УАК учить для армии</h3></header>
-          <div class="usaf-law-case-grid-v92">
-            <article><h4>Проникновение на FZ</h4><p>Незаконный вход, въезд или прорыв на закрытую и охраняемую территорию.</p></article>
-            <article><h4>Законное требование</h4><p>Отказ выполнить понятное законное требование военнослужащего или воспрепятствование его работе.</p></article>
-            <article><h4>Угроза и нападение</h4><p>Угроза, применение силы или оружия против военнослужащего либо другого государственного сотрудника.</p></article>
-            <article><h4>Оружие и запрещённые предметы</h4><p>Незаконное хранение или ношение оружия, боеприпасов, наркотиков и иных запрещённых средств.</p></article>
-            <article><h4>Военное имущество</h4><p>Кража, угон, повреждение или незаконное использование техники, амуниции и имущества NG.</p></article>
-            <article><h4>Побег и помощь нарушителю</h4><p>Попытка скрыться после законного задержания, освобождение задержанного или иное содействие.</p></article>
-          </div>
-        </section>
-
         <section class="usaf-law-group-v92" aria-labelledby="usaf-law-qa-v109">
           <header class="usaf-law-group-head-v92"><h3 id="usaf-law-qa-v109">Важные вопросы для сдачи</h3></header>
           <div class="usaf-law-qa-grid-v109">
@@ -105,11 +89,6 @@
             <article><h4>Что делать, если нарушение совершил другой военнослужащий?</h4><p>Зафиксировать и сообщить командующему составу его подразделения, MP или Генеральскому составу.</p></article>
           </div>
         </section>
-
-        <div class="usaf-law-scope-v109 usaf-law-scope-general-v109">
-          <span>Общее</span>
-          <strong>Госправила и процессуальная часть</strong>
-        </div>
 
         <section class="usaf-law-group-v92" aria-labelledby="usaf-law-project-rules-v109">
           <header class="usaf-law-group-head-v92"><h3 id="usaf-law-project-rules-v109">Правила гос. фракций: важное для ARMY</h3></header>
@@ -140,9 +119,9 @@
             <article class="usaf-law-fact-v92"><strong>BodyCam</strong><h4>Фиксация</h4><p>Для записи улик используется функциональная боди-камера.</p></article>
             <article class="usaf-law-fact-v92"><strong>Полная запись</strong><h4>От начала до конца</h4><p>Улика должна показывать ситуацию полностью — от начала до фактического завершения. Обрезанный отдельный фрагмент не принимается.</p></article>
           </div>
-          <div class="usaf-law-evidence-notes-v109">
-            <article><span>Улика</span><div><h4>Монтаж записи</h4><p>Улика не должна подвергаться видеомонтажу. Исключение — записи с голосом или видео человека, дающего показания (осведомителя).</p></div></article>
-            <article><span>Ордер</span><div><h4>Перед рейдом</h4><p>Для получения ордера необходимо отыграть передачу дела сотруднику прокуратуры и иметь видео/фотофиксацию для администрации.</p></div></article>
+          <div class="usaf-law-fact-grid-v92 usaf-law-evidence-extra-v110">
+            <article class="usaf-law-fact-v92"><strong>Улика</strong><h4>Монтаж записи</h4><p>Улика не должна подвергаться видеомонтажу. Исключение — записи с голосом или видео человека, дающего показания (осведомителя).</p></article>
+            <article class="usaf-law-fact-v92"><strong>Ордер</strong><h4>Перед рейдом</h4><p>Для получения ордера необходимо отыграть передачу дела сотруднику прокуратуры и иметь видео/фотофиксацию для администрации.</p></article>
           </div>
         </section>
 

@@ -63,3 +63,10 @@
   .usaf-law-step-v109{width:36px;height:36px;border-radius:11px}
   .usaf-law-scope-v109{align-items:flex-start;flex-direction:column;gap:7px}
 }
+
+/* v110: remove scope chips, restore normal card spacing, evidence notes match standard cards. */
+.usaf-law-split-v92 + .usaf-law-split-v92{margin-top:10px}
+.usaf-law-evidence-extra-v110{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}
+.usaf-law-evidence-extra-v110 .usaf-law-fact-v92{height:100%}
+.usaf-law-evidence-extra-v110 .usaf-law-fact-v92>strong{min-width:56px}
+@media(max-width:760px){.usaf-law-evidence-extra-v110{grid-template-columns:1fr}}
