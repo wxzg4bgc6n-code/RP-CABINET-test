@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v108_RULES_REFRESH",
-  "testVersion": 108,
-  "label": "Rules & reports refresh",
+  "output": "RP_CABINET_v109_USAF_LAW_CLEANUP",
+  "testVersion": 109,
+  "label": "USAF law cleanup",
   "publicReportKey": {
     "source": "js/config/public-config.js",
     "bundledInUpdate": false,
@@ -150,7 +150,18 @@
     "automaticMaterialOrder": "current progress task order",
     "missingMaterialRule": "skip task without exact source",
     "manualPinsOverrideAutomatic": true,
-    "examSummary": true
+    "examSummary": false,
+    "order": "USAF practical content first; general state/process content below",
+    "algorithmVisual": "numbered timeline cards",
+    "importantQuestions": "always-visible question/answer cards",
+    "removedUiBlocks": [
+      "main warning",
+      "exam summary",
+      "Ammunation/Train note",
+      "45-second legacy explainer",
+      "study note",
+      "pre-exam footer"
+    ]
   },
   "usafLawExam": {
     "questionCount": 17,
@@ -193,6 +204,7 @@
     "_tools/test-v106-screenshot-upload-regression.mjs",
     "_tools/test-v108-onboarding.mjs",
     "_tools/test-v108-rules-reports.mjs",
+    "_tools/test-v109-usaf-law-layout.mjs",
     "_tools/audit-build.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
@@ -250,5 +262,15 @@
     },
     "premiumWeek": "Sunday-Saturday",
     "premiumSpecialOpsProof": "faction menu logs; exceptions FZ/FT defense and Raid/Cordon"
+  },
+  "usafLawCleanup": {
+    "source": "user-requested cleanup of v108 UAK/PK screen",
+    "usafFirst": true,
+    "generalBelow": true,
+    "examSummaryRemoved": true,
+    "mainWarningRemoved": true,
+    "legacy45SecondExplainerRemoved": true,
+    "importantQuestionsCollapsed": false,
+    "evidenceNotesVisual": "separate Montage / Raid cards"
   }
 }
