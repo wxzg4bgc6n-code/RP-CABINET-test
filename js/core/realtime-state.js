@@ -139,6 +139,37 @@ function realtimeReportsFromState(state){
   return result;
 }
 
+function realtimeCleanReportTombstones(source){
+  const result={};
+  if(!source||typeof source!=='object'||Array.isArray(source)) return result;
+  Object.entries(source).forEach(([reportId,record])=>{
+    const id=String(record?.reportId||reportId||'').trim();
+    if(!id) return;
+    result[id]={reportId:id,contextKey:String(record?.contextKey||''),deletedAt:Number(record?.deletedAt||0)};
+  });
+  return result;
+}
+
+function realtimeCleanDriveCleanupQueue(source){
+  const result={};
+  if(!source||typeof source!=='object'||Array.isArray(source)) return result;
+  Object.entries(source).forEach(([operationId,record])=>{
+    if(!record||typeof record!=='object') return;
+    const id=String(record.id||operationId||'').trim();
+    if(!id) return;
+    result[id]={
+      id,
+      contextKey:String(record.contextKey||''),
+      reportId:String(record.reportId||''),
+      fileIds:Array.from(new Set((Array.isArray(record.fileIds)?record.fileIds:[]).map(value=>String(value||'').trim()).filter(Boolean))),
+      createdAt:Number(record.createdAt||0),
+      attempts:Math.max(0,Number(record.attempts||0)),
+      lastError:String(record.lastError||'').slice(0,180)
+    };
+  });
+  return result;
+}
+
 function buildRealtimeCloudDocument(state,meta={}){
   const core={};
   REALTIME_CORE_FIELDS.forEach(field=>{
@@ -163,6 +194,8 @@ function buildRealtimeCloudDocument(state,meta={}){
     premium:{items:realtimePremiumFromState(state)},
     proofs:realtimeProofsFromState(state),
     reports:realtimeReportsFromState(state),
+    reportTombstones:realtimeCleanReportTombstones(state?.reportDeleteTombstones),
+    driveCleanup:realtimeCleanDriveCleanupQueue(state?.driveCleanupQueue),
     updatedAtMs:Number(meta.updatedAtMs||Date.now()),
     writer:realtimeClone(meta.writer||{})
   };
@@ -223,17 +256,22 @@ function realtimeProofsToState(source){
   return result;
 }
 
-function realtimeReportsToState(source){
+function realtimeReportsToState(source,tombstones={}){
   const result={};
+  const deleted=realtimeCleanReportTombstones(tombstones);
   if(!source||typeof source!=='object'||Array.isArray(source)) return result;
   Object.entries(source).forEach(([encodedKey,entry])=>{
     if(!entry||typeof entry!=='object') return;
     if(Object.prototype.hasOwnProperty.call(entry,'value')){
       const key=typeof entry.key==='string'&&entry.key?entry.key:realtimeDecodeKey(encodedKey);
-      if(entry.value&&typeof entry.value==='object') result[key]=realtimeClone(entry.value);
+      const value=entry.value&&typeof entry.value==='object'?realtimeClone(entry.value):null;
+      if(value&&deleted[String(value.id||'')]) return;
+      if(value) result[key]=value;
       return;
     }
-    result[realtimeDecodeKey(encodedKey)]=realtimeClone(entry);
+    const value=realtimeClone(entry);
+    if(value&&deleted[String(value.id||'')]) return;
+    result[realtimeDecodeKey(encodedKey)]=value;
   });
   return result;
 }
@@ -255,7 +293,9 @@ function realtimeCloudDocumentToState(documentData,baseState={}){
     progressByContext:realtimeProgressToState(data.progress),
     selectedLevelBySection:realtimeSelectedLevelsToState(data.selectedLevels),
     proofsByContext:realtimeProofsToState(data.proofs),
-    reportsByContext:realtimeReportsToState(data.reports),
+    reportsByContext:realtimeReportsToState(data.reports,data.reportTombstones),
+    reportDeleteTombstones:realtimeCleanReportTombstones(data.reportTombstones),
+    driveCleanupQueue:realtimeCleanDriveCleanupQueue(data.driveCleanup),
     pinnedDepartmentBlocks:Array.isArray(data?.pins?.department)?[...data.pins.department]:[],
     pinnedAcademyBlocks:Array.isArray(data?.pins?.academy)?[...data.pins.academy]:[],
     premiumSelectedActivities:realtimePremiumToState(data?.premium?.items),
@@ -365,6 +405,28 @@ function buildRealtimeStateDiff(beforeState,afterState){
     if(realtimeObjectSnapshot(oldValue)===realtimeObjectSnapshot(newValue)) return;
     const path=`reports.${realtimeEncodeKey(key)}`;
     if(newValue) set(path,{key,value:realtimeClone(newValue)});
+    else remove(path);
+  });
+
+  const beforeTombstones=realtimeCleanReportTombstones(before.reportDeleteTombstones);
+  const afterTombstones=realtimeCleanReportTombstones(after.reportDeleteTombstones);
+  new Set([...Object.keys(beforeTombstones),...Object.keys(afterTombstones)]).forEach(reportId=>{
+    const oldValue=beforeTombstones[reportId]||null;
+    const newValue=afterTombstones[reportId]||null;
+    if(realtimeObjectSnapshot(oldValue)===realtimeObjectSnapshot(newValue)) return;
+    const path=`reportTombstones.${realtimeEncodeKey(reportId)}`;
+    if(newValue) set(path,newValue);
+    else remove(path);
+  });
+
+  const beforeCleanup=realtimeCleanDriveCleanupQueue(before.driveCleanupQueue);
+  const afterCleanup=realtimeCleanDriveCleanupQueue(after.driveCleanupQueue);
+  new Set([...Object.keys(beforeCleanup),...Object.keys(afterCleanup)]).forEach(operationId=>{
+    const oldValue=beforeCleanup[operationId]||null;
+    const newValue=afterCleanup[operationId]||null;
+    if(realtimeObjectSnapshot(oldValue)===realtimeObjectSnapshot(newValue)) return;
+    const path=`driveCleanup.${realtimeEncodeKey(operationId)}`;
+    if(newValue) set(path,newValue);
     else remove(path);
   });
 

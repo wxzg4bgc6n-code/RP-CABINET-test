@@ -1,7 +1,7 @@
 /* Основное приложение v80. Firebase — единственный источник истины после Google-входа; localStorage используется только как отображаемый кэш. */
 window.__profileBootComplete=false;
 document.body.classList.add('profile-booting');
-let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},pinnedDepartmentBlocks:[],pinnedAcademyBlocks:[],premiumSelectedActivities:[],account:{createdAt:0,initialName:''}};
+let S={ready:false,name:'',project:'GTA5RP',path:'Государственная служба',style:'style-violet',org:'',section:'',level:'',configured:false,tasks:{},progressByContext:{},selectedLevelBySection:{},proofsByContext:{},reportsByContext:{},reportDeleteTombstones:{},driveCleanupQueue:{},pinnedDepartmentBlocks:[],pinnedAcademyBlocks:[],premiumSelectedActivities:[],account:{createdAt:0,initialName:''}};
 let displayedProgress=0;
 let progressAnimationFrame=null;
 let progressAnimationTarget=null;
@@ -231,18 +231,53 @@ function save(){
   }
   rememberRealtimeLocalBaseline(S);
 }
+const PREMIUM_ACTIVITY_CATALOG_V108={
+  'Дежурство на КПП':{name:'Дежурство на КПП',points:1.5},
+  'Патруль штата':{name:'Патруль штата',points:1.5},
+  'Арест (КПЗ/ФТ)':{name:'Арест (КПЗ/ФТ)',points:1},
+  'Участие в наборе MA':{name:'Участие в наборе MA',points:4},
+  'Дроп':{name:'Дроп',points:2},
+  'Поставка материалов/аптечек':{name:'Поставка материалов/аптечек',points:2.5},
+  'Чёрный рынок':{name:'Чёрный рынок',points:2.5},
+  'Шпак':{name:'Шпак',points:3},
+  'Отбитие ФЗ / ФТ':{name:'Отбитие ФЗ / ФТ',points:3},
+  'Защита поезда':{name:'Защита поезда',points:4},
+  'Рейд / оцепление':{name:'Рейд / Оцепление',points:5},
+  'Рейд / Оцепление':{name:'Рейд / Оцепление',points:5},
+  'Проведение лекции':{name:'Проведение лекции',points:1},
+  'Принятие экзамена':{name:'Принятие экзамена',points:1.5},
+  'Проведение тренировки':{name:'Проведение тренировки',points:2.5},
+  'ВФМП или МФМА':{name:'ВФМП или МФМА',points:2},
+  'ГМП':{name:'ГМП / ВЗЧ / ОВЖ',points:4},
+  'ГМП / ВЗЧ / ОВЖ':{name:'ГМП / ВЗЧ / ОВЖ',points:4},
+  'Отчёт в спец. связи':{name:'Отчёт в спец. связи',points:1}
+};
+function currentPremiumActivity(item){
+  const source=PREMIUM_ACTIVITY_CATALOG_V108[String(item?.name||'').trim()];
+  return source?{...item,name:source.name,points:source.points}:item;
+}
+function premiumWeekRange(date=new Date()){
+  const current=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  const start=new Date(current);
+  start.setDate(current.getDate()-current.getDay());
+  const end=new Date(start);
+  end.setDate(start.getDate()+6);
+  const fmt=value=>value.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
+  return `${fmt(start)}–${fmt(end)}`;
+}
 function cleanPremiumSelection(list){
   if(!Array.isArray(list)) return [];
   const seen=new Set();
   const result=[];
   list.forEach((item,index)=>{
     if(!item||typeof item!=='object') return;
+    item=currentPremiumActivity(item);
     const name=String(item.name||'').trim();
     const note=String(item.note||'').trim();
     const points=Math.max(0,Math.round((Number(item.points)||0)*10)/10);
     const count=Math.max(1,Math.round(Number(item.count)||1));
     if(!name||points<=0||count<=0) return;
-    const key=String(item.key||[name,note,String(points)].join('||'));
+    const key=[name,note,String(points)].join('||');
     if(!key||seen.has(key)) return;
     seen.add(key);
     result.push({key,name,note,points,count,order:Number.isFinite(Number(item.order))?Number(item.order):index});
@@ -345,12 +380,45 @@ function normalizeProfileData(d){
       if(files.length) merged.proofsByContext[contextKey][task]={files,updatedAt:Number(proof.updatedAt||0)};
     });
   });
+  const incomingTombstones=(d.reportDeleteTombstones && typeof d.reportDeleteTombstones==='object' && !Array.isArray(d.reportDeleteTombstones))
+    ? d.reportDeleteTombstones
+    : {};
+  merged.reportDeleteTombstones={};
+  Object.entries(incomingTombstones).forEach(([reportId,record])=>{
+    const id=String(record?.reportId||reportId||'').trim();
+    if(!id) return;
+    merged.reportDeleteTombstones[id]={
+      reportId:id,
+      contextKey:String(record?.contextKey||''),
+      deletedAt:Number(record?.deletedAt||0)
+    };
+  });
+  const incomingCleanup=(d.driveCleanupQueue && typeof d.driveCleanupQueue==='object' && !Array.isArray(d.driveCleanupQueue))
+    ? d.driveCleanupQueue
+    : {};
+  merged.driveCleanupQueue={};
+  Object.entries(incomingCleanup).forEach(([operationId,record])=>{
+    if(!record||typeof record!=='object') return;
+    const id=String(record.id||operationId||'').trim();
+    if(!id) return;
+    const fileIds=Array.from(new Set((Array.isArray(record.fileIds)?record.fileIds:[]).map(value=>String(value||'').trim()).filter(Boolean)));
+    merged.driveCleanupQueue[id]={
+      id,
+      contextKey:String(record.contextKey||''),
+      reportId:String(record.reportId||''),
+      fileIds,
+      createdAt:Number(record.createdAt||0),
+      attempts:Math.max(0,Number(record.attempts||0)),
+      lastError:String(record.lastError||'').slice(0,180)
+    };
+  });
   const incomingReports=(d.reportsByContext && typeof d.reportsByContext==='object' && !Array.isArray(d.reportsByContext))
     ? d.reportsByContext
     : {};
   merged.reportsByContext={};
   Object.entries(incomingReports).forEach(([contextKey,report])=>{
     if(!report || typeof report!=='object' || Array.isArray(report) || typeof report.id!=='string') return;
+    if(merged.reportDeleteTombstones[String(report.id||'')]) return;
     merged.reportsByContext[contextKey]={
       id:report.id,
       url:typeof report.url==='string'?report.url:'',
@@ -1078,7 +1146,7 @@ function premiumCareerCard(){
   return `<div class="path-card path-premium-card" id="premiumCareerPathCard">
     <div class="path-step-icon premium-path-icon">$</div>
     <b>Премия</b>
-    <span>За неделю по отчётам</span>
+    <span>Отчётная неделя: <strong id="profilePremiumWeek">—</strong></span>
     <div class="path-premium-stats">
       <div><em>Баллы</em><strong id="profilePremiumPoints">0</strong></div>
       <div><em>Выплата</em><strong id="profilePremiumPay">0$</strong></div>
@@ -1754,9 +1822,11 @@ document.querySelectorAll('.theme-card').forEach(card=>{
     const pts=document.getElementById('profilePremiumPoints');
     const pay=document.getElementById('profilePremiumPay');
     const lim=document.getElementById('profilePremiumLimit');
+    const week=document.getElementById('profilePremiumWeek');
     if(pts) pts.textContent=ptxt(selectedPoints());
     if(pay) pay.textContent=money(vals.pay||0);
     if(lim) lim.textContent=money(vals.limit||0);
+    if(week) week.textContent=premiumWeekRange();
   };
   const update=()=>{
     const rank=currentRank();
@@ -1765,6 +1835,7 @@ document.querySelectorAll('.theme-card').forEach(card=>{
     Object.entries(vals).forEach(([k,v])=>{root.querySelectorAll(`[data-premium-output="${k}"]`).forEach(el=>{el.textContent=money(v);});});
     root.querySelectorAll('[data-premium-output="rank"]').forEach(el=>{el.textContent=rank+' ранг';});
     root.querySelectorAll('[data-premium-output="points"]').forEach(el=>{el.textContent=ptxt(points)+' б.';});
+    root.querySelectorAll('[data-premium-output="week"]').forEach(el=>{el.textContent=premiumWeekRange();});
     root.querySelectorAll('[data-premium-output="rank-source"]').forEach(el=>{el.textContent=currentRankSource();});
     root.querySelectorAll('[data-premium-limit-fill]').forEach(el=>{el.style.width=(limit>0?Math.min(100,Math.round(pay/limit*100)):0)+'%';});
     updateProfilePremium(vals);

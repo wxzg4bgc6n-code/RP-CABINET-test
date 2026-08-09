@@ -7,6 +7,7 @@
   let reportGenerating=false;
   let driveConnecting=false;
   let bulkDeleting=false;
+  let cleanupProcessing=false;
   let viewerInstalled=false;
   const COLLAPSED_GALLERIES_KEY='kiri:rp-cabinet:v82:collapsed-proof-galleries';
   const collapsedGalleries=new Set((()=>{
@@ -47,6 +48,72 @@
   function reportStore(){
     if(!S.reportsByContext||typeof S.reportsByContext!=='object'||Array.isArray(S.reportsByContext)) S.reportsByContext={};
     return S.reportsByContext;
+  }
+
+  function reportTombstones(){
+    if(!S.reportDeleteTombstones||typeof S.reportDeleteTombstones!=='object'||Array.isArray(S.reportDeleteTombstones)) S.reportDeleteTombstones={};
+    return S.reportDeleteTombstones;
+  }
+
+  function cleanupQueue(){
+    if(!S.driveCleanupQueue||typeof S.driveCleanupQueue!=='object'||Array.isArray(S.driveCleanupQueue)) S.driveCleanupQueue={};
+    return S.driveCleanupQueue;
+  }
+
+  function queueReportCleanup(report,contextKey,fileIds){
+    const reportId=String(report?.id||'').trim();
+    if(!reportId) return null;
+    const now=Date.now();
+    reportTombstones()[reportId]={reportId,contextKey:String(contextKey||''),deletedAt:now};
+    const id=`report:${reportId}`;
+    cleanupQueue()[id]={
+      id,
+      contextKey:String(contextKey||''),
+      reportId,
+      fileIds:Array.from(new Set((fileIds||[]).map(value=>String(value||'').trim()).filter(Boolean))),
+      createdAt:now,
+      attempts:0,
+      lastError:''
+    };
+    return id;
+  }
+
+  async function processCleanupQueue(){
+    if(cleanupProcessing||!drive()?.hasAccessToken?.()) return;
+    const queue=cleanupQueue();
+    const entries=Object.entries(queue);
+    if(!entries.length) return;
+    cleanupProcessing=true;
+    try{
+      for(const [operationId,operation] of entries){
+        const ids=Array.from(new Set([operation?.reportId,...(Array.isArray(operation?.fileIds)?operation.fileIds:[])]
+          .map(value=>String(value||'').trim()).filter(Boolean)));
+        let failed='';
+        for(const fileId of ids){
+          try{await drive().deleteFile(fileId);}
+          catch(error){
+            failed=String(error?.message||error||'Ошибка Google Drive').slice(0,180);
+            console.warn('Background report cleanup failed',fileId,error);
+            break;
+          }
+        }
+        if(failed){
+          const active=cleanupQueue()[operationId];
+          if(active){
+            active.attempts=Math.max(0,Number(active.attempts||0))+1;
+            active.lastError=failed;
+            save();
+          }
+          continue;
+        }
+        if(cleanupQueue()[operationId]){
+          delete cleanupQueue()[operationId];
+          save();
+        }
+      }
+    }finally{
+      cleanupProcessing=false;
+    }
   }
 
   function proofFor(task){
@@ -345,6 +412,11 @@
     const completed=allTasks.filter(task=>S.tasks?.[task]===true);
     const contextKey=currentContextKey();
     let report=contextKey?reportStore()[contextKey]:null;
+    if(report&&reportTombstones()[String(report.id||'')]){
+      delete reportStore()[contextKey];
+      report=null;
+      queueMicrotask(()=>save());
+    }
     if(report&&report.provider!=='google-drive'){
       delete reportStore()[contextKey];
       report=null;
@@ -431,6 +503,7 @@
       await drive().ensureAccessToken();
       await drive().ensureFolders();
       const cleanup=await drive().cleanupExpired().catch(()=>({deleted:0}));
+      await processCleanupQueue();
       showToast('Google Диск подключён',cleanup.deleted?`Удалено старых файлов: ${cleanup.deleted}`:'Можно загружать скриншоты');
     }catch(error){
       showToast('Диск не подключён',String(error.message||error).slice(0,140));
@@ -712,26 +785,25 @@
     }
   }
 
-  async function deleteReport(report){
+  function deleteReport(report){
     if(!report?.id||!confirm('Удалить весь отчёт и все его скриншоты?')) return;
-    try{
-      await drive().ensureAccessToken();
-      if(report.provider==='google-drive') await drive().deleteFile(report.id).catch(error=>console.warn('Manifest delete failed',error));
-      const store=ensureProofStore();
-      const fileIds=new Set();
-      Object.values(store).forEach(proof=>{
-        (proof?.files||[]).forEach(file=>{if(file.fileId) fileIds.add(file.fileId);});
-      });
-      for(const fileId of fileIds) await drive().deleteFile(fileId).catch(error=>console.warn('Report proof delete failed',fileId,error));
-      delete reportStore()[currentContextKey()];
-      Object.keys(store).forEach(task=>delete store[task]);
-      save();
-      showToast('Отчёт удалён','Ссылка и скриншоты больше недоступны');
-    }catch(error){
-      showToast('Не удалось удалить',String(error.message||error).slice(0,140));
-    }finally{
-      render();
-    }
+    const contextKey=currentContextKey();
+    const store=ensureProofStore();
+    const fileIds=new Set();
+    Object.values(store).forEach(proof=>{
+      (proof?.files||[]).forEach(file=>{if(file?.fileId) fileIds.add(file.fileId);});
+    });
+
+    /* v108: сначала сразу убираем отчёт и скриншоты из канонического состояния.
+     * Удаление Google Drive выполняется отдельно, чтобы интерфейс и Firebase
+     * не ждали сеть. Tombstone не позволяет старой вкладке вернуть удалённый отчёт. */
+    queueReportCleanup(report,contextKey,[...fileIds]);
+    delete reportStore()[contextKey];
+    if(S.proofsByContext?.[contextKey]) delete S.proofsByContext[contextKey];
+    save();
+    render();
+    showToast('Отчёт удалён из панели','Google Drive очищается в фоне');
+    queueMicrotask(()=>processCleanupQueue());
   }
 
   const appRender=window.render||globalThis.render;
@@ -742,7 +814,8 @@
     };
     try{globalThis.render=wrapped;}catch(error){}
   }
-  document.addEventListener('rp:drive-status',render);
-  document.addEventListener('DOMContentLoaded',render);
+  document.addEventListener('rp:drive-status',()=>{render();queueMicrotask(()=>processCleanupQueue());});
+  document.addEventListener('DOMContentLoaded',()=>{render();queueMicrotask(()=>processCleanupQueue());});
   render();
+  queueMicrotask(()=>processCleanupQueue());
 })();

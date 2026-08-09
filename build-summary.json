@@ -1,10 +1,10 @@
 {
-  "output": "RP_CABINET_v107_ONBOARDING_FLOW",
-  "testVersion": 107,
-  "label": "Animated onboarding",
+  "output": "RP_CABINET_v108_RULES_REFRESH",
+  "testVersion": 108,
+  "label": "Rules & reports refresh",
   "publicReportKey": {
     "source": "js/config/public-config.js",
-    "bundledInUpdate": true,
+    "bundledInUpdate": false,
     "ownerSetupOnce": true,
     "userPrompt": false,
     "localStorage": false,
@@ -12,7 +12,8 @@
     "verifiedBeforeCopy": true,
     "futureUpdatesMustPreserveFile": true,
     "apiRestriction": "Google Drive API only",
-    "referrerRestriction": "GitHub Pages domain"
+    "referrerRestriction": "GitHub Pages domain",
+    "fullArchiveUsesExample": true
   },
   "browserIcon": {
     "design": "dark rounded RP mark with violet accent",
@@ -102,7 +103,9 @@
       "Google profile photo",
       "initials"
     ],
-    "preconnectDrive": true
+    "preconnectDrive": true,
+    "deleteBehavior": "immediate panel/Firebase removal + background Google Drive cleanup queue",
+    "deleteTombstone": true
   },
   "avatar": {
     "provider": "Google Drive",
@@ -132,7 +135,8 @@
     "cloudProfile": "users/{uid}/profiles/default_realtime",
     "driveMetadataSynced": true,
     "driveTokenSynced": false,
-    "pageLoadWritesState": false
+    "pageLoadWritesState": false,
+    "reportDeleteQueueSynced": true
   },
   "smartSearch": {
     "defaultScope": "current profile organization and section",
@@ -187,10 +191,12 @@
   "tests": [
     "_tools/test-v106-public-config.mjs",
     "_tools/test-v106-screenshot-upload-regression.mjs",
+    "_tools/test-v108-onboarding.mjs",
+    "_tools/test-v108-rules-reports.mjs",
+    "_tools/audit-build.mjs",
     "node --check for all JavaScript",
     "HTML dependency audit",
-    "ZIP integrity audit",
-    "_tools/test-v107-onboarding.mjs"
+    "ZIP integrity audit"
   ],
   "githubRoot": [
     "index.html",
@@ -232,5 +238,17 @@
       "js/features/onboarding.js",
       "js/app.js"
     ]
+  },
+  "rulesRefresh": {
+    "effective": "03.08.2026 07:00",
+    "basis": "user-supplied GTA5RP rule text and premium announcement",
+    "ammunition": "ARMY/USAF excluded; state participation only FIB/LSPD/LSSD",
+    "evidence": "45-second minimum removed; full situation from start to finish",
+    "interrogation": {
+      "official": "8-10 questions / max 30 min",
+      "violent": "FIB CID / 10 questions / max 60 min"
+    },
+    "premiumWeek": "Sunday-Saturday",
+    "premiumSpecialOpsProof": "faction menu logs; exceptions FZ/FT defense and Raid/Cordon"
   }
 }

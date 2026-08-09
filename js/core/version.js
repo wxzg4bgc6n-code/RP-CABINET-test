@@ -1,5 +1,5 @@
-const TEST_VERSION="107";
-const TEST_VERSION_LABEL="Animated onboarding";
+const TEST_VERSION="108";
+const TEST_VERSION_LABEL="Rules & reports refresh";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{

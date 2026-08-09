@@ -1,4 +1,4 @@
-/* TEST v107 — управляет только первым созданием профиля. */
+/* TEST v108 — управляет только первым созданием профиля. */
 (function(){
   const screen=document.getElementById('firstScreen');
   const shell=document.getElementById('onboardingShell');
