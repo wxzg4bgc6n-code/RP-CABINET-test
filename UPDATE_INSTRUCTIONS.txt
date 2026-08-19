@@ -1,5 +1,11 @@
-RP CABINET TEST v111 — маленькое обновление
+RP CABINET v112 — UPDATE
 
-Загрузи содержимое этого архива в корень GitHub-репозитория поверх текущей версии с сохранением структуры папок.
+1. Распакуй маленький ZIP.
+2. На GitHub открой корень репозитория RP-CABINET-test.
+3. Add file -> Upload files.
+4. Перетащи СОДЕРЖИМОЕ распакованного архива, а не сам ZIP и не внешнюю папку.
+5. Убедись, что в списке изменений есть корневой index.html, js/app.js, js/core/version.js и js/features/career-path-guard.js.
+6. Commit changes.
+7. После деплоя сделай Ctrl+F5.
 
-ВАЖНО: js/config/public-config.js в пакет не входит — твой настроенный Google Drive Browser API key не будет затронут.
+js/config/public-config.js не заменять.

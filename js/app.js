@@ -1077,7 +1077,7 @@ function careerStepCard(step){
   }else{
     statusMarkup=`<span class="path-status">${statusText}</span>`;
   }
-  return `<div class="${cls.join(' ')}">${icon}<b>${step.title}</b>${statusMarkup}${progress}</div>`;
+  return `<div class="${cls.join(' ')}" data-career-step="${String(step.title||'').replace(/&/g,'&amp;').replace(/\"/g,'&quot;')}">${icon}<b>${step.title}</b>${statusMarkup}${progress}</div>`;
 }
 function buildCareerPathSteps(){
   const p=S.configured?percent():0;
@@ -1159,6 +1159,7 @@ function renderPathDashboard(){
   const wrap=$('#careerPathCards');
   if(!wrap) return;
   const steps=buildCareerPathSteps();
+  wrap.dataset.currentSection=String(S.section||'');
   wrap.innerHTML=steps.map(step=>careerStepCard(step)).join('')+premiumCareerCard();
   if(typeof window.KiriPremiumSync==='function') window.KiriPremiumSync();
 }

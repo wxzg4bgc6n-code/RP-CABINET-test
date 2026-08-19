@@ -1,5 +1,5 @@
-const TEST_VERSION="111";
-const TEST_VERSION_LABEL="Career Academy visibility";
+const TEST_VERSION="112";
+const TEST_VERSION_LABEL="Career Academy hotfix";
 function renderTestVersion(){
   const label=`TEST v${TEST_VERSION} · ${TEST_VERSION_LABEL}`;
   document.querySelectorAll(".kiri-test-version-badge").forEach(el=>{
