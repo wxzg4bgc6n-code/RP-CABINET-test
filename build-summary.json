@@ -1,7 +1,7 @@
 {
-  "output": "RP_CABINET_v109_USAF_LAW_CLEANUP",
-  "testVersion": 109,
-  "label": "USAF law cleanup",
+  "output": "RP_CABINET_v111_CAREER_ACADEMY_VISIBILITY_FULL",
+  "testVersion": 111,
+  "label": "Career Academy visibility",
   "publicReportKey": {
     "source": "js/config/public-config.js",
     "bundledInUpdate": false,
@@ -272,5 +272,11 @@
     "legacy45SecondExplainerRemoved": true,
     "importantQuestionsCollapsed": false,
     "evidenceNotesVisual": "separate Montage / Raid cards"
+  },
+  "careerPath": {
+    "academyVisibleOnlyWhenCurrent": true,
+    "academyHiddenAfterDepartmentTransfer": true,
+    "currentDepartmentProgressPreserved": true,
+    "responsiveColumns": "auto-fit minmax(220px,1fr)"
   }
 }

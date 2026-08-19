@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const failures=[];
+const index=read('index.html');
+const report=read('report.html');
+const version=read('js/core/version.js');
+const coreCss=read('css/core.css');
+const mainCss=read('css/main.css');
+const onboardingCss=read('css/features/onboarding.css');
+const onboardingJs=read('js/features/onboarding.js');
+const app=read('js/app.js');
+if(!version.includes('TEST_VERSION="111"')) failures.push('TEST_VERSION is not 111');
+if(!version.includes('Career Academy visibility')) failures.push('TEST_VERSION_LABEL mismatch');
+if(!index.includes('TEST v111 · Career Academy visibility')) failures.push('visible badge mismatch');
+if(!coreCss.includes('TEST v111 · Career Academy visibility')) failures.push('CSS badge mismatch');
+if(!index.includes('modular-v111-career-academy-visibility')) failures.push('architecture marker mismatch');
+if(!index.includes('data-onboarding-stage="welcome"')) failures.push('welcome stage missing');
+if(!index.includes('data-onboarding-stage="about"')) failures.push('about stage missing');
+if(!index.includes('data-onboarding-stage="name"')) failures.push('name stage missing');
+if(!index.includes('data-onboarding-stage="direction"')) failures.push('direction stage missing');
+if(!index.includes('data-onboarding-stage="organization"')) failures.push('organization stage missing');
+if(!index.includes('js/features/onboarding.js?v=111')) failures.push('onboarding JS missing');
+if(!mainCss.includes('features/onboarding.css?v=111')) failures.push('onboarding CSS missing');
+if(!onboardingJs.includes('window.KiriOnboarding')) failures.push('onboarding API missing');
+if(!onboardingJs.includes('prefers-reduced-motion')) failures.push('reduced-motion support missing');
+if(!app.includes("const selectedOrg=$('#firstOrg')")) failures.push('selected organization not saved');
+if(!app.includes("setActiveDashTab('progress')")) failures.push('progress tab opening missing');
+for(const html of [index,report]){
+  if(!html.includes('js/config/public-config.js?v=1')) failures.push('public-config.js missing');
+  if(!html.includes('js/config/google-drive-public-key.js?v=111')) failures.push('public key helper missing');
+  if(html.indexOf('public-config.js')>html.indexOf('google-drive-public-key.js')) failures.push('public config loads too late');
+  if(!html.includes('assets/icons/favicon.svg?v=111')) failures.push('SVG favicon missing');
+  if(!html.includes('site.webmanifest?v=111')) failures.push('manifest missing');
+}
+if(!mainCss.includes('features/progress-proofs.css?v=111')) failures.push('progress proof CSS missing');
+if(!index.includes('js/features/progress-proofs.js?v=111')) failures.push('progress proof JS missing');
+const helper=read('js/config/google-drive-public-key.js');
+const proofs=read('js/features/progress-proofs.js');
+if(/window\.prompt\s*\(/.test(helper)) failures.push('API key prompt remains');
+if(/localStorage/.test(helper)) failures.push('public API key still uses localStorage');
+if(/queryKey|QUERY_KEY/.test(helper+proofs)) failures.push('pk query implementation remains');
+if(!helper.includes('RP_PUBLIC_CONFIG')) failures.push('public config is not used');
+const required=['index.html','report.html','favicon.ico','site.webmanifest','assets','css','data','js','documentation','_tools','README.md','build-summary.json'];
+for(const item of required){if(!fs.existsSync(path.join(root,item))) failures.push(`missing ${item}`);}
+if(fs.existsSync(path.join(root,'proof-service'))) failures.push('proof-service must not exist');
+if(fs.existsSync(path.join(root,'node_modules'))) failures.push('node_modules must not exist');
+if(failures.length){console.error(failures.join('\n'));process.exit(1);}
+console.log('v111 build audit passed');

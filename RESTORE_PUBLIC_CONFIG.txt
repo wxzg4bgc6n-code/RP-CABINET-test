@@ -1,9 +1,1 @@
-RP CABINET v109 — ВАЖНО
-
-Файл js/config/public-config.js специально не включён в полный архив,
-чтобы не затереть уже настроенный Google Drive Browser API key.
-
-Для текущего сайта сохрани свой существующий js/config/public-config.js.
-Для новой установки скопируй js/config/public-config.example.js в
-js/config/public-config.js и впиши свой сохранённый браузерный API key локально.
-Не публикуй ключ в чат.
+js/config/public-config.js не входит в update-пакет намеренно. Не удаляй существующий файл из GitHub.
