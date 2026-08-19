@@ -10,7 +10,7 @@ const proofs=read('js/features/progress-proofs.js');
 const realtime=read('js/core/realtime-state.js');
 const version=read('js/core/version.js');
 const checks=[
-  ['current version 109',version.includes('TEST_VERSION="109"')],
+  ['current version 111',version.includes('TEST_VERSION="111"')],
   ['Ammunation excludes ARMY',tests.includes('Может ли ARMY / USAF участвовать в отбитии Ammunation?')&&tests.includes('только FIB, LSPD и LSSD')],
   ['KPP is 1.5',index.includes('data-premium-add="1.5" role="button" tabindex="0"><span class="premium-activity-name">Дежурство на КПП')],
   ['Patrol is 1.5',index.includes('data-premium-add="1.5" role="button" tabindex="0"><span class="premium-activity-name">Патруль штата')],
@@ -32,4 +32,4 @@ const checks=[
 let failed=false;
 for(const [name,ok] of checks){console.log(`${ok?'PASS':'FAIL'} ${name}`);if(!ok)failed=true;}
 if(failed)process.exit(1);
-console.log('v108 rules/reports regressions preserved in v109');
+console.log('v108 rules/reports regressions preserved in v111');

@@ -1089,10 +1089,8 @@ function buildCareerPathSteps(){
   }
 
   const isArmy=S.org==='ARMY';
-  const academyDone=isArmy && !!S.section && S.section!=='Academy';
   if(isArmy){
     const academyActive=S.section==='Academy';
-    const academyCompletedButNotCurrent=academyDone && !academyActive;
     steps.push({
       title:'ARMY',
       status:S.section && S.section!=='Academy'?'Фракция активна':(academyActive?'Текущая фракция':'Фракция выбрана'),
@@ -1100,16 +1098,19 @@ function buildCareerPathSteps(){
       active:!!S.org && (!S.configured || S.section===''),
       done:!!S.org
     });
-    steps.push({
-      title:'Academy',
-      status:academyActive?`${S.level||'В процессе'} · ${p}%`: (academyCompletedButNotCurrent?'Завершено':'Нужно выбрать'),
-      icon:'🎓',
-      done:academyCompletedButNotCurrent,
-      active:academyActive,
-      locked:!academyActive && !academyCompletedButNotCurrent,
-      progress:academyActive?p:(academyCompletedButNotCurrent?100:undefined)
-    });
-    if(S.configured && S.section && S.section!=='Academy'){
+
+    // Academy показывается только пока она является текущим отделом.
+    // После перехода в USAF/MP/DF/SD/ED и т.д. карточка Academy больше не остаётся в карьерном пути.
+    if(academyActive){
+      steps.push({
+        title:'Academy',
+        status:`${S.level||'В процессе'} · ${p}%`,
+        icon:'🎓',
+        active:true,
+        progress:p
+      });
+      steps.push({title:'Отдел',status:'Выбор после Academy или вручную',icon:'▢',locked:true});
+    }else if(S.configured && S.section){
       steps.push({
         title:S.section,
         status:`${S.level||'Ступень не выбрана'} · ${p}% до повышения`,
@@ -1118,7 +1119,7 @@ function buildCareerPathSteps(){
         progress:p
       });
     }else{
-      steps.push({title:'Отдел',status:'Выбор после Academy или вручную',icon:'▢',locked:true});
+      steps.push({title:'Отдел',status:'Нужно выбрать',icon:'▢',locked:true});
     }
   }else{
     steps.push({
